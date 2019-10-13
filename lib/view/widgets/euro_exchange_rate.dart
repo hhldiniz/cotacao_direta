@@ -11,7 +11,7 @@ class EuroExchangeRate extends StatelessWidget{
       children: <Widget>[
         Column(
           children: <Widget>[
-            Text("EUR")
+            Text("EUR ", style: TextStyle(fontSize: 18),)
           ],
         ),
         Column(

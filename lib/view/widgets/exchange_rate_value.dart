@@ -17,10 +17,10 @@ class _ExchangeRateValueState extends State<ExchangeRateValue>{
 
   @override
   Widget build(BuildContext context) {
-    return Text(_value.toString());
+    return Text(_value.toString(), style: TextStyle(fontSize: 18),);
   }
 
-  setValue(newValue, currency){
+  setValue(newValue){
     setState(() {
       _value = newValue;
     });
