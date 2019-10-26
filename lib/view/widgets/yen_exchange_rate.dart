@@ -1,7 +1,8 @@
 import 'package:cotacao_direta/view/widgets/exchange_rate_value.dart';
 import 'package:flutter/material.dart';
 
-class DollarExchangeRate extends StatelessWidget{
+class YenExchangeRate extends StatelessWidget
+{
 
   final exchangeRateValue = ExchangeRateValue();
 
@@ -11,7 +12,7 @@ class DollarExchangeRate extends StatelessWidget{
       children: <Widget>[
         Column(
           children: <Widget>[
-            Text("USD ", style: TextStyle(fontSize: 18),)
+            Text("JPY ", style: TextStyle(fontSize: 18),)
           ],
         ),
         Column(
