@@ -33,9 +33,12 @@ class BaseCurrencyMultiplierState extends State<BaseCurrencyMultiplier>{
               width: 24,
               child: StreamBuilder<String>(
                 builder: (context, snapshot){
-                  return TextField(
-                    controller: _inputTextController,
-                    decoration: InputDecoration(errorText: snapshot.data),
+                  return Container(
+                    width: 24,
+                      child: TextField(
+                        controller: _inputTextController,
+                        decoration: InputDecoration(errorText: snapshot.data),
+                      )
                   );
                 },
               ),

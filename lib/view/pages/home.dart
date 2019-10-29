@@ -1,3 +1,4 @@
+import 'package:cotacao_direta/view/widgets/base_currency_multiplier.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/euro_exchange_rate.dart';
@@ -11,6 +12,7 @@ class Home extends StatelessWidget{
   final euroExchangeRate = EuroExchangeRate();
   final canadianDollarExchangeRate = CanadianDollarExchangeRate();
   final yenExchangeRate = YenExchangeRate();
+  final baseCurrencyMultiplier = BaseCurrencyMultiplier();
 
   final String _pageTitle;
   final viewModel = HomeViewModelImpl();
@@ -45,17 +47,9 @@ class Home extends StatelessWidget{
               children: <Widget>[
                 Column(
                   children: <Widget>[
-                    Container(
-                      width: 24,
-                      child: TextField(),
-                    )
+                    baseCurrencyMultiplier
                   ],
                 ),
-                Column(
-                  children: <Widget>[
-                    Text("Real vale hoje", style: TextStyle(fontSize: 24),)
-                  ],
-                )
               ],
             ),
             Row(
