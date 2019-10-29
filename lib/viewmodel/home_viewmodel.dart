@@ -7,4 +7,6 @@ abstract class HomeViewModel
   Future<double> loadCanadianDollar();
   Future<double> loadYen();
   loadData();
+  Sink get currencyMultiplierValue;
+  dispose();
 }
