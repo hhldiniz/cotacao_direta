@@ -25,16 +25,16 @@ class Home extends StatelessWidget{
 
     WidgetsBinding.instance.addPostFrameCallback((_){
       viewModel.loadDollarValue().then((value){
-        dollarExchangeRate.exchangeRateValue.state.setValue(1/value);
+        dollarExchangeRate.exchangeRateValue.bloc.updateValue(1/value);
       });
       viewModel.loadEuroValue().then((value){
-        euroExchangeRate.exchangeRateValue.state.setValue(1/value);
+        euroExchangeRate.exchangeRateValue.bloc.updateValue(1/value);
       });
       viewModel.loadEuroValue().then((value){
-        canadianDollarExchangeRate.exchangeRateValue.state.setValue(1/value);
+        canadianDollarExchangeRate.exchangeRateValue.bloc.updateValue(1/value);
       });
       viewModel.loadYen().then((value){
-        yenExchangeRate.exchangeRateValue.state.setValue(1/value);
+        yenExchangeRate.exchangeRateValue.bloc.updateValue(1/value);
       });
     });
     return Scaffold(

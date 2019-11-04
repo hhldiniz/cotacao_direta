@@ -1,32 +1,20 @@
+import 'package:cotacao_direta/view/blocs/exchange_rate_value_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class ExchangeRateValue extends StatefulWidget{
+class ExchangeRateValue extends StatelessWidget{
 
-  final state = _ExchangeRateValueState();
-
-
-  @override
-  State createState() {
-    return state;
-  }
-
-}
-
-class _ExchangeRateValueState extends State<ExchangeRateValue>{
-
-  var _value = 0.0;
+  final bloc = ExchangeRateValueBloc();
   final _formatter = NumberFormat("#.###");
 
   @override
   Widget build(BuildContext context) {
-    return Text(_value.toString(), style: TextStyle(fontSize: 18),);
+    return StreamBuilder(
+      stream: bloc.getValue,
+      initialData: 0,
+      builder: (context, snapshot)=> Text(_formatter.format(snapshot.data), style: TextStyle(fontSize: 18),),
+    );
   }
 
-  setValue(newValue){
-    setState(() {
-      _value = double.parse(_formatter.format(newValue));
-    });
-  }
 
 }
