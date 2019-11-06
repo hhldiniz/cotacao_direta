@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:cotacao_direta/blocs/home_bloc.dart';
+import 'package:cotacao_direta/blocs/exchange_rate_value_bloc.dart';
 
-class HomeBlocProvider extends InheritedWidget
+class ExchangeValueBlocProvider extends InheritedWidget
 {
 
-  final HomeBloc bloc;
+  final ExchangeRateValueBloc bloc;
 
-  HomeBlocProvider({Key key, Widget child})
-      : bloc = HomeBloc(),
+  ExchangeValueBlocProvider({Key key, Widget child})
+      : bloc = ExchangeRateValueBloc(),
         super(key: key, child: child);
 
   @override
   bool updateShouldNotify(InheritedWidget oldWidget) => true;
 
-  static HomeBloc of(BuildContext context){
-    return (context.inheritFromWidgetOfExactType(HomeBlocProvider) as HomeBlocProvider).bloc;
+  static ExchangeRateValueBloc of(BuildContext context){
+    return (context.inheritFromWidgetOfExactType(ExchangeValueBlocProvider) as ExchangeValueBlocProvider).bloc;
   }
 }

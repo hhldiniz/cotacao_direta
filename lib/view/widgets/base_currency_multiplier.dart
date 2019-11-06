@@ -1,4 +1,3 @@
-import 'package:cotacao_direta/viewmodel/viewmodel_impl/HomeViewModelImpl.dart';
 import 'package:flutter/material.dart';
 
 class BaseCurrencyMultiplier extends StatefulWidget{
@@ -14,14 +13,8 @@ class BaseCurrencyMultiplier extends StatefulWidget{
 
 class BaseCurrencyMultiplierState extends State<BaseCurrencyMultiplier>{
 
-  final _viewModel = HomeViewModelImpl();
   final _inputTextController = TextEditingController();
 
-  @override
-  void initState() {
-    _inputTextController.addListener(()=> _viewModel.currencyMultiplierValue.add(_inputTextController.text));
-    super.initState();
-  }
   @override
   Widget build(BuildContext context) {
     return Row(

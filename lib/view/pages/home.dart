@@ -3,7 +3,6 @@ import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/euro_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/yen_exchange_rate.dart';
-import 'package:cotacao_direta/viewmodel/viewmodel_impl/HomeViewModelImpl.dart';
 import 'package:flutter/material.dart';
 
 class Home extends StatelessWidget{
@@ -15,7 +14,6 @@ class Home extends StatelessWidget{
   final baseCurrencyMultiplier = BaseCurrencyMultiplier();
 
   final String _pageTitle;
-  final viewModel = HomeViewModelImpl();
 
   Home(this._pageTitle);
 

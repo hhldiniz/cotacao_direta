@@ -1,28 +1,36 @@
-import 'package:cotacao_direta/blocs/home_bloc.dart';
+import 'package:cotacao_direta/blocs/exchange_rate_value_bloc.dart';
+import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/providers/exchange_rate_value_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class ExchangeRateValue extends StatefulWidget{
 
-  final _state = ExchangeRateValueState();
+  final Currencies currency;
+
+  ExchangeRateValue(this.currency);
 
   @override
   State<StatefulWidget> createState() {
-    // TODO: implement createState
-    return _state;
+    return ExchangeRateValueState(currency);
   }
 
 }
 
 class ExchangeRateValueState extends State<ExchangeRateValue>{
 
-  HomeBloc bloc;
+  ExchangeRateValueBloc bloc;
   final _formatter = NumberFormat("#.###");
+  final Currencies _currency;
+
+  ExchangeRateValueState(this._currency);
 
   @override
   void didChangeDependencies() {
-    bloc = HomeBlocProvider.of(context);
+    bloc = ExchangeValueBlocProvider.of(context);
+    bloc.retrieveRemoteValue(_currency).then((value){
+      bloc.updateValue(value);
+    });
     super.didChangeDependencies();
   }
 
