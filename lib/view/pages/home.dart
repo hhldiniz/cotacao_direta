@@ -22,21 +22,6 @@ class Home extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-
-    WidgetsBinding.instance.addPostFrameCallback((_){
-      viewModel.loadDollarValue().then((value){
-        dollarExchangeRate.exchangeRateValue.bloc.updateValue(1/value);
-      });
-      viewModel.loadEuroValue().then((value){
-        euroExchangeRate.exchangeRateValue.bloc.updateValue(1/value);
-      });
-      viewModel.loadEuroValue().then((value){
-        canadianDollarExchangeRate.exchangeRateValue.bloc.updateValue(1/value);
-      });
-      viewModel.loadYen().then((value){
-        yenExchangeRate.exchangeRateValue.bloc.updateValue(1/value);
-      });
-    });
     return Scaffold(
       appBar: AppBar(title: Text(_pageTitle),),
       body: Center(
