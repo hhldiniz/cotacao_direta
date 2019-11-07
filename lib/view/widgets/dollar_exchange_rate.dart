@@ -13,7 +13,7 @@ class DollarExchangeRate extends StatelessWidget{
       children: <Widget>[
         Column(
           children: <Widget>[
-            Text("USD ", style: TextStyle(fontSize: 18),)
+            Text("USD ", style: TextStyle(fontSize: 18, color: Colors.white),)
           ],
         ),
         Column(

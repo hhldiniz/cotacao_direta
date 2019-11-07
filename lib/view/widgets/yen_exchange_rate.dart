@@ -14,7 +14,7 @@ class YenExchangeRate extends StatelessWidget
       children: <Widget>[
         Column(
           children: <Widget>[
-            Text("JPY ", style: TextStyle(fontSize: 18),)
+            Text("JPY ", style: TextStyle(fontSize: 18, color: Colors.white),)
           ],
         ),
         Column(
