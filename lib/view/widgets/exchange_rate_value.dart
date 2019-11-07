@@ -39,7 +39,7 @@ class ExchangeRateValueState extends State<ExchangeRateValue>{
     return StreamBuilder(
       stream: bloc.getExchangeValue,
       initialData: 0,
-      builder: (context, snapshot)=> Text(_formatter.format(snapshot.data), style: TextStyle(fontSize: 18),),
+      builder: (context, snapshot)=> Text(_formatter.format(1/snapshot.data), style: TextStyle(fontSize: 18),),
     );
   }
 
