@@ -1,6 +1,6 @@
-import 'package:cotacao_direta/blocs/exchange_rate_value_bloc.dart';
+import 'package:cotacao_direta/blocs/home_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
-import 'package:cotacao_direta/providers/exchange_rate_value_provider.dart';
+import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -19,7 +19,7 @@ class ExchangeRateValue extends StatefulWidget{
 
 class ExchangeRateValueState extends State<ExchangeRateValue>{
 
-  ExchangeRateValueBloc bloc;
+  HomeBloc bloc;
   final _formatter = NumberFormat("#.###");
   final Currencies _currency;
 
@@ -27,7 +27,7 @@ class ExchangeRateValueState extends State<ExchangeRateValue>{
 
   @override
   void didChangeDependencies() {
-    bloc = ExchangeValueBlocProvider.of(context);
+    bloc = HomeBlocProvider.of(context);
     bloc.retrieveRemoteValue(_currency).then((value){
       bloc.updateValue(value);
     });
@@ -37,7 +37,7 @@ class ExchangeRateValueState extends State<ExchangeRateValue>{
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: bloc.getExchangeValue,
+      stream: bloc.getExchangeValueStream,
       initialData: 0,
       builder: (context, snapshot)=> Text(_formatter.format(1/snapshot.data), style: TextStyle(fontSize: 18, color: Colors.white),),
     );

@@ -5,15 +5,25 @@ import 'package:http/http.dart' as http;
 import 'base_bloc.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 
-class ExchangeRateValueBloc extends BaseBloc
+class HomeBloc extends BaseBloc
 {
-  final valueController = StreamController();
+  final valueController = StreamController.broadcast();
+  final multiplierController = StreamController();
+
   final String _exchangeRateApi = "https://api.exchangeratesapi.io/latest?base=BRL";
 
-  Stream get getExchangeValue => valueController.stream;
+  Stream get getExchangeValueStream => valueController.stream;
+  Stream get getMultiplierStream => multiplierController.stream;
+
+  double lastMultiplierValue = 0.0;
 
   void updateValue(value){
     valueController.sink.add(value);
+  }
+
+  void updateMultiplier(value){
+    lastMultiplierValue = value;
+    multiplierController.sink.add(value);
   }
 
   Future<double> retrieveRemoteValue(Currencies currency) async
@@ -25,6 +35,7 @@ class ExchangeRateValueBloc extends BaseBloc
   @override
   void dispose() {
     valueController.close();
+    multiplierController.close();
   }
 
 }
