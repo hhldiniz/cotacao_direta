@@ -44,7 +44,7 @@ class BaseCurrencyMultiplierState extends State<BaseCurrencyMultiplier>{
                           if(text.isNotEmpty)
                             bloc.updateMultiplier(text);
                         },
-                        decoration: InputDecoration(errorText: snapshot.data),
+                        decoration: InputDecoration(errorText: snapshot.error),
                       )
                   );
                 },
