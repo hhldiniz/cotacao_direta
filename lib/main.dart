@@ -1,4 +1,3 @@
-import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:flutter/material.dart';
 
 import 'view/pages/home.dart';
@@ -18,7 +17,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         fontFamily: "Roboto"
       ),
-      home: HomeBlocProvider(child: Home(appName),),
+      home: Home(appName),
     );
   }
 }

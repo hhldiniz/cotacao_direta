@@ -1,6 +1,6 @@
-import 'package:cotacao_direta/blocs/home_bloc.dart';
+import 'package:cotacao_direta/blocs/exchange_value_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
-import 'package:cotacao_direta/providers/home_bloc_provider.dart';
+import 'package:cotacao_direta/providers/exchange_value_bloc_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -16,7 +16,7 @@ class ExchangeRateValue extends StatefulWidget {
 }
 
 class ExchangeRateValueState extends State<ExchangeRateValue> {
-  HomeBloc bloc;
+  ExchangeValueBloc bloc;
   final _formatter = NumberFormat("#.###");
   final Currencies _currency;
 
@@ -24,7 +24,7 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
 
   @override
   void didChangeDependencies() {
-    bloc = HomeBlocProvider.of(context);
+    bloc = ExchangeValueBlocProvider.of(context);
     bloc.retrieveRemoteValue(_currency).then((value) {
       bloc.updateValue(value);
     });
@@ -47,7 +47,7 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
   void dispose() {
     // Warning. Since the bloc is not being initialized inside UI, calling dispose causes exceptions when widgets are rebuild.
     // Possible memory leaks were considered but not found with dev tools.
-//    bloc.dispose();
+    bloc.dispose();
     super.dispose();
   }
 }
