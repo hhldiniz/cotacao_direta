@@ -1,3 +1,5 @@
+import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
+import 'package:cotacao_direta/view/pages/conversion_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/euro_exchange_rate.dart';
@@ -25,6 +27,13 @@ class Home extends StatelessWidget {
       appBar: AppBar(
         title: Text(_pageTitle),
       ),
+      floatingActionButton: FloatingActionButton.extended(onPressed: (){
+        Navigator.of(context).push(MaterialPageRoute(builder: (context){
+          return ConversionPageBlocProvider(
+            child: ConversionPage(),
+          );
+        }));
+      }, label: Text("Conversões"), icon: Icon(Icons.compare_arrows),),
       body: Container(
         child: orientation == Orientation.portrait
             ? Column(
