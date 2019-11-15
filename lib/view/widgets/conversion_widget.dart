@@ -25,126 +25,150 @@ class ConversionWidgetState extends State<ConversionWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: Row(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Column(
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Container(
-                  width: 60,
-                  child: StreamBuilder(
-                    stream: bloc.multiplierStream,
-                    builder: (context, snapshot) => TextField(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: "Qtd"
-                      ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) {
-                        bloc.updateMultiplierValue(double.parse(value));
-                      },
-                    ),
-                  ))
-            ],
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[Icon(Icons.close)],
-            ),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              StreamBuilder(
-                stream: bloc.currencyFromStream,
-                initialData: Currencies.JPY,
-                builder: (context, snapshot) {
-                  return DropdownButton(
-                    items: Currencies.values.map((value) {
-                      return DropdownMenuItem(
-                        value: value,
-                        child: Text(
-                            EnumValueAsString().getEnumValue(value.toString())),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      bloc.updateFromCurrency(value);
-                    },
-                    icon: Icon(Icons.arrow_downward),
-                    iconSize: 24,
-                    elevation: 16,
-                    value: snapshot.data,
-                  );
-                },
-              )
-            ],
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[Icon(Icons.arrow_forward)],
-            ),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              StreamBuilder(
-                stream: bloc.currencyToStream,
-                initialData: Currencies.JPY,
-                builder: (context, snapshot) {
-                  return DropdownButton(
-                    items: Currencies.values.map((value) {
-                      return DropdownMenuItem(
-                        value: value,
-                        child: Text(
-                            EnumValueAsString().getEnumValue(value.toString())),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      bloc.updateToCurrency(value);
-                    },
-                    icon: Icon(Icons.arrow_downward),
-                    iconSize: 24,
-                    elevation: 16,
-                    value: snapshot.data,
-                  );
-                },
-              )
-            ],
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 8,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  "=",
-                  style: TextStyle(fontSize: 32),
-                )
-              ],
-            ),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              StreamBuilder(
-                initialData: 0,
-                stream: bloc.conversionResultStream,
-                builder: (context, snapshot) => Text(
-                  _formatter.format(snapshot.data),
-                  style: TextStyle(fontSize: 18),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Container(
+                      width: 60,
+                      child: StreamBuilder(
+                        initialData: 1,
+                        stream: bloc.multiplierStream,
+                        builder: (context, snapshot) => TextField(
+                          decoration: InputDecoration(
+                              border: OutlineInputBorder(), labelText: "Qtd"),
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) {
+                            bloc.updateMultiplierValue(double.parse(value));
+                          },
+                        ),
+                      ))
+                ],
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[Icon(Icons.close)],
                 ),
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  StreamBuilder(
+                    stream: bloc.currencyFromStream,
+                    initialData: Currencies.BRL,
+                    builder: (context, snapshot) {
+                      return DropdownButton(
+                        items: Currencies.values.map((value) {
+                          return DropdownMenuItem(
+                            value: value,
+                            child: Text(
+                                EnumValueAsString().getEnumValue(value.toString())),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          bloc.updateFromCurrency(value);
+                        },
+                        icon: Icon(Icons.arrow_downward),
+                        iconSize: 24,
+                        elevation: 16,
+                        value: snapshot.data,
+                      );
+                    },
+                  )
+                ],
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[Icon(Icons.arrow_forward)],
+                ),
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  StreamBuilder(
+                    stream: bloc.currencyToStream,
+                    initialData: Currencies.USD,
+                    builder: (context, snapshot) {
+                      return DropdownButton(
+                        items: Currencies.values.map((value) {
+                          return DropdownMenuItem(
+                            value: value,
+                            child: Text(
+                                EnumValueAsString().getEnumValue(value.toString())),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          bloc.updateToCurrency(value);
+                        },
+                        icon: Icon(Icons.arrow_downward),
+                        iconSize: 24,
+                        elevation: 16,
+                        value: snapshot.data,
+                      );
+                    },
+                  )
+                ],
+              ),
+
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      "=",
+                      style: TextStyle(fontSize: 32),
+                    )
+                  ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Column(
+                  children: <Widget>[
+                    StreamBuilder(
+                      stream: bloc.currencyLabelStream,
+                      initialData: "",
+                      builder: (context, snapshot) {
+                        return Text(snapshot.data.toString());
+                      },
+                    )
+                  ],
+                ),
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  StreamBuilder(
+                    initialData: 0,
+                    stream: bloc.conversionResultStream,
+                    builder: (context, snapshot) => Text(
+                      _formatter.format(snapshot.data),
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  )
+                ],
               )
             ],
           )
         ],
-      ),
+      )
     );
   }
 

@@ -12,13 +12,15 @@ class ConversionPageBloc extends BaseBloc{
   var _currencyFromStreamController = StreamController();
   var _currencyToStreamController = StreamController();
   var _conversionResultStreamController = StreamController();
+  var _currencyLabelStreamController = StreamController();
+
   final enumAsValueUtil = EnumValueAsString();
 
   final _exchangeValueBloc = ExchangeValueBloc();
 
   var _multiplierValue = 0.0;
-  var _selectedFromCurrency = Currencies.JPY;
-  var _selectedToCurrency = Currencies.JPY;
+  var _selectedFromCurrency = Currencies.BRL;
+  var _selectedToCurrency = Currencies.USD;
 
   Stream get multiplierStream => _multiplierStreamController.stream;
 
@@ -35,6 +37,10 @@ class ConversionPageBloc extends BaseBloc{
   Stream get conversionResultStream => _conversionResultStreamController.stream;
 
   Sink get conversionResultSink => _conversionResultStreamController.sink;
+
+  Stream get currencyLabelStream => _currencyLabelStreamController.stream;
+
+  Sink get currencyLabelSink => _currencyLabelStreamController.sink;
 
   updateMultiplierValue(value){
     _multiplierValue = value == null || value == "" ? 0 : value;
@@ -63,6 +69,7 @@ class ConversionPageBloc extends BaseBloc{
     _currencyFromStreamController.close();
     _currencyToStreamController.close();
     _conversionResultStreamController.close();
+    _currencyLabelStreamController.close();
   }
 
 }
