@@ -3,6 +3,7 @@ import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ConversionWidget extends StatefulWidget{
   @override
@@ -15,6 +16,7 @@ class ConversionWidget extends StatefulWidget{
 class ConversionWidgetState extends State<ConversionWidget>{
 
   ConversionPageBloc bloc;
+  final _formatter = NumberFormat("#.###");
 
   @override
   void didChangeDependencies() {
@@ -32,8 +34,16 @@ class ConversionWidgetState extends State<ConversionWidget>{
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Container(
-                width: 60,
-                child: TextField(),
+                  width: 60,
+                  child: StreamBuilder(
+                      stream: bloc.multiplierStream,
+                      builder: (context, snapshot) => TextField(
+                        keyboardType: TextInputType.number,
+                        onChanged: (value){
+                          bloc.updateMultiplierValue(double.parse(value));
+                        },
+                      ),
+                  )
               )
             ],
           ),
@@ -48,12 +58,12 @@ class ConversionWidgetState extends State<ConversionWidget>{
             children: <Widget>[
               StreamBuilder(
                 stream: bloc.currencyFromStream,
-                initialData: EnumValueAsString().getEnumValue(Currencies.JPY.toString()),
+                initialData: Currencies.JPY,
                 builder: (context, snapshot){
                   return DropdownButton(
                     items: Currencies.values.map((value) {
                       return DropdownMenuItem(
-                        value: EnumValueAsString().getEnumValue(value.toString()),
+                        value: value,
                         child: Text(
                             EnumValueAsString().getEnumValue(value.toString())),
                       );
@@ -82,12 +92,12 @@ class ConversionWidgetState extends State<ConversionWidget>{
             children: <Widget>[
               StreamBuilder(
                 stream: bloc.currencyToStream,
-                initialData: EnumValueAsString().getEnumValue(Currencies.JPY.toString()),
+                initialData: Currencies.JPY,
                 builder: (context, snapshot){
                   return DropdownButton(
                     items: Currencies.values.map((value) {
                       return DropdownMenuItem(
-                        value: EnumValueAsString().getEnumValue(value.toString()),
+                        value: value,
                         child: Text(
                             EnumValueAsString().getEnumValue(value.toString())),
                       );
@@ -116,7 +126,7 @@ class ConversionWidgetState extends State<ConversionWidget>{
               StreamBuilder(
                 initialData: 0,
                 stream: bloc.conversionResultStream,
-                builder: (context, snapshot)=> Text(snapshot.data.toString(), style: TextStyle(fontSize: 18),),
+                builder: (context, snapshot)=> Text(_formatter.format(snapshot.data), style: TextStyle(fontSize: 18),),
               )
             ],
           )
