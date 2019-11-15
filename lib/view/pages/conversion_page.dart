@@ -11,8 +11,10 @@ class ConversionPage extends StatelessWidget {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(onPressed: (){
         conversionPageBloc.updateResult();
-      }, label: Text("Converter")),
+      }, label: Text("Converter"),
+      icon: Icon(Icons.autorenew),),
       appBar: AppBar(
+        title: Text("Conversor de Moedas"),
         leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () {

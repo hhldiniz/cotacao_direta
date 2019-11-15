@@ -5,16 +5,14 @@ import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class ConversionWidget extends StatefulWidget{
+class ConversionWidget extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
     return ConversionWidgetState();
   }
-
 }
 
-class ConversionWidgetState extends State<ConversionWidget>{
-
+class ConversionWidgetState extends State<ConversionWidget> {
   ConversionPageBloc bloc;
   final _formatter = NumberFormat("#.###");
 
@@ -36,22 +34,26 @@ class ConversionWidgetState extends State<ConversionWidget>{
               Container(
                   width: 60,
                   child: StreamBuilder(
-                      stream: bloc.multiplierStream,
-                      builder: (context, snapshot) => TextField(
-                        keyboardType: TextInputType.number,
-                        onChanged: (value){
-                          bloc.updateMultiplierValue(double.parse(value));
-                        },
+                    stream: bloc.multiplierStream,
+                    builder: (context, snapshot) => TextField(
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: "Qtd"
                       ),
-                  )
-              )
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        bloc.updateMultiplierValue(double.parse(value));
+                      },
+                    ),
+                  ))
             ],
           ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(Icons.close)
-            ],
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[Icon(Icons.close)],
+            ),
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -59,7 +61,7 @@ class ConversionWidgetState extends State<ConversionWidget>{
               StreamBuilder(
                 stream: bloc.currencyFromStream,
                 initialData: Currencies.JPY,
-                builder: (context, snapshot){
+                builder: (context, snapshot) {
                   return DropdownButton(
                     items: Currencies.values.map((value) {
                       return DropdownMenuItem(
@@ -78,14 +80,14 @@ class ConversionWidgetState extends State<ConversionWidget>{
                   );
                 },
               )
-
             ],
           ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(Icons.arrow_forward)
-            ],
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[Icon(Icons.arrow_forward)],
+            ),
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -93,7 +95,7 @@ class ConversionWidgetState extends State<ConversionWidget>{
               StreamBuilder(
                 stream: bloc.currencyToStream,
                 initialData: Currencies.JPY,
-                builder: (context, snapshot){
+                builder: (context, snapshot) {
                   return DropdownButton(
                     items: Currencies.values.map((value) {
                       return DropdownMenuItem(
@@ -114,11 +116,19 @@ class ConversionWidgetState extends State<ConversionWidget>{
               )
             ],
           ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text("=", style: TextStyle(fontSize: 32),)
-            ],
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: 8,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  "=",
+                  style: TextStyle(fontSize: 32),
+                )
+              ],
+            ),
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -126,7 +136,10 @@ class ConversionWidgetState extends State<ConversionWidget>{
               StreamBuilder(
                 initialData: 0,
                 stream: bloc.conversionResultStream,
-                builder: (context, snapshot)=> Text(_formatter.format(snapshot.data), style: TextStyle(fontSize: 18),),
+                builder: (context, snapshot) => Text(
+                  _formatter.format(snapshot.data),
+                  style: TextStyle(fontSize: 18),
+                ),
               )
             ],
           )
@@ -140,5 +153,4 @@ class ConversionWidgetState extends State<ConversionWidget>{
     bloc.dispose();
     super.dispose();
   }
-
 }
