@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 
 class ConversionPage extends StatelessWidget {
 
+  final String pageTitle;
+
+  ConversionPage(this.pageTitle);
+
   @override
   Widget build(BuildContext context) {
     final conversionPageBloc = ConversionPageBlocProvider.of(context);
@@ -14,7 +18,7 @@ class ConversionPage extends StatelessWidget {
       }, label: Text("Converter"),
       icon: Icon(Icons.autorenew),),
       appBar: AppBar(
-        title: Text("Conversor de Moedas"),
+        title: Text(pageTitle),
         leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () {

@@ -1,4 +1,5 @@
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
+import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
@@ -22,6 +23,7 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final orientation = MediaQuery.of(context).orientation;
+    final _localization = MyAppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -30,10 +32,10 @@ class Home extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(onPressed: (){
         Navigator.of(context).push(MaterialPageRoute(builder: (context){
           return ConversionPageBlocProvider(
-            child: ConversionPage(),
+            child: ConversionPage(_localization.conversionPageTitle),
           );
         }));
-      }, label: Text("Conversões"), icon: Icon(Icons.compare_arrows),),
+      }, label: Text(_localization.conversionButtonLabel), icon: Icon(Icons.compare_arrows),),
       body: Container(
         child: orientation == Orientation.portrait
             ? Column(
