@@ -1,4 +1,5 @@
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
+import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/view/widgets/conversion_widget.dart';
 import 'package:flutter/material.dart';
 
@@ -11,11 +12,12 @@ class ConversionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final conversionPageBloc = ConversionPageBlocProvider.of(context);
+    final _localization = MyAppLocalizations.of(context);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(onPressed: (){
         conversionPageBloc.updateResult();
-      }, label: Text("Converter"),
+      }, label: Text(_localization.convertActionBtnLabel),
       icon: Icon(Icons.autorenew),),
       appBar: AppBar(
         title: Text(pageTitle),

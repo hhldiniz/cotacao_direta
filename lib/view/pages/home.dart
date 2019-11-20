@@ -14,7 +14,6 @@ class Home extends StatelessWidget {
   final euroExchangeRate = EuroExchangeRate();
   final canadianDollarExchangeRate = CanadianDollarExchangeRate();
   final yenExchangeRate = YenExchangeRate();
-  final pageHeader = Text("O Real vale hoje", style: TextStyle(fontSize: 28),);
 
   final String _pageTitle;
 
@@ -24,6 +23,7 @@ class Home extends StatelessWidget {
   Widget build(BuildContext context) {
     final orientation = MediaQuery.of(context).orientation;
     final _localization = MyAppLocalizations.of(context);
+    final pageHeader = Text(_localization.homePageHeadsUpText, style: TextStyle(fontSize: 28),);
 
     return Scaffold(
       appBar: AppBar(
