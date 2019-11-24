@@ -1,14 +1,16 @@
 class Currency
 {
-  int id;
+  String id;
   double value;
+  String timestamp;
 
-  Currency({this.id, this.value});
+  Currency({this.id, this.value, this.timestamp});
 
   Map<String, dynamic> toMap(){
     return {
       'id': id,
-      'value': value
+      'value': value,
+      'timestamp': timestamp
     };
   }
 }
