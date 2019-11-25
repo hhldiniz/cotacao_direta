@@ -18,7 +18,7 @@ class AppDatabase
     if(_database == null)
       _database = await openDatabase(path, onCreate: (db, version){
       db.execute(
-        "CREATE TABLE Currency(id TEXT PRIMARY KEY, value REAL)"
+        "CREATE TABLE Currency(id TEXT PRIMARY KEY, value REAL, timestamp TEXT)"
       );
     }, version: 1);
     return _database;

@@ -9,15 +9,17 @@ class CurrencyDao {
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<List<Currency>> getByCurrencyCode(String currencyCode) async {
+  Future<Currency> getByCurrencyCode(String currencyCode) async {
     final Database db = await AppDatabase().openAppDatabase();
-    List<Map<String, dynamic>> result = await db.query("currency",
-        columns: ["id", "value"], where: "id = ?", whereArgs: [currencyCode]);
-    return List.generate(result.length, (i) {
+    var result = await db.query("currency",
+        columns: ["id", "value", "timestamp"], where: "id = ?", whereArgs: [currencyCode]);
+    if(result.length == 0)
+      return null;
+    else
       return Currency(
-          id: result[i]["id"],
-          value: result[i]["value"],
-          timestamp: result[i]["timestamp"]);
-    });
+          id: result.first["id"],
+          value: result.first["value"],
+          timestamp: result.first["timestamp"]
+      );
   }
 }
