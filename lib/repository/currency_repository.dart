@@ -21,17 +21,31 @@ class CurrencyRepository{
 
   Future<Currency> getByCurrencyCode(String currencyCode) async{
     var networkAvailable = await _networkUtils.isNetworkAvailable();
-    if(networkAvailable){
+    var savedCurrency = await _currencyDao.getByCurrencyCode(currencyCode);
+
+    if(networkAvailable && (savedCurrency == null || !_isCurrencyTimestampValid(savedCurrency.timestamp))){
       var response =  await http.get(_exchangeRateApi);
       var currencyValue = jsonDecode(response.body)["rates"][currencyCode];
-      _currencyDao.insert(Currency(
+      var newCurrency = Currency(
           id: currencyCode,
           value: currencyValue,
           timestamp: DateTime.now().toIso8601String()
-      ));
-      return currencyValue;
+      );
+      _currencyDao.insert(newCurrency);
+      return newCurrency;
     }
     else
-      return await _currencyDao.getByCurrencyCode(currencyCode);
+      return savedCurrency;
   }
+
+  bool _isCurrencyTimestampValid(String timeStamp){
+    try{
+      var timeStampDate = DateTime.parse(timeStamp);
+      return DateTime.now().difference(timeStampDate).inHours < 1;
+    }catch(exception){
+      return false;
+    }
+
+  }
+
 }

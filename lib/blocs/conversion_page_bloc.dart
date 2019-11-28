@@ -58,8 +58,8 @@ class ConversionPageBloc extends BaseBloc{
   }
 
   updateResult() async{
-    var fromValue = await _exchangeValueBloc.retrieveRemoteValue(_selectedFromCurrency);
-    var toValue = await _exchangeValueBloc.retrieveRemoteValue(_selectedToCurrency);
+    var fromValue = await _exchangeValueBloc.retrieveRemote(_selectedFromCurrency);
+    var toValue = await _exchangeValueBloc.retrieveRemote(_selectedToCurrency);
     conversionResultSink.add(_multiplierValue * (toValue / fromValue));
   }
 

@@ -25,7 +25,7 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
   @override
   void didChangeDependencies() {
     bloc = ExchangeValueBlocProvider.of(context);
-    bloc.retrieveRemoteValue(_currency).then((value) {
+    bloc.retrieveRemote(_currency).then((value) {
       bloc.updateValue(value);
     });
     super.didChangeDependencies();
