@@ -55,6 +55,10 @@ class MyAppLocalizations{
     return _localizedValues[locale.languageCode]['conversionMultiplierHint'];
   }
 
+  String get conversionPageExplanationText {
+    return _localizedValues[locale.languageCode]['conversionPageExplanationText'];
+  }
+
 }
 
 class MyAppLocalizationsDelegate extends LocalizationsDelegate<MyAppLocalizations>{

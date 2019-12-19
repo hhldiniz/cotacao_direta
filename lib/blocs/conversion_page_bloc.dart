@@ -63,6 +63,13 @@ class ConversionPageBloc extends BaseBloc{
     conversionResultSink.add(_multiplierValue * (toValue / fromValue));
   }
 
+  switchCurrencies() async{
+    var lastFromCurrencyValue = await currencyFromStream.last;
+    var lastToCurrencyValue = await currencyToStream.last;
+    updateFromCurrency(lastToCurrencyValue);
+    updateToCurrency(lastFromCurrencyValue);
+  }
+
   @override
   void dispose() {
     _multiplierStreamController.close();
