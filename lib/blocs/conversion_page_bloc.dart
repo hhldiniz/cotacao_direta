@@ -64,10 +64,10 @@ class ConversionPageBloc extends BaseBloc{
   }
 
   switchCurrencies() async{
-    var lastFromCurrencyValue = await currencyFromStream.last;
-    var lastToCurrencyValue = await currencyToStream.last;
-    updateFromCurrency(lastToCurrencyValue);
-    updateToCurrency(lastFromCurrencyValue);
+    var currentSelectedToCurrency = _selectedToCurrency;
+    var currentSelectedFromCurrency = _selectedFromCurrency;
+    updateFromCurrency(currentSelectedToCurrency);
+    updateToCurrency(currentSelectedFromCurrency);
   }
 
   @override
