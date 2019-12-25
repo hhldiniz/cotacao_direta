@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:cotacao_direta/blocs/exchange_value_bloc.dart';
+import 'package:flutter/material.dart';
 
 class ExchangeValueBlocProvider extends InheritedWidget
 {
@@ -14,6 +14,6 @@ class ExchangeValueBlocProvider extends InheritedWidget
   bool updateShouldNotify(InheritedWidget oldWidget) => true;
 
   static ExchangeValueBloc of(BuildContext context){
-    return (context.inheritFromWidgetOfExactType(ExchangeValueBlocProvider) as ExchangeValueBlocProvider).bloc;
+    return context.dependOnInheritedWidgetOfExactType<ExchangeValueBlocProvider>().bloc;
   }
 }

@@ -12,6 +12,6 @@ class ConversionPageBlocProvider extends InheritedWidget{
   bool updateShouldNotify(InheritedWidget oldWidget) => true;
 
   static ConversionPageBloc of(BuildContext context){
-    return (context.inheritFromWidgetOfExactType(ConversionPageBlocProvider) as ConversionPageBlocProvider).bloc;
+    return context.dependOnInheritedWidgetOfExactType<ConversionPageBlocProvider>().bloc;
   }
 }
