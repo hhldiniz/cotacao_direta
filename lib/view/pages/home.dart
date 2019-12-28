@@ -9,15 +9,27 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-class Home extends StatelessWidget {
-  final dollarExchangeRate = DollarExchangeRate();
-  final euroExchangeRate = EuroExchangeRate();
-  final canadianDollarExchangeRate = CanadianDollarExchangeRate();
-  final yenExchangeRate = YenExchangeRate();
+class Home extends StatefulWidget{
+
 
   final String _pageTitle;
 
   Home(this._pageTitle);
+
+  @override
+  State<StatefulWidget> createState() => HomeState(_pageTitle);
+}
+
+class HomeState extends State<Home>{
+  final dollarExchangeRate = DollarExchangeRate();
+  final euroExchangeRate = EuroExchangeRate();
+  final canadianDollarExchangeRate = CanadianDollarExchangeRate();
+  final yenExchangeRate = YenExchangeRate();
+  var _selectedIndex = 0;
+
+  final String _pageTitle;
+
+  HomeState(this._pageTitle);
 
   @override
   Widget build(BuildContext context) {
@@ -25,18 +37,8 @@ class Home extends StatelessWidget {
     final _localization = MyAppLocalizations.of(context);
     final pageHeader = Text(_localization.homePageHeadsUpText, style: TextStyle(fontSize: 28),);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_pageTitle),
-      ),
-      floatingActionButton: FloatingActionButton.extended(onPressed: (){
-        Navigator.of(context).push(MaterialPageRoute(builder: (context){
-          return ConversionPageBlocProvider(
-            child: ConversionPage(_localization.conversionPageTitle),
-          );
-        }));
-      }, label: Text(_localization.conversionButtonLabel), icon: Icon(Icons.compare_arrows),),
-      body: Container(
+    final List<Widget> _widgetOptions = <Widget>[
+      Container(
         child: orientation == Orientation.portrait
             ? Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -175,6 +177,48 @@ class Home extends StatelessWidget {
           ],
         ),
       ),
+      Container(
+        child: Text("histórico"),
+      ),
+      Container(
+        child: Text("sobre"),
+      )
+    ];
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_pageTitle),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+              icon: Icon(Icons.attach_money),
+              title: Text(_localization.mainCurrenciesBottomNavItemLabel)
+          ),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.history),
+              title: Text(_localization.currencyHistoryBottomNavItemLabel)
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.short_text),
+            title: Text(_localization.aboutBottomNavItemLabel)
+          )
+        ],
+        currentIndex: _selectedIndex,
+        onTap: (index){
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(onPressed: (){
+        Navigator.of(context).push(MaterialPageRoute(builder: (context){
+          return ConversionPageBlocProvider(
+            child: ConversionPage(_localization.conversionPageTitle),
+          );
+        }));
+      }, label: Text(_localization.conversionButtonLabel), icon: Icon(Icons.compare_arrows),),
+      body: _widgetOptions.elementAt(_selectedIndex),
     );
   }
+
 }

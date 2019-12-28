@@ -20,7 +20,10 @@ class MyAppLocalizations{
       'conversionMultiplierHint': 'Amount',
       'conversionPageExplanationText': 'Insert the amount value of the currency '
           'that will be converted, selected a currency to be converted and the '
-          'currency that it will be converted to.'
+          'currency that it will be converted to.',
+      'mainCurrenciesBottomNavItemLabel': 'Currencies',
+      'currencyHistoryBottomNavItemLabel': 'History',
+      'aboutBottomNavItemLabel': 'About'
     },
 
     'pt' : {
@@ -31,7 +34,10 @@ class MyAppLocalizations{
       'conversionMultiplierHint': 'Quantidade',
       'conversionPageExplanationText': 'Insira a quantidade da moeda que será '
           'convertida, selecionada a moeda que será convertida e a moeda para '
-          'a qual será feita a conversão.'
+          'a qual será feita a conversão.',
+      'mainCurrenciesBottomNavItemLabel': 'Moedas',
+      'currencyHistoryBottomNavItemLabel': 'Histórico',
+      'aboutBottomNavItemLabel': 'Sobre'
     }
   };
 
@@ -57,6 +63,18 @@ class MyAppLocalizations{
 
   String get conversionPageExplanationText {
     return _localizedValues[locale.languageCode]['conversionPageExplanationText'];
+  }
+
+  String get mainCurrenciesBottomNavItemLabel {
+    return _localizedValues[locale.languageCode]['mainCurrenciesBottomNavItemLabel'];
+  }
+
+  String get currencyHistoryBottomNavItemLabel {
+    return _localizedValues[locale.languageCode]['currencyHistoryBottomNavItemLabel'];
+  }
+
+  String get aboutBottomNavItemLabel {
+    return _localizedValues[locale.languageCode]['aboutBottomNavItemLabel'];
   }
 
 }
