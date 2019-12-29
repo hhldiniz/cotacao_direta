@@ -1,9 +1,11 @@
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
+import 'package:cotacao_direta/providers/currency_history_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/euro_exchange_rate.dart';
+import 'package:cotacao_direta/view/widgets/main_menu_items/currency_history_menu.dart';
 import 'package:cotacao_direta/view/widgets/yen_exchange_rate.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -178,7 +180,9 @@ class HomeState extends State<Home>{
         ),
       ),
       Container(
-        child: Text("histórico"),
+        child: CurrencyHistoryBlocProvider(
+          child: CurrencyHistory(),
+        ),
       ),
       Container(
         child: Text("sobre"),
