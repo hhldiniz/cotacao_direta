@@ -1,20 +1,31 @@
 import 'dart:async';
 
 import 'package:cotacao_direta/blocs/base_bloc.dart';
+import 'package:flutter/widgets.dart';
 
-class CurrencyHistoryBloc extends BaseBloc{
+class CurrencyHistoryBloc extends BaseBloc {
   var _currencyHistoryFromDateStreamController = StreamController();
   var _currencyHistoryToDateStreamController = StreamController();
+  final _currencyHistoryFromDateController = TextEditingController();
+  final _currencyHistoryToDateController = TextEditingController();
 
-  Stream get currencyHistoryFromDateStream => _currencyHistoryFromDateStreamController.stream;
+  Stream get currencyHistoryFromDateStream =>
+      _currencyHistoryFromDateStreamController.stream;
 
-  Stream get currencyHistoryToDateStream => _currencyHistoryToDateStreamController.stream;
+  Stream get currencyHistoryToDateStream =>
+      _currencyHistoryToDateStreamController.stream;
 
-  updateFromDateValue(value){
+  TextEditingController get currencyHistoryFromDateController =>
+      _currencyHistoryFromDateController;
+
+  TextEditingController get currencyHistoryToDateController =>
+      _currencyHistoryToDateController;
+
+  updateFromDateValue(value) {
     _currencyHistoryFromDateStreamController.sink.add(value);
   }
 
-  updateToDateValue(value){
+  updateToDateValue(value) {
     _currencyHistoryToDateStreamController.sink.add(value);
   }
 
@@ -23,5 +34,4 @@ class CurrencyHistoryBloc extends BaseBloc{
     _currencyHistoryFromDateStreamController.close();
     _currencyHistoryToDateStreamController.close();
   }
-
 }
