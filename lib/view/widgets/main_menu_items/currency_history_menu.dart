@@ -98,25 +98,35 @@ class CurrencyHistory extends StatelessWidget {
         ),
         Row(
           children: <Widget>[
-            Container(
-              width: _screenWidth,
-              height: 40,
-              child: ListView.builder(
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: InkWell(
-                      onTap: (){
-
-                      },
-                      child: Chip(
-                        label: Text(_currencyList.elementAt(index)),
-                      ),
-                    ),
-                  );
-                },
-                itemCount: _currencyList.length,
-                scrollDirection: Axis.horizontal,
+            Expanded(
+              child: Container(
+                width: _screenWidth,
+                height: 40,
+                child: ListView.builder(
+                  itemBuilder: (context, index) {
+                    return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: StreamBuilder(
+                          initialData: false,
+                          stream: bloc
+                              .getCurrencySteam(_currencyList.elementAt(index)),
+                          builder: (context, snapshot) {
+                            return RawChip(
+                              showCheckmark: true,
+                              selected: snapshot.data,
+                              onPressed: () {
+                                bloc.updateCurrencyState(
+                                    _currencyList.elementAt(index),
+                                    !snapshot.data);
+                              },
+                              label: Text(_currencyList.elementAt(index)),
+                            );
+                          },
+                        ));
+                  },
+                  itemCount: _currencyList.length,
+                  scrollDirection: Axis.horizontal,
+                ),
               ),
             )
           ],
