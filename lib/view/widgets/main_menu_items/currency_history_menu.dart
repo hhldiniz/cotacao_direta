@@ -17,6 +17,8 @@ class CurrencyHistory extends StatelessWidget {
           .getEnumValue(Currencies.values.elementAt(index).toString());
     });
     final _screenWidth = MediaQuery.of(context).size.width;
+    final _currencyChipsPressState = Map.fromIterable(_currencyList,
+        key: (element) => element, value: (element) => false);
 
     return Column(
       children: <Widget>[
@@ -33,18 +35,18 @@ class CurrencyHistory extends StatelessWidget {
                       Column(
                         children: <Widget>[
                           Container(
-                            width: 200,
+                            width: _screenWidth/2,
                             child: TextField(
                               controller:
-                              bloc.currencyHistoryFromDateController,
+                                  bloc.currencyHistoryFromDateController,
                               onTap: () {
                                 FocusScope.of(context)
                                     .requestFocus(FocusNode());
                                 showDatePicker(
-                                    context: context,
-                                    initialDate: DateTime.now(),
-                                    firstDate: DateTime(1999),
-                                    lastDate: DateTime.now())
+                                        context: context,
+                                        initialDate: DateTime.now(),
+                                        firstDate: DateTime(1999),
+                                        lastDate: DateTime.now())
                                     .then((value) {
                                   bloc.updateFromDateValue(value);
                                   if (value != null)
@@ -63,18 +65,18 @@ class CurrencyHistory extends StatelessWidget {
                       Column(
                         children: <Widget>[
                           Container(
-                              width: 200,
+                              width: _screenWidth/2,
                               child: TextField(
                                 controller:
-                                bloc.currencyHistoryToDateController,
+                                    bloc.currencyHistoryToDateController,
                                 onTap: () {
                                   FocusScope.of(context)
                                       .requestFocus(FocusNode());
                                   showDatePicker(
-                                      context: context,
-                                      initialDate: DateTime.now(),
-                                      firstDate: DateTime(1999),
-                                      lastDate: DateTime.now())
+                                          context: context,
+                                          initialDate: DateTime.now(),
+                                          firstDate: DateTime(1999),
+                                          lastDate: DateTime.now())
                                       .then((value) {
                                     bloc.updateToDateValue(value);
                                     if (value != null)
@@ -107,17 +109,18 @@ class CurrencyHistory extends StatelessWidget {
                     return Padding(
                         padding: EdgeInsets.symmetric(horizontal: 4),
                         child: StreamBuilder(
-                          initialData: false,
+                          initialData: _currencyChipsPressState[_currencyList.elementAt(index)],
                           stream: bloc
                               .getCurrencySteam(_currencyList.elementAt(index)),
                           builder: (context, snapshot) {
                             return RawChip(
                               showCheckmark: true,
-                              selected: snapshot.data,
+                              selected: _currencyChipsPressState[_currencyList.elementAt(index)],
                               onPressed: () {
+                                _currencyChipsPressState[_currencyList.elementAt(index)] = !_currencyChipsPressState[_currencyList.elementAt(index)];
                                 bloc.updateCurrencyState(
                                     _currencyList.elementAt(index),
-                                    !snapshot.data);
+                                    !_currencyChipsPressState[_currencyList.elementAt(index)]);
                               },
                               label: Text(_currencyList.elementAt(index)),
                             );

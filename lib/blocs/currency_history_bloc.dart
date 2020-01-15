@@ -11,6 +11,7 @@ class CurrencyHistoryBloc extends BaseBloc {
   final _currencyHistoryFromDateController = TextEditingController();
   final _currencyHistoryToDateController = TextEditingController();
   final _currencyListStreamController = Map<String, StreamController>();
+  
 
   CurrencyHistoryBloc() {
     Currencies.values.forEach((currency) {
