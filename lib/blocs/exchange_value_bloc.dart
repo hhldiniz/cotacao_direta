@@ -18,7 +18,7 @@ class ExchangeValueBloc extends BaseBloc {
   }
 
   Future<double> retrieveRemote(Currencies currency) async {
-    return (await _currencyRepository.getByCurrencyCode(
+    return (await _currencyRepository.getLatestDataByCurrencyCode(
         EnumValueAsString().getEnumValue(currency.toString())))
         .value;
   }

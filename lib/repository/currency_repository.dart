@@ -19,9 +19,9 @@ class CurrencyRepository{
 
   CurrencyRepository._internalConstructor();
 
-  Future<Currency> getByCurrencyCode(String currencyCode) async{
+  Future<Currency> getLatestDataByCurrencyCode(String currencyCode) async{
     var networkAvailable = await _networkUtils.isNetworkAvailable();
-    var savedCurrency = await _currencyDao.getByCurrencyCode(currencyCode);
+    var savedCurrency = await _currencyDao.getLatestDataByCurrencyCode(currencyCode);
 
     if(networkAvailable && (savedCurrency == null || !_isCurrencyTimestampValid(savedCurrency.timestamp))){
       var response =  await http.get(_exchangeRateApi);
@@ -38,6 +38,11 @@ class CurrencyRepository{
       return savedCurrency;
   }
 
+  Future<List<Currency>> getCurrencyHistoricalData(List<String> currencyCodeList) async{
+    var isNetworkAvailable = await _networkUtils.isNetworkAvailable();
+
+  }
+
   bool _isCurrencyTimestampValid(String timeStamp){
     try{
       var timeStampDate = DateTime.parse(timeStamp);
@@ -45,7 +50,6 @@ class CurrencyRepository{
     }catch(exception){
       return false;
     }
-
   }
 
 }
