@@ -42,7 +42,7 @@ class CurrencyDao {
     var result = await db.query(
       "currency",
       columns: ["id", "value", "historicalDate", "timestamp"],
-      where: "id IN ? AND hitoricalDate BETWEEN ? AND ?",
+      where: "id IN ? AND hitoricalDate >= ? AND historicalDate <= ?",
       whereArgs: [currencyCodeList, initialDate, finalDate]
     );
     return List.generate(result.length, (index){

@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:cotacao_direta/blocs/base_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
-import 'package:cotacao_direta/util/database.dart';
+import 'package:cotacao_direta/model/currency.dart';
+import 'package:cotacao_direta/repository/currency_repository.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:flutter/widgets.dart';
 
@@ -12,8 +13,8 @@ class CurrencyHistoryBloc extends BaseBloc {
   final _currencyHistoryFromDateController = TextEditingController();
   final _currencyHistoryToDateController = TextEditingController();
   final _currencyListStreamController = Map<String, StreamController>();
-  final _database = AppDatabase().openAppDatabase();
-  
+  final _currencyRepository = CurrencyRepository();
+
 
   CurrencyHistoryBloc() {
     Currencies.values.forEach((currency) {
@@ -48,9 +49,8 @@ class CurrencyHistoryBloc extends BaseBloc {
     _currencyListStreamController[currencyLabel].add(selected);
   }
 
-  _retriveHistoryData(){
-    var currentDate = DateTime.now();
-    var limitPastDate = DateTime.now().subtract(Duration(days: 3650));
+  Future<List<Currency>> _retriveHistoryData(currencyCodeList, initialDate, finalDate) async{
+    return _currencyRepository.getCurrencyHistoricalData(currencyCodeList, initialDate, finalDate);
   }
 
   @override
