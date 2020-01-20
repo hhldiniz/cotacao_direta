@@ -6,30 +6,30 @@ import 'package:cotacao_direta/model/currency.dart';
 import 'package:cotacao_direta/repository/currency_repository.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 
 class CurrencyHistoryBloc extends BaseBloc {
-  var _currencyHistoryFromDateStreamController = StreamController();
-  var _currencyHistoryToDateStreamController = StreamController();
   final _currencyHistoryFromDateController = TextEditingController();
   final _currencyHistoryToDateController = TextEditingController();
   final _currencyListStreamController = Map<String, StreamController>();
+  final _currencyListValues = Map<String, bool>();
   final _currencyRepository = CurrencyRepository();
-
+  final _historyLineGraphController = StreamController();
+  final _dateFormatter = DateFormat("dd/MM/yyyy");
 
   CurrencyHistoryBloc() {
     Currencies.values.forEach((currency) {
-      _currencyListStreamController[EnumValueAsString()
-          .getEnumValue(currency.toString())] = StreamController.broadcast();
+      var currencyCode = EnumValueAsString().getEnumValue(currency.toString());
+      _currencyListStreamController[currencyCode] =
+          StreamController.broadcast();
+      _currencyListValues[currencyCode] = false;
     });
   }
 
-  Stream get currencyHistoryFromDateStream =>
-      _currencyHistoryFromDateStreamController.stream;
+  Stream get historyLineGraphController => _historyLineGraphController.stream;
 
-  Stream get currencyHistoryToDateStream =>
-      _currencyHistoryToDateStreamController.stream;
-
-  Stream getCurrencySteam(currencyLabel) => _currencyListStreamController[currencyLabel].stream;
+  Stream getCurrencySteam(currencyLabel) =>
+      _currencyListStreamController[currencyLabel].stream;
 
   TextEditingController get currencyHistoryFromDateController =>
       _currencyHistoryFromDateController;
@@ -37,25 +37,44 @@ class CurrencyHistoryBloc extends BaseBloc {
   TextEditingController get currencyHistoryToDateController =>
       _currencyHistoryToDateController;
 
-  updateFromDateValue(value) {
-    _currencyHistoryFromDateStreamController.sink.add(value);
+  _dispatchHistoryGraphSeries(List<Currency> currencyList) {
+//    List<Series>.generate(
+//        currencyList.length, (index) => Series(id: currencyList[index].id, data: [], ));
   }
 
-  updateToDateValue(value) {
-    _currencyHistoryToDateStreamController.sink.add(value);
+  updateFromDateValue(DateTime value) {
+    if (_currencyHistoryToDateController.value != null) {
+      _retrieveHistoryData(
+              _currencyListValues.keys.where((key) => _currencyListValues[key]),
+              _dateFormatter.parse(_currencyHistoryToDateController.value.text),
+              value.toIso8601String())
+          .then(_dispatchHistoryGraphSeries);
+    }
   }
 
-  updateCurrencyState(currencyLabel, selected){
+  updateToDateValue(DateTime value) {
+    if (_currencyHistoryFromDateController.value != null) {
+      _retrieveHistoryData(
+              _currencyListValues.keys.where((key) => _currencyListValues[key]),
+              _dateFormatter.parse(_currencyHistoryToDateController.value.text),
+              value.toIso8601String())
+          .then(_dispatchHistoryGraphSeries);
+    }
+  }
+
+  updateCurrencyState(currencyLabel, selected) {
+    _currencyListValues[currencyLabel] = selected;
     _currencyListStreamController[currencyLabel].add(selected);
   }
 
-  Future<List<Currency>> _retriveHistoryData(currencyCodeList, initialDate, finalDate) async{
-    return _currencyRepository.getCurrencyHistoricalData(currencyCodeList, initialDate, finalDate);
+  Future<List<Currency>> _retrieveHistoryData(
+      currencyCodeList, initialDate, finalDate) async {
+    return _currencyRepository.getCurrencyHistoricalData(
+        currencyCodeList, initialDate, finalDate);
   }
 
   @override
   void dispose() {
-    _currencyHistoryFromDateStreamController.close();
-    _currencyHistoryToDateStreamController.close();
+    _historyLineGraphController.close();
   }
 }
