@@ -1,11 +1,13 @@
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_stetho/flutter_stetho.dart';
 
 import 'view/pages/home.dart';
 
 void main(){
   WidgetsFlutterBinding.ensureInitialized();
+  Stetho.initialize();
   return runApp(MyApp());
 }
 

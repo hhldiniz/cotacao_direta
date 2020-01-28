@@ -13,7 +13,7 @@ class CurrencyDao {
     final Database db = await AppDatabase().openAppDatabase();
     var batch = db.batch();
     currencies.forEach((currency) {
-      batch.insert("currency", currency.toMap());
+      batch.insert("currency", currency.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
     });
     await batch.commit();
   }
@@ -42,7 +42,7 @@ class CurrencyDao {
     var result = await db.query(
       "currency",
       columns: ["id", "value", "historicalDate", "timestamp"],
-      where: "id IN (?) AND hitoricalDate >= ? AND historicalDate <= ?",
+      where: "id IN (?) AND historicalDate >= ? AND historicalDate <= ?",
       whereArgs: [currencyCodeList, initialDate, finalDate]
     );
     return List.generate(result.length, (index){

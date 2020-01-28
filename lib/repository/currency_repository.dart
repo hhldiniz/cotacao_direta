@@ -56,23 +56,26 @@ class CurrencyRepository {
     else if (isNetworkAvailable) {
       var response = await http
           .get(sprintf(_exchangeHistoricalRateApi, [initialDate, finalDate]));
-      List<Map<String, Map<String, double>>> jsonData =
-      jsonDecode(response.body);
+      List<MapEntry> jsonData =
+      jsonDecode(response.body)["rates"].entries.toList();
       var currencyListToSave = List<Currency>();
-      for (var index = 0; index < jsonData.length; index++) {
-        var historicalDate = DateFormat("yyyy-MM-dd")
-            .parse(jsonData[index].keys.elementAt(index));
-        jsonData[index].forEach((key, value) {
+      jsonData.forEach((MapEntry element) {
+        var historicalDate = DateFormat("yyyy-MM-dd").parse(element.key);
+
+        element.value.entries.forEach((MapEntry currencyEntry) {
           currencyListToSave.add(Currency(
-              id: key,
+              id: currencyEntry.key,
               historicalDate: historicalDate.toIso8601String(),
-              value: value[key],
+              value: currencyEntry.value,
               timestamp: DateTime.now().toIso8601String()));
         });
-      }
-      _currencyDao.insertMany(currencyListToSave.where((currency) =>
-      (DateTime.now().year - DateTime.parse(currency.historicalDate).year) <
-          10));
+      });
+      _currencyDao.insertMany(currencyListToSave
+          .where((currency) =>
+      (DateTime.now().year -
+          DateTime.parse(currency.historicalDate).year) <
+          10)
+          .toList());
       return currencyListToSave;
     } else
       return Iterable.empty();

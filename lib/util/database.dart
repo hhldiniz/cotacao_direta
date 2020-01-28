@@ -21,7 +21,7 @@ class AppDatabase {
     if (_database == null)
       _database = await openDatabase(path, onCreate: (db, version) {
         db.execute(
-            "CREATE TABLE Currency(id TEXT PRIMARY KEY, value REAL, timestamp TEXT)");
+            "CREATE TABLE Currency(id TEXT PRIMARY KEY, value REAL, timestamp TEXT, historicalDate TEXT)");
       }, onUpgrade: (database, oldVersion, newVersion) {
         migrationsScripts1_2
             .forEach((script) async => await database.execute(script));
