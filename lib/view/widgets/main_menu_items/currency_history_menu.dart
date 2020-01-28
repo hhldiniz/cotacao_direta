@@ -2,8 +2,8 @@ import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/providers/currency_history_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
-import 'package:cotacao_direta/view/widgets/charts.dart';
-import 'package:flutter/material.dart';
+import 'package:cotacao_direta/view/widgets/charts.dart' as charts;
+import 'package:flutter/material.dart' as material;
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
@@ -37,13 +37,14 @@ class CurrencyHistory extends StatelessWidget {
                         children: <Widget>[
                           Container(
                             width: _screenWidth / 2,
-                            child: TextField(
+                            child: material.TextField(
                               controller:
                               bloc.currencyHistoryFromDateController,
                               onTap: () {
                                 FocusScope.of(context)
                                     .requestFocus(FocusNode());
-                                showDatePicker(
+                                material
+                                    .showDatePicker(
                                     context: context,
                                     initialDate: DateTime.now(),
                                     firstDate: DateTime(1999),
@@ -55,8 +56,8 @@ class CurrencyHistory extends StatelessWidget {
                                         .text = _dateFormatter.format(value);
                                 });
                               },
-                              decoration: InputDecoration(
-                                  border: OutlineInputBorder(),
+                              decoration: material.InputDecoration(
+                                  border: material.OutlineInputBorder(),
                                   labelText: _localizations
                                       .currencyHistoryFromDateLabel),
                             ),
@@ -67,13 +68,14 @@ class CurrencyHistory extends StatelessWidget {
                         children: <Widget>[
                           Container(
                               width: _screenWidth / 2,
-                              child: TextField(
+                              child: material.TextField(
                                 controller:
                                 bloc.currencyHistoryToDateController,
                                 onTap: () {
                                   FocusScope.of(context)
                                       .requestFocus(FocusNode());
-                                  showDatePicker(
+                                  material
+                                      .showDatePicker(
                                       context: context,
                                       initialDate: DateTime.now(),
                                       firstDate: DateTime(1999),
@@ -85,8 +87,8 @@ class CurrencyHistory extends StatelessWidget {
                                           .text = _dateFormatter.format(value);
                                   });
                                 },
-                                decoration: InputDecoration(
-                                    border: OutlineInputBorder(),
+                                decoration: material.InputDecoration(
+                                    border: material.OutlineInputBorder(),
                                     labelText: _localizations
                                         .currencyHistoryToDateLabel),
                               ))
@@ -115,7 +117,7 @@ class CurrencyHistory extends StatelessWidget {
                           stream: bloc
                               .getCurrencySteam(_currencyList.elementAt(index)),
                           builder: (context, snapshot) {
-                            return RawChip(
+                            return material.RawChip(
                               showCheckmark: true,
                               selected: _currencyChipsPressState[
                               _currencyList.elementAt(index)],
@@ -135,7 +137,7 @@ class CurrencyHistory extends StatelessWidget {
                         ));
                   },
                   itemCount: _currencyList.length,
-                  scrollDirection: Axis.horizontal,
+                  scrollDirection: material.Axis.horizontal,
                 ),
               ),
             )
@@ -143,11 +145,18 @@ class CurrencyHistory extends StatelessWidget {
         ),
         Row(
           children: <Widget>[
-            StreamBuilder(
-              builder: (context, snapshot) => SimpleLineChart(
-                seriesList: snapshot.data,
-                animate: true,
-              ),
+            material.Container(
+              width: _screenWidth,
+              height: 200,
+              child: StreamBuilder(builder: (context, snapshot) {
+                if (snapshot.data != null)
+                  return charts.SimpleLineChart(
+                    seriesList: snapshot.data,
+                    animate: true,
+                  );
+                else
+                  return material.Text(_localizations.noDataLabel);
+              }),
             )
           ],
         )

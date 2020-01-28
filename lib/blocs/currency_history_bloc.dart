@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:charts_flutter/flutter.dart';
 import 'package:cotacao_direta/blocs/base_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/model/currency.dart';
@@ -38,25 +39,31 @@ class CurrencyHistoryBloc extends BaseBloc {
       _currencyHistoryToDateController;
 
   _dispatchHistoryGraphSeries(List<Currency> currencyList) {
-//    List<Series>.generate(
-//        currencyList.length, (index) => Series(id: currencyList[index].id, data: [], ));
+    List<Series>.generate(
+        currencyList.length,
+        (index) => Series(
+            id: 'Histórico',
+            data: currencyList,
+            domainFn: (currency, _) => currency.value,
+            measureFn: (currency, _) => currency.id
+        ));
   }
 
   updateFromDateValue(DateTime value) {
-    if (_currencyHistoryToDateController.value != null) {
+    if (_currencyHistoryToDateController.value.text.isNotEmpty) {
       _retrieveHistoryData(
-              _currencyListValues.keys.where((key) => _currencyListValues[key]),
-              _dateFormatter.parse(_currencyHistoryToDateController.value.text),
+              _currencyListValues.keys.where((key) => _currencyListValues[key]).toList(),
+              _dateFormatter.parse(_currencyHistoryToDateController.value.text).toIso8601String(),
               value.toIso8601String())
           .then(_dispatchHistoryGraphSeries);
     }
   }
 
   updateToDateValue(DateTime value) {
-    if (_currencyHistoryFromDateController.value != null) {
+    if (_currencyHistoryFromDateController.value.text.isNotEmpty) {
       _retrieveHistoryData(
-              _currencyListValues.keys.where((key) => _currencyListValues[key]),
-              _dateFormatter.parse(_currencyHistoryToDateController.value.text),
+              _currencyListValues.keys.where((key) => _currencyListValues[key]).toList(),
+              _dateFormatter.parse(_currencyHistoryFromDateController.value.text).toIso8601String(),
               value.toIso8601String())
           .then(_dispatchHistoryGraphSeries);
     }
