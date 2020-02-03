@@ -15,4 +15,14 @@ class Currency
       'timestamp': timestamp
     };
   }
+
+  @override
+  String toString() {
+    return "{"
+        "id: $id,\n"
+        "value: $value, \n"
+        "historicalDate: $historicalDate, \n"
+        "timestamp: $timestamp \n"
+        "}";
+  }
 }
