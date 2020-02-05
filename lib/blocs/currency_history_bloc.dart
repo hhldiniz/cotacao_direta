@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:charts_flutter/flutter.dart';
 import 'package:cotacao_direta/blocs/base_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/model/currency.dart';
@@ -32,8 +33,6 @@ class CurrencyHistoryBloc extends BaseBloc {
   Stream getCurrencySteam(currencyLabel) =>
       _currencyListStreamController[currencyLabel].stream;
 
-  Stream get historyGraphStream => _historyLineGraphController.stream;
-
   TextEditingController get currencyHistoryFromDateController =>
       _currencyHistoryFromDateController;
 
@@ -41,7 +40,13 @@ class CurrencyHistoryBloc extends BaseBloc {
       _currencyHistoryToDateController;
 
   _dispatchHistoryGraphSeries(List<Currency> currencyList) {
-    _historyLineGraphController.sink.add(currencyList);
+    List<Series>.generate(
+        currencyList.length,
+            (index) => Series(
+            id: 'Histórico',
+            data: currencyList,
+            domainFn: (currency, _) => currency.value,
+            measureFn: (currency, _) => currency.id));
   }
 
   updateFromDateValue(DateTime value) {
@@ -50,8 +55,7 @@ class CurrencyHistoryBloc extends BaseBloc {
           _currencyListValues.keys
               .where((key) => _currencyListValues[key])
               .toList(),
-          _dateFormatter.format(_dateParser
-              .parse(currencyHistoryToDateController.value.text)),
+          _dateFormatter.format(_dateParser.parse(currencyHistoryToDateController.value.text)),
           _dateFormatter.format(value))
           .then(_dispatchHistoryGraphSeries);
     }
@@ -63,8 +67,7 @@ class CurrencyHistoryBloc extends BaseBloc {
           _currencyListValues.keys
               .where((key) => _currencyListValues[key])
               .toList(),
-          _dateFormatter.format(_dateParser
-              .parse(_currencyHistoryFromDateController.value.text)),
+          _dateFormatter.format(_dateParser.parse(_currencyHistoryFromDateController.value.text)),
           _dateFormatter.format(value))
           .then(_dispatchHistoryGraphSeries);
     }
