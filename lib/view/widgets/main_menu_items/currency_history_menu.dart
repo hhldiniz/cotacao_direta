@@ -148,15 +148,17 @@ class CurrencyHistory extends StatelessWidget {
             material.Container(
               width: _screenWidth,
               height: 200,
-              child: StreamBuilder(builder: (context, snapshot) {
-                if (snapshot.data != null)
-                  return charts.SimpleLineChart(
-                    seriesList: snapshot.data,
-                    animate: true,
-                  );
-                else
-                  return material.Text(_localizations.noDataLabel);
-              }),
+              child: StreamBuilder(
+                  stream: bloc.historyLineGraphController,
+                  builder: (context, snapshot) {
+                    if (snapshot.data != null)
+                      return charts.SimpleLineChart(
+                        seriesList: snapshot.data,
+                        animate: true,
+                      );
+                    else
+                      return material.Text(_localizations.noDataLabel);
+                  }),
             )
           ],
         )

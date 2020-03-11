@@ -40,23 +40,30 @@ class CurrencyHistoryBloc extends BaseBloc {
       _currencyHistoryToDateController;
 
   _dispatchHistoryGraphSeries(List<Currency> currencyList) {
-    List<Series>.generate(
-        currencyList.length,
-            (index) => Series(
-            id: 'Histórico',
-            data: currencyList,
-            domainFn: (currency, _) => currency.value,
-            measureFn: (currency, _) => currency.id));
+    var currencyCodeList = currencyList.map<String>((currency)=> currency.id).toSet().toList();
+    var dataToAdd = List<Series<dynamic, DateTime>>();
+    currencyCodeList.forEach((currencyCode){
+      dataToAdd.add(
+          Series<Currency, DateTime>(
+              id: currencyCode,
+              data: currencyList.where((currency)=> currency.id == currencyCode).toList(),
+              domainFn: (Currency currency, _) =>
+                  DateFormat("yyyy-MM-dd").parse(currency.historicalDate),
+              measureFn: (Currency currency, _) => currency.value)
+      );
+    });
+    _historyLineGraphController.sink.add(dataToAdd);
   }
 
   updateFromDateValue(DateTime value) {
     if (_currencyHistoryToDateController.value.text.isNotEmpty) {
       _retrieveHistoryData(
-          _currencyListValues.keys
-              .where((key) => _currencyListValues[key])
-              .toList(),
-          _dateFormatter.format(_dateParser.parse(currencyHistoryToDateController.value.text)),
-          _dateFormatter.format(value))
+              _currencyListValues.keys
+                  .where((key) => _currencyListValues[key])
+                  .toList(),
+              _dateFormatter.format(_dateParser
+                  .parse(currencyHistoryToDateController.value.text)),
+              _dateFormatter.format(value))
           .then(_dispatchHistoryGraphSeries);
     }
   }
@@ -64,11 +71,12 @@ class CurrencyHistoryBloc extends BaseBloc {
   updateToDateValue(DateTime value) {
     if (_currencyHistoryFromDateController.value.text.isNotEmpty) {
       _retrieveHistoryData(
-          _currencyListValues.keys
-              .where((key) => _currencyListValues[key])
-              .toList(),
-          _dateFormatter.format(_dateParser.parse(_currencyHistoryFromDateController.value.text)),
-          _dateFormatter.format(value))
+              _currencyListValues.keys
+                  .where((key) => _currencyListValues[key])
+                  .toList(),
+              _dateFormatter.format(_dateParser
+                  .parse(_currencyHistoryFromDateController.value.text)),
+              _dateFormatter.format(value))
           .then(_dispatchHistoryGraphSeries);
     }
   }
