@@ -43,8 +43,7 @@ class CurrencyDao {
       "currency",
       columns: ["id", "value", "historicalDate", "timestamp"],
       where: "id IN (?) AND historicalDate >= ? AND historicalDate <= ?",
-      whereArgs: [currencyCodeList, initialDate, finalDate],
-      groupBy: "historicalDate"
+      whereArgs: [currencyCodeList, initialDate, finalDate]
     );
     return List.generate(result.length, (index){
       return Currency(
