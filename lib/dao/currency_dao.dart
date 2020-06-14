@@ -5,7 +5,7 @@ import 'package:sqflite/sqlite_api.dart';
 class CurrencyDao {
   Future<void> insert(Currency currency) async {
     final Database db = await AppDatabase().openAppDatabase();
-    db.insert("currency", currency.toMap(),
+    db.insert("Currency", currency.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -13,14 +13,14 @@ class CurrencyDao {
     final Database db = await AppDatabase().openAppDatabase();
     var batch = db.batch();
     currencies.forEach((currency) {
-      batch.insert("currency", currency.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      batch.insert("Currency", currency.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
     });
     await batch.commit();
   }
 
   Future<Currency> getLatestDataByCurrencyCode(String currencyCode) async {
     final Database db = await AppDatabase().openAppDatabase();
-    var result = await db.query("currency",
+    var result = await db.query("Currency",
         columns: ["id", "value", "historicalDate", "timestamp"],
         where: "id = ?",
         whereArgs: [currencyCode],

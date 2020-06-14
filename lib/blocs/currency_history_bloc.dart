@@ -40,25 +40,29 @@ class CurrencyHistoryBloc extends BaseBloc {
       _currencyHistoryToDateController;
 
   _dispatchHistoryGraphSeries(List<Currency> currencyList) {
-    var currencyCodeList = currencyList.map<String>((currency)=> currency.id).toSet().toList();
+    var currencyCodeList =
+        currencyList.map<String>((currency) => currency.id).toSet().toList();
     var dataToAdd = List<Series<dynamic, DateTime>>();
-    currencyCodeList.forEach((currencyCode){
-      dataToAdd.add(
-          Series<Currency, DateTime>(
-              id: currencyCode,
-              data: currencyList.where((currency)=> currency.id == currencyCode).toList(),
-              domainFn: (Currency currency, _) =>
-                  DateFormat("yyyy-MM-dd").parse(currency.historicalDate),
-              measureFn: (Currency currency, _) => currency.value)
-      );
+    currencyCodeList.forEach((currencyCode) {
+      dataToAdd.add(Series<Currency, DateTime>(
+          id: currencyCode,
+          data: currencyList
+              .where((currency) => currency.id == currencyCode)
+              .toList(),
+          domainFn: (Currency currency, _) =>
+              DateFormat("yyyy-MM-dd").parse(currency.historicalDate),
+          measureFn: (Currency currency, _) => currency.value));
     });
     _historyLineGraphController.sink.add(dataToAdd);
   }
 
   updateFromDateValue(DateTime value) {
-    if (_currencyHistoryToDateController.value.text.isNotEmpty) {
+    if (_currencyHistoryToDateController.value.text.isNotEmpty &&
+        _currencyListValues.values.where((element) => !element).length > 0) {
+      var filteredCurrencyIdList = _currencyListValues;
+      filteredCurrencyIdList.removeWhere((key, value) => !value);
       _retrieveHistoryData(
-              _currencyListValues.keys
+              filteredCurrencyIdList.keys
                   .where((key) => _currencyListValues[key])
                   .toList(),
               _dateFormatter.format(_dateParser
@@ -69,9 +73,12 @@ class CurrencyHistoryBloc extends BaseBloc {
   }
 
   updateToDateValue(DateTime value) {
-    if (_currencyHistoryFromDateController.value.text.isNotEmpty) {
+    if (_currencyHistoryFromDateController.value.text.isNotEmpty &&
+        _currencyListValues.values.where((element) => !element).length > 0) {
+      var filteredCurrencyIdList = _currencyListValues;
+      filteredCurrencyIdList.removeWhere((key, value) => !value);
       _retrieveHistoryData(
-              _currencyListValues.keys
+              filteredCurrencyIdList.keys
                   .where((key) => _currencyListValues[key])
                   .toList(),
               _dateFormatter.format(_dateParser
