@@ -1,4 +1,5 @@
 import 'package:cotacao_direta/enums/currency_enum.dart';
+import 'package:cotacao_direta/providers/selected_currency_details_bloc_provider.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:cotacao_direta/view/pages/selected_currency_details.dart';
 import 'package:flutter/material.dart';
@@ -21,11 +22,13 @@ class CurrencyHistory extends StatelessWidget {
             ),
             onTap: () {
               Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => SelectedCurrencyDetails(
-                            selectedCurrencyCode: _currencyList[index],
-                          )));
+                context,
+                MaterialPageRoute(
+                    builder: (context) => SelectedCurrencyDetailsBlocProvider(
+                            child: SelectedCurrencyDetails(
+                          selectedCurrencyCode: _currencyList[index],
+                        ))),
+              );
             },
           );
         },
