@@ -19,6 +19,7 @@ class CurrencyHistory extends StatelessWidget {
           return GestureDetector(
             child: ListTile(
               title: Text(_currencyList[index]),
+              subtitle: Text("Placeholder"),
             ),
             onTap: () {
               Navigator.push(
