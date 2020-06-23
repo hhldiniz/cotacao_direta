@@ -2,7 +2,6 @@ import 'package:cotacao_direta/providers/selected_currency_details_bloc_provider
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/view/widgets/charts.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class SelectedCurrencyDetails extends StatelessWidget {
   final String selectedCurrencyCode;
@@ -14,14 +13,12 @@ class SelectedCurrencyDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     final Size _screenSize = MediaQuery.of(context).size;
     final localizations = MyAppLocalizations.of(context);
-    final DateFormat formatter = DateFormat("dd/MM/yyyy");
     var bloc = SelectedCurrencyDetailsBlocProvider.of(context);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) =>
-        bloc.getCurrencyHistoryData(
-            selectedCurrencyCode, "2020-06-15", "2020-06-22"));
-
     return Scaffold(
+        floatingActionButton: FloatingActionButton.extended(onPressed: (){
+          bloc.getCurrencyHistoryData(selectedCurrencyCode);
+        }, label: Text(localizations.getCurrencyHistoryBtnLabel)),
         body: Column(
       children: [
         Row(
@@ -32,18 +29,16 @@ class SelectedCurrencyDetails extends StatelessWidget {
                   width: _screenSize.width / 2,
                   child: TextField(
                       controller: bloc.initialDateController,
-                      onTap: (){
-                        FocusScope.of(context)
-                            .requestFocus(FocusNode());
+                      onTap: () {
+                        FocusScope.of(context).requestFocus(FocusNode());
                         showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(1999),
-                            lastDate: DateTime.now())
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(1999),
+                                lastDate: DateTime.now())
                             .then((value) {
                           if (value != null)
-                            bloc.initialDateController.text =
-                                formatter.format(value);
+                            bloc.updateInitialDate(value);
                         });
                       },
                       decoration: InputDecoration(
@@ -59,24 +54,21 @@ class SelectedCurrencyDetails extends StatelessWidget {
                   width: _screenSize.width / 2,
                   child: TextField(
                       controller: bloc.endDateController,
-                      onTap: (){
-                        FocusScope.of(context)
-                            .requestFocus(FocusNode());
+                      onTap: () {
+                        FocusScope.of(context).requestFocus(FocusNode());
                         showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(1999),
-                            lastDate: DateTime.now())
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(1999),
+                                lastDate: DateTime.now())
                             .then((value) {
                           if (value != null)
-                            bloc.endDateController
-                                .text = formatter.format(value);
+                            bloc.updateFinalDate(value);
                         });
                       },
                       decoration: InputDecoration(
                           border: OutlineInputBorder(),
-                          labelText:
-                              localizations.currencyHistoryToDateLabel)),
+                          labelText: localizations.currencyHistoryToDateLabel)),
                 )
               ],
             )

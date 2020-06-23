@@ -11,9 +11,16 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
   StreamController _selectedCurrencyHistoryDataStreamController =
   StreamController();
 
+  final DateFormat _viewDateFormatter = DateFormat("dd/MM/yyyy");
+  final DateFormat _apiDateFormatter = DateFormat("yyyy-MM-dd");
+
   TextEditingController _initialDateController = TextEditingController();
 
   TextEditingController _endDateController = TextEditingController();
+
+  String _initialDate = "";
+
+  String _finalDate = "";
 
   final _currencyRepository = CurrencyRepository();
 
@@ -24,11 +31,10 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
 
   get endDateController => _endDateController;
 
-  getCurrencyHistoryData(String selectedCurrencyCod, String initialDate,
-      String finalDate) async {
+  getCurrencyHistoryData(String selectedCurrencyCod) async {
 
     var currencyList = await _currencyRepository.getCurrencyHistoricalData(
-        [selectedCurrencyCod], initialDate, finalDate);
+        [selectedCurrencyCod], _initialDate, _finalDate);
     var dataToAdd = List<Series<dynamic, DateTime>>();
     dataToAdd.add(
         Series<Currency, DateTime>(
@@ -39,6 +45,16 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
             measureFn: (Currency currency, _) => currency.value)
     );
     _selectedCurrencyHistoryDataStreamController.sink.add(dataToAdd);
+  }
+
+  updateInitialDate(dateValue){
+    initialDateController.text = _viewDateFormatter.format(dateValue);
+    _initialDate = _apiDateFormatter.format(dateValue);
+  }
+
+  updateFinalDate(dateValue){
+    _endDateController.text = _viewDateFormatter.format(dateValue);
+    _finalDate = _apiDateFormatter.format(dateValue);
   }
 
   @override

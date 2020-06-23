@@ -26,7 +26,8 @@ class MyAppLocalizations{
       'aboutBottomNavItemLabel': 'About',
       'currencyHistoryFromDateLabel': 'From',
       'currencyHistoryToDateLabel': 'Until',
-      'noDataLabel': 'No Data'
+      'noDataLabel': 'No Data',
+      'getCurrencyHistoryBtnLabel': 'Get history'
     },
 
     'pt' : {
@@ -43,7 +44,8 @@ class MyAppLocalizations{
       'aboutBottomNavItemLabel': 'Sobre',
       'currencyHistoryFromDateLabel': 'De',
       'currencyHistoryToDateLabel': 'Até',
-      'noDataLabel': 'Sem Dados'
+      'noDataLabel': 'Sem Dados',
+      'getCurrencyHistoryBtnLabel': 'Obter histórico'
     }
   };
 
@@ -93,6 +95,10 @@ class MyAppLocalizations{
 
   String get noDataLabel {
     return _localizedValues[locale.languageCode]['noDataLabel'];
+  }
+
+  String get getCurrencyHistoryBtnLabel {
+    return _localizedValues[locale.languageCode]['getCurrencyHistoryBtnLabel'];
   }
 
 }
