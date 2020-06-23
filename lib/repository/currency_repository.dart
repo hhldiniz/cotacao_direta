@@ -49,11 +49,7 @@ class CurrencyRepository {
   Future<List<Currency>> getCurrencyHistoricalData(
       List<String> currencyCodeList, initialDate, finalDate) async {
     var isNetworkAvailable = await _networkUtils.isNetworkAvailable();
-    var savedHistoricalDate = await _currencyDao.getHistoricalData(
-        currencyCodeList, initialDate, finalDate);
-    if (savedHistoricalDate.isNotEmpty)
-      return savedHistoricalDate;
-    else if (isNetworkAvailable) {
+    if (isNetworkAvailable) {
       var response = await http
           .get(sprintf(_exchangeHistoricalRateApi, [initialDate, finalDate]));
       List<MapEntry> jsonData =
@@ -78,7 +74,8 @@ class CurrencyRepository {
           .toList());
       return currencyListToSave;
     } else
-      return Iterable.empty();
+      return await _currencyDao.getHistoricalData(
+          currencyCodeList, initialDate, finalDate);
   }
 
   bool _isCurrencyTimestampValid(String timeStamp) {
