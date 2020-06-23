@@ -26,15 +26,19 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
 
   getCurrencyHistoryData(String selectedCurrencyCod, String initialDate,
       String finalDate) async {
+
     var currencyList = await _currencyRepository.getCurrencyHistoricalData(
         [selectedCurrencyCod], initialDate, finalDate);
-    _selectedCurrencyHistoryDataStreamController.sink.add(
+    var dataToAdd = List<Series<dynamic, DateTime>>();
+    dataToAdd.add(
         Series<Currency, DateTime>(
             id: selectedCurrencyCod,
             data: currencyList,
             domainFn: (Currency currency, _) =>
                 DateFormat("yyyy-MM-dd").parse(currency.historicalDate),
-            measureFn: (Currency currency, _) => currency.value));
+            measureFn: (Currency currency, _) => currency.value)
+    );
+    _selectedCurrencyHistoryDataStreamController.sink.add(dataToAdd);
   }
 
   @override
