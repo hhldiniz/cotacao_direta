@@ -24,7 +24,7 @@ class CurrencyDao {
         columns: ["id", "value", "historicalDate", "timestamp"],
         where: "id = ?",
         whereArgs: [currencyCode],
-        orderBy: "timestamp DESC",
+        orderBy: "historicalDate DESC",
         limit: 1);
     if (result.length == 0)
       return null;
