@@ -1,4 +1,5 @@
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
+import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
@@ -176,7 +177,9 @@ class HomeState extends State<Home> {
               ),
       ),
       Container(
-        child: CurrencyHistory(),
+        child: CurrencyHistoryMenuBlocProvider(
+          child: CurrencyHistory(),
+        ),
       ),
       Container(
         child: Text("sobre"),
