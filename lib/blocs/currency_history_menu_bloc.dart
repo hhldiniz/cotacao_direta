@@ -5,17 +5,34 @@ import 'package:cotacao_direta/repository/country_names_repository.dart';
 
 class CurrencyHistoryMenuBloc extends BaseBloc {
   CountryNamesRepository _countryNameRepository = CountryNamesRepository();
-  StreamController _countryNameController = StreamController();
+  Map _countryNameControllerMap = Map<String, StreamController>();
+  Map _savedCountryNamesByCurrencyCod = Map<String, String>();
 
-  get countryNameStream => _countryNameController.stream;
+  void initStreamControllers(List<String> currencyCodList) {
+    currencyCodList.forEach((element) {
+      _countryNameControllerMap[element] = StreamController();
+    });
+  }
+
+  Stream getCountryNameController(String currencyCod){
+    return _countryNameControllerMap[currencyCod].stream.asBroadcastStream();
+  }
 
   getCountryNameByCurrencyCode(String currencyCode) async {
-    String countryName = await _countryNameRepository.getCountryNameByCurrencyCode(currencyCode);
-    _countryNameController.sink.add(countryName);
+    if(_savedCountryNamesByCurrencyCod.containsKey(currencyCode)){
+      _countryNameControllerMap[currencyCode].sink.add(_savedCountryNamesByCurrencyCod[currencyCode]);
+    }
+    else{
+      String countryName = await _countryNameRepository.getCountryNameByCurrencyCode(currencyCode);
+      _countryNameControllerMap[currencyCode].sink.add(countryName);
+      _savedCountryNamesByCurrencyCod[currencyCode] = countryName;
+    }
   }
 
   @override
   void dispose() {
-    _countryNameController.close();
+    _countryNameControllerMap.forEach((_, value) {
+      value.close();
+    });
   }
 }

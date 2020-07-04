@@ -16,19 +16,19 @@ class CurrencyHistory extends StatelessWidget {
           .getEnumValue(Currencies.values.elementAt(index).toString());
     });
 
+    bloc.initStreamControllers(_currencyList);
+
     return Center(
       child: ListView.builder(
         itemBuilder: (BuildContext context, index) {
-          bloc.getCountryNameByCurrencyCode(_currencyList[index]);
-
           return GestureDetector(
             child: ListTile(
               title: Text(_currencyList[index]),
               subtitle: StreamBuilder(
-                initialData: "",
-                stream: bloc.countryNameStream,
+                stream: bloc.getCountryNameController(_currencyList[index]),
                 builder: (context, snapshot){
-                    return Text(snapshot.data);
+                    bloc.getCountryNameByCurrencyCode(_currencyList[index]);
+                    return Text(snapshot.data ?? "");
                 },
               ),
             ),
