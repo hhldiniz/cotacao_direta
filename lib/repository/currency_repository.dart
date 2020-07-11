@@ -14,7 +14,7 @@ class CurrencyRepository {
   final String _exchangeRateApi =
       "https://api.exchangeratesapi.io/latest?base=BRL";
   final String _exchangeHistoricalRateApi =
-      "https://api.exchangeratesapi.io/history?start_at=%s&end_at=%s";
+      "https://api.exchangeratesapi.io/history?start_at=%s&end_at=%s&base?=BRL&symbols=%s";
 
   factory CurrencyRepository() {
     if (_instance == null)
@@ -51,7 +51,7 @@ class CurrencyRepository {
     var isNetworkAvailable = await _networkUtils.isNetworkAvailable();
     if (isNetworkAvailable) {
       var response = await http
-          .get(sprintf(_exchangeHistoricalRateApi, [initialDate, finalDate]));
+          .get(sprintf(_exchangeHistoricalRateApi, [initialDate, finalDate, currencyCodeList.join(", ")]));
       List<MapEntry> jsonData =
       jsonDecode(response.body)["rates"].entries.toList();
       var currencyListToSave = List<Currency>();
