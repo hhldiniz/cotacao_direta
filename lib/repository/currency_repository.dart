@@ -27,7 +27,7 @@ class CurrencyRepository {
   Future<Currency> getLatestDataByCurrencyCode(String currencyCode) async {
     var networkAvailable = await _networkUtils.isNetworkAvailable();
     var savedCurrency =
-    await _currencyDao.getLatestDataByCurrencyCode(currencyCode);
+        await _currencyDao.getLatestDataByCurrencyCode(currencyCode);
 
     if (networkAvailable &&
         (savedCurrency == null ||
@@ -50,10 +50,10 @@ class CurrencyRepository {
       List<String> currencyCodeList, initialDate, finalDate) async {
     var isNetworkAvailable = await _networkUtils.isNetworkAvailable();
     if (isNetworkAvailable) {
-      var response = await http
-          .get(sprintf(_exchangeHistoricalRateApi, [initialDate, finalDate, currencyCodeList.join(", ")]));
+      var response = await http.get(sprintf(_exchangeHistoricalRateApi,
+          [initialDate, finalDate, currencyCodeList.join(", ")]));
       List<MapEntry> jsonData =
-      jsonDecode(response.body)["rates"].entries.toList();
+          jsonDecode(response.body)["rates"].entries.toList();
       var currencyListToSave = List<Currency>();
       jsonData.forEach((MapEntry element) {
         var historicalDate = DateFormat("yyyy-MM-dd").parse(element.key);
@@ -68,10 +68,21 @@ class CurrencyRepository {
       });
       _currencyDao.insertMany(currencyListToSave
           .where((currency) =>
-      (DateTime.now().year -
-          DateTime.parse(currency.historicalDate).year) <
-          10)
+              (DateTime.now().year -
+                  DateTime.parse(currency.historicalDate).year) <
+              10)
           .toList());
+      currencyListToSave.sort((Currency a, Currency b) {
+        DateTime dateCurrencyA = DateTime.parse(a.historicalDate);
+        DateTime dateCurrencyB = DateTime.parse(b.historicalDate);
+        if (dateCurrencyA.isBefore(dateCurrencyB)) {
+          return -1;
+        } else if (dateCurrencyA.isAfter(dateCurrencyB)) {
+          return 1;
+        } else {
+          return 0;
+        }
+      });
       return currencyListToSave;
     } else
       return await _currencyDao.getHistoricalData(
