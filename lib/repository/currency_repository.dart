@@ -14,7 +14,7 @@ class CurrencyRepository {
   final String _exchangeRateApi =
       "https://api.exchangeratesapi.io/latest?base=BRL";
   final String _exchangeHistoricalRateApi =
-      "https://api.exchangeratesapi.io/history?start_at=%s&end_at=%s&base?=BRL&symbols=%s";
+      "https://api.exchangeratesapi.io/history?start_at=%s&end_at=%s&base=BRL&symbols=%s";
 
   factory CurrencyRepository() {
     if (_instance == null)

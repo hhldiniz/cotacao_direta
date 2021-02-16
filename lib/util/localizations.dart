@@ -23,6 +23,7 @@ class MyAppLocalizations{
           'currency that it will be converted to.',
       'mainCurrenciesBottomNavItemLabel': 'Currencies',
       'currencyHistoryBottomNavItemLabel': 'History',
+      'configBottomNavItemLabel': 'Config',
       'aboutBottomNavItemLabel': 'About',
       'currencyHistoryFromDateLabel': 'From',
       'currencyHistoryToDateLabel': 'Until',
@@ -41,6 +42,7 @@ class MyAppLocalizations{
           'a qual será feita a conversão.',
       'mainCurrenciesBottomNavItemLabel': 'Moedas',
       'currencyHistoryBottomNavItemLabel': 'Histórico',
+      'configBottomNavItemLabel': 'Configurações',
       'aboutBottomNavItemLabel': 'Sobre',
       'currencyHistoryFromDateLabel': 'De',
       'currencyHistoryToDateLabel': 'Até',
@@ -99,6 +101,10 @@ class MyAppLocalizations{
 
   String get getCurrencyHistoryBtnLabel {
     return _localizedValues[locale.languageCode]['getCurrencyHistoryBtnLabel'];
+  }
+
+  String get getConfigBottomNavItemLabel {
+    return _localizedValues[locale.languageCode]['configBottomNavItemLabel'];
   }
 
 }

@@ -42,7 +42,7 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
             data: currencyList,
             domainFn: (Currency currency, _) =>
                 DateFormat("yyyy-MM-dd").parse(currency.historicalDate),
-            measureFn: (Currency currency, _) => (1 / currency.value))
+            measureFn: (Currency currency, _) => currency.value)
     );
     _selectedCurrencyHistoryDataStreamController.sink.add(dataToAdd);
   }

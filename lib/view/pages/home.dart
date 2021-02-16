@@ -1,6 +1,8 @@
+import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
+import 'package:cotacao_direta/view/pages/configurations_page.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
@@ -182,6 +184,11 @@ class HomeState extends State<Home> {
         ),
       ),
       Container(
+        child: ConfigurationsPageBlocProvider(
+          child: ConfigurationsPage(),
+        ),
+      ),
+      Container(
         child: Text("sobre"),
       )
     ];
@@ -193,13 +200,16 @@ class HomeState extends State<Home> {
         items: [
           BottomNavigationBarItem(
               icon: Icon(Icons.attach_money),
-              title: Text(_localization.mainCurrenciesBottomNavItemLabel)),
+              label: _localization.mainCurrenciesBottomNavItemLabel),
           BottomNavigationBarItem(
               icon: Icon(Icons.history),
-              title: Text(_localization.currencyHistoryBottomNavItemLabel)),
+              label: _localization.currencyHistoryBottomNavItemLabel),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: _localization.getConfigBottomNavItemLabel),
           BottomNavigationBarItem(
               icon: Icon(Icons.short_text),
-              title: Text(_localization.aboutBottomNavItemLabel))
+              label: _localization.aboutBottomNavItemLabel),
         ],
         currentIndex: _selectedIndex,
         onTap: (index) {
