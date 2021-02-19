@@ -197,6 +197,7 @@ class HomeState extends State<Home> {
         title: Text(_pageTitle),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         items: [
           BottomNavigationBarItem(
               icon: Icon(Icons.attach_money),

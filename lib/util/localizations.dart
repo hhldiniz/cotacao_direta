@@ -1,20 +1,19 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-class MyAppLocalizations{
+class MyAppLocalizations {
   MyAppLocalizations(this.locale);
 
   final Locale locale;
 
-  static MyAppLocalizations of(BuildContext context){
+  static MyAppLocalizations of(BuildContext context) {
     return Localizations.of<MyAppLocalizations>(context, MyAppLocalizations);
   }
 
   static Map<String, Map<String, String>> _localizedValues = {
     'en': {
       'conversionButtonLabel': 'Conversions',
-      'conversionPageTitle' : "Currency Conversion",
+      'conversionPageTitle': "Currency Conversion",
       'homePageHeadsUpText': 'The Real today is worth',
       'convertActionBtnLabel': 'Convert',
       'conversionMultiplierHint': 'Amount',
@@ -28,10 +27,10 @@ class MyAppLocalizations{
       'currencyHistoryFromDateLabel': 'From',
       'currencyHistoryToDateLabel': 'Until',
       'noDataLabel': 'No Data',
-      'getCurrencyHistoryBtnLabel': 'Get history'
+      'getCurrencyHistoryBtnLabel': 'Get history',
+      'overrideDefaultCurrencySwitchLabel': 'Override default currency'
     },
-
-    'pt' : {
+    'pt': {
       'conversionButtonLabel': "Conversões",
       'conversionPageTitle': "Conversão de Moedas",
       'homePageHeadsUpText': "O Real vale hoje",
@@ -47,11 +46,12 @@ class MyAppLocalizations{
       'currencyHistoryFromDateLabel': 'De',
       'currencyHistoryToDateLabel': 'Até',
       'noDataLabel': 'Sem Dados',
-      'getCurrencyHistoryBtnLabel': 'Obter histórico'
+      'getCurrencyHistoryBtnLabel': 'Obter histórico',
+      'overrideDefaultCurrencySwitchLabel': 'Sobrescrever moeda padrão'
     }
   };
 
-  String get conversionButtonLabel{
+  String get conversionButtonLabel {
     return _localizedValues[locale.languageCode]['conversionButtonLabel'];
   }
 
@@ -72,15 +72,18 @@ class MyAppLocalizations{
   }
 
   String get conversionPageExplanationText {
-    return _localizedValues[locale.languageCode]['conversionPageExplanationText'];
+    return _localizedValues[locale.languageCode]
+        ['conversionPageExplanationText'];
   }
 
   String get mainCurrenciesBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]['mainCurrenciesBottomNavItemLabel'];
+    return _localizedValues[locale.languageCode]
+        ['mainCurrenciesBottomNavItemLabel'];
   }
 
   String get currencyHistoryBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]['currencyHistoryBottomNavItemLabel'];
+    return _localizedValues[locale.languageCode]
+        ['currencyHistoryBottomNavItemLabel'];
   }
 
   String get aboutBottomNavItemLabel {
@@ -88,7 +91,8 @@ class MyAppLocalizations{
   }
 
   String get currencyHistoryFromDateLabel {
-    return _localizedValues[locale.languageCode]['currencyHistoryFromDateLabel'];
+    return _localizedValues[locale.languageCode]
+        ['currencyHistoryFromDateLabel'];
   }
 
   String get currencyHistoryToDateLabel {
@@ -107,9 +111,14 @@ class MyAppLocalizations{
     return _localizedValues[locale.languageCode]['configBottomNavItemLabel'];
   }
 
+  String get overrideDefaultCurrencySwitchLabel {
+    return _localizedValues[locale.languageCode]
+        ['overrideDefaultCurrencySwitchLabel'];
+  }
 }
 
-class MyAppLocalizationsDelegate extends LocalizationsDelegate<MyAppLocalizations>{
+class MyAppLocalizationsDelegate
+    extends LocalizationsDelegate<MyAppLocalizations> {
   @override
   bool isSupported(Locale locale) => ["en", "pt"].contains(locale.languageCode);
 
@@ -120,5 +129,4 @@ class MyAppLocalizationsDelegate extends LocalizationsDelegate<MyAppLocalization
 
   @override
   bool shouldReload(LocalizationsDelegate<MyAppLocalizations> old) => false;
-
 }
