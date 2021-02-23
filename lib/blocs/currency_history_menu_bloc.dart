@@ -10,20 +10,24 @@ class CurrencyHistoryMenuBloc extends BaseBloc {
 
   void initStreamControllers(List<String> currencyCodList) {
     currencyCodList.forEach((element) {
-      _countryNameControllerMap[element] = StreamController();
+      /*TODO Encontrar uma maneira de usar apenas SteramController, pois
+         como está pode gerar queda de desempenho e leaks.*/
+      _countryNameControllerMap[element] = StreamController.broadcast();
     });
   }
 
-  Stream getCountryNameController(String currencyCod){
+  Stream getCountryNameController(String currencyCod) {
     return _countryNameControllerMap[currencyCod].stream.asBroadcastStream();
   }
 
   getCountryNameByCurrencyCode(String currencyCode) async {
-    if(_savedCountryNamesByCurrencyCod.containsKey(currencyCode)){
-      _countryNameControllerMap[currencyCode].sink.add(_savedCountryNamesByCurrencyCod[currencyCode]);
-    }
-    else{
-      String countryName = await _countryNameRepository.getCountryNameByCurrencyCode(currencyCode);
+    if (_savedCountryNamesByCurrencyCod.containsKey(currencyCode)) {
+      _countryNameControllerMap[currencyCode]
+          .sink
+          .add(_savedCountryNamesByCurrencyCod[currencyCode]);
+    } else {
+      String countryName = await _countryNameRepository
+          .getCountryNameByCurrencyCode(currencyCode);
       _countryNameControllerMap[currencyCode].sink.add(countryName);
       _savedCountryNamesByCurrencyCod[currencyCode] = countryName;
     }
