@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:cotacao_direta/blocs/configurations_page_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
@@ -44,13 +42,22 @@ class ConfigurationsPage extends StatelessWidget {
                 ),
               ),
               StreamBuilder(
-                builder: (BuildContext context, snapshot) {
-                  return DropdownButton(
-                    items: List.generate(
-                        _currencyList.length,
-                        (index) => DropdownMenuItem(
-                            child: Text(_currencyList[index]))),
-                    onChanged: snapshot.data == true ? (value){} : null,
+                builder: (BuildContext context, switchSnapshot) {
+                  return StreamBuilder(
+                    builder:
+                        (BuildContext context, currencyCodeDropdownSnapshot) {
+                      return DropdownButton(
+                        items: List.generate(
+                            _currencyList.length,
+                            (index) => DropdownMenuItem(
+                                child: Text(_currencyList[index]))),
+                        onChanged:
+                            switchSnapshot.data == true ? (value) {
+                              _bloc.updateSelectedOverrideCurrency(value);
+                            } : null,
+                      );
+                    },
+                    stream: _bloc.selectedCurrencyCodeStream,
                   );
                 },
                 stream: _bloc.overrideDefaultCurrencyValueStream,
