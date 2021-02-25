@@ -1,12 +1,16 @@
 import 'dart:async';
 
 import 'package:cotacao_direta/blocs/base_bloc.dart';
+import 'package:cotacao_direta/view/widgets/widget_state_helpers/override_currency_state_helper.dart';
 
 class ConfigurationsPageBloc extends BaseBloc {
+  final OverrideCurrencyStateHelper _overrideCurrencyStateHelper =
+      OverrideCurrencyStateHelper();
+
   StreamController _currencyOptionsStreamController = StreamController();
 
   StreamController _overrideDefaultCurrencyValueStreamController =
-      StreamController.broadcast();
+      StreamController<OverrideCurrencyStateHelper>.broadcast();
 
   StreamController _selectedCurrencyCodeStreamController = StreamController();
 
@@ -21,8 +25,18 @@ class ConfigurationsPageBloc extends BaseBloc {
   Sink get overrideDefaultCurrencyValueSink =>
       _overrideDefaultCurrencyValueStreamController.sink;
 
-  updateSelectedOverrideCurrency(String currencyController) {
-    _selectedCurrencyCodeStreamController.sink.add(currencyController);
+  OverrideCurrencyStateHelper get overrideCurrencyStateHelper =>
+      _overrideCurrencyStateHelper;
+
+  updateSelectedOverrideCurrency(String currencyCode) {
+    _overrideCurrencyStateHelper.selectedCurrencyOverride = currencyCode;
+    _selectedCurrencyCodeStreamController.sink
+        .add(_overrideCurrencyStateHelper);
+  }
+
+  updateOverrideCurrencySwitch(bool enabled) {
+    _overrideCurrencyStateHelper.enableCurrencyOverride = enabled;
+    overrideDefaultCurrencyValueSink.add(_overrideCurrencyStateHelper);
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
+import 'package:cotacao_direta/view/widgets/widget_state_helpers/override_currency_state_helper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -25,43 +26,38 @@ class ConfigurationsPage extends StatelessWidget {
               Container(
                 child: Row(
                   children: [
-                    StreamBuilder(
+                    StreamBuilder<OverrideCurrencyStateHelper>(
                       builder: (BuildContext context, snapshot) {
                         return Switch(
-                            value: snapshot.data,
+                            value: snapshot.data.enableCurrencyOverride,
                             onChanged: (bool checked) {
-                              _bloc.overrideDefaultCurrencyValueSink
-                                  .add(checked);
+                              _bloc.updateOverrideCurrencySwitch(checked);
                             });
                       },
                       stream: _bloc.overrideDefaultCurrencyValueStream,
-                      initialData: false,
+                      initialData: _bloc.overrideCurrencyStateHelper,
                     ),
                     Text(_localization.overrideDefaultCurrencySwitchLabel)
                   ],
                 ),
               ),
-              StreamBuilder(
+              StreamBuilder<OverrideCurrencyStateHelper>(
                 builder: (BuildContext context, switchSnapshot) {
-                  return StreamBuilder(
-                    builder:
-                        (BuildContext context, currencyCodeDropdownSnapshot) {
-                      return DropdownButton(
-                        items: List.generate(
-                            _currencyList.length,
+                  return DropdownButton(
+                    items: List.generate(
+                        _currencyList.length,
                             (index) => DropdownMenuItem(
-                                child: Text(_currencyList[index]))),
-                        onChanged:
-                            switchSnapshot.data == true ? (value) {
-                              _bloc.updateSelectedOverrideCurrency(value);
-                            } : null,
-                      );
-                    },
-                    stream: _bloc.selectedCurrencyCodeStream,
+                            child: Text(_currencyList[index]))),
+                    onChanged:
+                    switchSnapshot.data.enableCurrencyOverride == true
+                        ? (value) {
+                      _bloc.updateSelectedOverrideCurrency(value);
+                    }
+                        : null,
                   );
                 },
                 stream: _bloc.overrideDefaultCurrencyValueStream,
-                initialData: null,
+                initialData: _bloc.overrideCurrencyStateHelper,
               )
             ],
           ),
