@@ -19,9 +19,6 @@ class ConfigurationsPageBloc extends BaseBloc {
   Stream get overrideDefaultCurrencyValueStream =>
       _overrideDefaultCurrencyValueStreamController.stream;
 
-  Stream get selectedCurrencyCodeStream =>
-      _selectedCurrencyCodeStreamController.stream;
-
   Sink get overrideDefaultCurrencyValueSink =>
       _overrideDefaultCurrencyValueStreamController.sink;
 
@@ -30,8 +27,7 @@ class ConfigurationsPageBloc extends BaseBloc {
 
   updateSelectedOverrideCurrency(String currencyCode) {
     _overrideCurrencyStateHelper.selectedCurrencyOverride = currencyCode;
-    _selectedCurrencyCodeStreamController.sink
-        .add(_overrideCurrencyStateHelper);
+    overrideDefaultCurrencyValueSink.add(_overrideCurrencyStateHelper);
   }
 
   updateOverrideCurrencySwitch(bool enabled) {

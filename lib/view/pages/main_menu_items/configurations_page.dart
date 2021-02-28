@@ -46,14 +46,18 @@ class ConfigurationsPage extends StatelessWidget {
                   return DropdownButton(
                     items: List.generate(
                         _currencyList.length,
-                            (index) => DropdownMenuItem(
+                        (index) => DropdownMenuItem(
+                            value: _currencyList[index],
                             child: Text(_currencyList[index]))),
                     onChanged:
-                    switchSnapshot.data.enableCurrencyOverride == true
-                        ? (value) {
-                      _bloc.updateSelectedOverrideCurrency(value);
-                    }
-                        : null,
+                        switchSnapshot.data.enableCurrencyOverride == true
+                            ? (value) {
+                                _bloc.updateSelectedOverrideCurrency(value);
+                              }
+                            : null,
+                    value: switchSnapshot.data.selectedCurrencyOverride.isEmpty
+                        ? _currencyList[0]
+                        : switchSnapshot.data.selectedCurrencyOverride,
                   );
                 },
                 stream: _bloc.overrideDefaultCurrencyValueStream,
