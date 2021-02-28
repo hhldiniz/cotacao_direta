@@ -1,4 +1,6 @@
-class Currency
+import 'package:cotacao_direta/model/base_model.dart';
+
+class Currency extends BaseModel
 {
   String id;
   double value;
