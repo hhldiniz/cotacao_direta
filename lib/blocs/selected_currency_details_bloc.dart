@@ -35,7 +35,7 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
 
     var currencyList = await _currencyRepository.getCurrencyHistoricalData(
         [selectedCurrencyCod], _initialDate, _finalDate);
-    var dataToAdd = List<Series<dynamic, DateTime>>();
+    var dataToAdd = <Series<dynamic, DateTime>>[];
     dataToAdd.add(
         Series<Currency, DateTime>(
             id: selectedCurrencyCod,

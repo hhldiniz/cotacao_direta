@@ -32,7 +32,7 @@ class CurrencyRepository {
     if (networkAvailable &&
         (savedCurrency == null ||
             !_isCurrencyTimestampValid(savedCurrency.timestamp))) {
-      var response = await http.get(_exchangeRateApi);
+      var response = await http.get(Uri.parse(_exchangeRateApi));
       var currencyValue = jsonDecode(response.body)["rates"][currencyCode];
       var now = DateTime.now().toIso8601String();
       var newCurrency = Currency(
@@ -50,11 +50,12 @@ class CurrencyRepository {
       List<String> currencyCodeList, initialDate, finalDate) async {
     var isNetworkAvailable = await _networkUtils.isNetworkAvailable();
     if (isNetworkAvailable) {
-      var response = await http.get(sprintf(_exchangeHistoricalRateApi,
-          [initialDate, finalDate, currencyCodeList.join(", ")]));
+      var response = await http.get(Uri.parse(sprintf(
+          _exchangeHistoricalRateApi,
+          [initialDate, finalDate, currencyCodeList.join(", ")])));
       List<MapEntry> jsonData =
           jsonDecode(response.body)["rates"].entries.toList();
-      var currencyListToSave = List<Currency>();
+      var currencyListToSave = <Currency>[];
       jsonData.forEach((MapEntry element) {
         var historicalDate = DateFormat("yyyy-MM-dd").parse(element.key);
 
@@ -72,7 +73,7 @@ class CurrencyRepository {
                   DateTime.parse(currency.historicalDate).year) <
               10)
           .toList());
-      currencyListToSave.sort((Currency a, Currency b) {
+      currencyListToSave.sort((a, b) {
         DateTime dateCurrencyA = DateTime.parse(a.historicalDate);
         DateTime dateCurrencyB = DateTime.parse(b.historicalDate);
         if (dateCurrencyA.isBefore(dateCurrencyB)) {

@@ -28,7 +28,8 @@ class MyAppLocalizations {
       'currencyHistoryToDateLabel': 'Until',
       'noDataLabel': 'No Data',
       'getCurrencyHistoryBtnLabel': 'Get history',
-      'overrideDefaultCurrencySwitchLabel': 'Override default currency'
+      'overrideDefaultCurrencySwitchLabel': 'Override default currency',
+      'appConfigurationsSectionLabel': 'App Configurations'
     },
     'pt': {
       'conversionButtonLabel': "Conversões",
@@ -47,7 +48,8 @@ class MyAppLocalizations {
       'currencyHistoryToDateLabel': 'Até',
       'noDataLabel': 'Sem Dados',
       'getCurrencyHistoryBtnLabel': 'Obter histórico',
-      'overrideDefaultCurrencySwitchLabel': 'Sobrescrever moeda padrão'
+      'overrideDefaultCurrencySwitchLabel': 'Sobrescrever moeda padrão',
+      'appConfigurationsSectionLabel': 'Configurações do Aplicativo'
     }
   };
 
@@ -114,6 +116,11 @@ class MyAppLocalizations {
   String get overrideDefaultCurrencySwitchLabel {
     return _localizedValues[locale.languageCode]
         ['overrideDefaultCurrencySwitchLabel'];
+  }
+
+  String get appConfigurationsSectionLabel {
+    return _localizedValues[locale.languageCode]
+        ['appConfigurationsSectionLabel'];
   }
 }
 
