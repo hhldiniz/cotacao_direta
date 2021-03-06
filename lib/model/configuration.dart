@@ -11,7 +11,7 @@ class Configuration extends BaseModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'overrideDefaultCurrency': overrideDefaultCurrency,
+      'overrideDefaultCurrency': overrideDefaultCurrency ? 1 : 0,
       'selectedOverrideCurrencyCode': selectedOverrideCurrencyCode,
     };
   }
