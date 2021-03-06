@@ -25,6 +25,14 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
         MyAppLocalizationsDelegate()
       ],
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white
+        )
+      ),
+      themeMode: ThemeMode.system,
       supportedLocales: [
         const Locale("en"),
         const Locale("pt")
