@@ -1,8 +1,11 @@
 import 'dart:convert';
 
 import 'package:cotacao_direta/dao/currency_dao.dart';
+import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/model/currency.dart';
+import 'package:cotacao_direta/repository/configuration_repository.dart';
 import 'package:cotacao_direta/util/network_util.dart';
+import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:sprintf/sprintf.dart';
@@ -10,11 +13,14 @@ import 'package:sprintf/sprintf.dart';
 class CurrencyRepository {
   static CurrencyRepository _instance;
   final CurrencyDao _currencyDao = CurrencyDao();
+  final ConfigurationRepository _configurationRepository =
+      ConfigurationRepository();
   final NetworkUtils _networkUtils = NetworkUtils();
   final String _exchangeRateApi =
-      "https://api.exchangeratesapi.io/latest?base=BRL";
+      "https://api.exchangeratesapi.io/latest?base=%s";
   final String _exchangeHistoricalRateApi =
-      "https://api.exchangeratesapi.io/history?start_at=%s&end_at=%s&base=BRL&symbols=%s";
+      "https://api.exchangeratesapi.io/history?start_at=%s&end_at=%s&base=%s&symbols=%s";
+  final _enumValueAsStringUtil = EnumValueAsString();
 
   factory CurrencyRepository() {
     if (_instance == null)
@@ -24,6 +30,28 @@ class CurrencyRepository {
 
   CurrencyRepository._internalConstructor();
 
+  Future<Uri> _resolveExchangeRateApiUri() async {
+    final configuration = await _configurationRepository.getConfiguration();
+    return Uri.parse(sprintf(
+        _exchangeRateApi,
+        configuration.overrideDefaultCurrency
+            ? configuration.selectedOverrideCurrencyCode
+            : _enumValueAsStringUtil.getEnumValue(Currencies.USD.toString())));
+  }
+
+  Future<Uri> _resolveExchangeHistoricalRateApiUri(
+      currencyCodeList, initialDate, finalDate) async {
+    final configuration = await _configurationRepository.getConfiguration();
+    return Uri.parse(sprintf(_exchangeHistoricalRateApi, [
+      initialDate,
+      finalDate,
+      configuration.overrideDefaultCurrency
+          ? configuration.selectedOverrideCurrencyCode
+          : _enumValueAsStringUtil.getEnumValue(Currencies.USD.toString()),
+      currencyCodeList.join(", ")
+    ]));
+  }
+
   Future<Currency> getLatestDataByCurrencyCode(String currencyCode) async {
     var networkAvailable = await _networkUtils.isNetworkAvailable();
     var savedCurrency =
@@ -32,7 +60,7 @@ class CurrencyRepository {
     if (networkAvailable &&
         (savedCurrency == null ||
             !_isCurrencyTimestampValid(savedCurrency.timestamp))) {
-      var response = await http.get(Uri.parse(_exchangeRateApi));
+      var response = await http.get(await _resolveExchangeRateApiUri());
       var currencyValue = jsonDecode(response.body)["rates"][currencyCode];
       var now = DateTime.now().toIso8601String();
       var newCurrency = Currency(
@@ -50,9 +78,8 @@ class CurrencyRepository {
       List<String> currencyCodeList, initialDate, finalDate) async {
     var isNetworkAvailable = await _networkUtils.isNetworkAvailable();
     if (isNetworkAvailable) {
-      var response = await http.get(Uri.parse(sprintf(
-          _exchangeHistoricalRateApi,
-          [initialDate, finalDate, currencyCodeList.join(", ")])));
+      var response = await http.get(await _resolveExchangeHistoricalRateApiUri(
+          currencyCodeList, initialDate, finalDate));
       List<MapEntry> jsonData =
           jsonDecode(response.body)["rates"].entries.toList();
       var currencyListToSave = <Currency>[];
