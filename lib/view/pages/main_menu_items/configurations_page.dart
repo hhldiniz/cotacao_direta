@@ -12,6 +12,8 @@ class ConfigurationsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ConfigurationsPageBloc _bloc = ConfigurationsPageBlocProvider.of(context);
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _bloc.loadCurrentConfiguration());
     final _currencyList = List.generate(Currencies.values.length, (index) {
       return EnumValueAsString()
           .getEnumValue(Currencies.values.elementAt(index).toString());

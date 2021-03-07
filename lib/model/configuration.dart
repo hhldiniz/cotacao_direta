@@ -5,7 +5,7 @@ class Configuration extends BaseModel {
   bool overrideDefaultCurrency;
   String selectedOverrideCurrencyCode;
 
-  Configuration(int id,
+  Configuration(this.id,
       {this.overrideDefaultCurrency, this.selectedOverrideCurrencyCode});
 
   Map<String, dynamic> toMap() {

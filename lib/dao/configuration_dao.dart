@@ -26,7 +26,7 @@ class ConfigurationDao {
       return Configuration(configurationId);
     } else
       return Configuration(configurationId,
-          overrideDefaultCurrency: result.first["overrideDefaultCurrency"],
+          overrideDefaultCurrency: result.first["overrideDefaultCurrency"] == 1,
           selectedOverrideCurrencyCode:
               result.first["selectedOverrideCurrencyCode"]);
   }
