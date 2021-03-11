@@ -32,11 +32,11 @@ class CurrencyRepository {
 
   Future<Uri> _resolveExchangeRateApiUri() async {
     final configuration = await _configurationRepository.getConfiguration();
-    return Uri.parse(sprintf(
-        _exchangeRateApi,
-        configuration.overrideDefaultCurrency
-            ? configuration.selectedOverrideCurrencyCode
-            : _enumValueAsStringUtil.getEnumValue(Currencies.USD.toString())));
+    return Uri.parse(sprintf(_exchangeRateApi, [
+      configuration.overrideDefaultCurrency
+          ? configuration.selectedOverrideCurrencyCode
+          : _enumValueAsStringUtil.getEnumValue(Currencies.USD.toString())
+    ]));
   }
 
   Future<Uri> _resolveExchangeHistoricalRateApiUri(
