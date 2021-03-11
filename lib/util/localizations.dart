@@ -14,7 +14,7 @@ class MyAppLocalizations {
     'en': {
       'conversionButtonLabel': 'Conversions',
       'conversionPageTitle': "Currency Conversion",
-      'homePageHeadsUpText': 'The Real today is worth',
+      'homePageHeadsUpText': 'The %s today is worth',
       'convertActionBtnLabel': 'Convert',
       'conversionMultiplierHint': 'Amount',
       'conversionPageExplanationText': 'Insert the amount value of the currency '
@@ -34,7 +34,7 @@ class MyAppLocalizations {
     'pt': {
       'conversionButtonLabel': "Conversões",
       'conversionPageTitle': "Conversão de Moedas",
-      'homePageHeadsUpText': "O Real vale hoje",
+      'homePageHeadsUpText': "O %s vale hoje",
       'convertActionBtnLabel': "Converter",
       'conversionMultiplierHint': 'Quantidade',
       'conversionPageExplanationText': 'Insira a quantidade da moeda que será '
