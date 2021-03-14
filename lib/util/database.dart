@@ -27,12 +27,16 @@ class AppDatabase {
     "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT)"
   ];
 
+  var migrationsScripts4_5 = {
+    "ALTER TABLE Currency ADD friendlyName TEXT NOT NULL DEFAULT ''"
+  };
+
   Future<Database> openAppDatabase() async {
     var path = join(await getDatabasesPath(), 'doggie_database.db');
     if (_database == null)
       _database = await openDatabase(path, onCreate: (db, version) {
         db.execute(
-            "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, PRIMARY KEY(id, historicalDate))");
+            "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, PRIMARY KEY(id, historicalDate), friendlyName TEXT NOT NULL DEFAULT '')");
         db.execute(
             "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT)");
       }, onUpgrade: (database, oldVersion, newVersion) {
@@ -48,8 +52,13 @@ class AppDatabase {
           case 4:
             migrationsScripts3_4
                 .forEach((script) async => await database.execute(script));
+            break;
+          case 5:
+            migrationsScripts4_5
+                .forEach((script) async => await database.execute(script));
+            break;
         }
-      }, version: 4);
+      }, version: 5);
     return _database;
   }
 }

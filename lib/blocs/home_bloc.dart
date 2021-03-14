@@ -4,10 +4,12 @@ import 'package:cotacao_direta/blocs/base_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/model/configuration.dart';
 import 'package:cotacao_direta/repository/configuration_repository.dart';
+import 'package:cotacao_direta/repository/currency_repository.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 
 class HomeBloc extends BaseBloc {
   ConfigurationRepository _configurationRepository = ConfigurationRepository();
+  CurrencyRepository _currencyRepository = CurrencyRepository();
   StreamController<String> _headsUpTextStreamController;
 
   Stream<String> getNextStreamController(){

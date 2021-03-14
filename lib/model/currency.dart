@@ -6,15 +6,17 @@ class Currency extends BaseModel
   double value;
   String historicalDate;
   String timestamp;
+  String friendlyName;
 
-  Currency({this.id, this.value, this.historicalDate, this.timestamp});
+  Currency({this.id, this.value, this.historicalDate, this.timestamp, this.friendlyName});
 
   Map<String, dynamic> toMap(){
     return {
       'id': id,
       'value': value,
       'historicalDate': historicalDate,
-      'timestamp': timestamp
+      'timestamp': timestamp,
+      'friendlyName': friendlyName
     };
   }
 
@@ -25,6 +27,7 @@ class Currency extends BaseModel
         "value: $value, \n"
         "historicalDate: $historicalDate, \n"
         "timestamp: $timestamp \n"
+        "friendlyName: $friendlyName \n"
         "}";
   }
 }

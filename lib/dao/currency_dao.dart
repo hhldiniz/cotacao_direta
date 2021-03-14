@@ -13,7 +13,8 @@ class CurrencyDao {
     final Database db = await AppDatabase().openAppDatabase();
     var batch = db.batch();
     currencies.forEach((currency) {
-      batch.insert("Currency", currency.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      batch.insert("Currency", currency.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace);
     });
     await batch.commit();
   }
@@ -21,7 +22,7 @@ class CurrencyDao {
   Future<Currency> getLatestDataByCurrencyCode(String currencyCode) async {
     final Database db = await AppDatabase().openAppDatabase();
     var result = await db.query("Currency",
-        columns: ["id", "value", "historicalDate", "timestamp"],
+        columns: ["id", "value", "historicalDate", "timestamp", "friendlyName"],
         where: "id = ?",
         whereArgs: [currencyCode],
         orderBy: "historicalDate DESC",
@@ -39,19 +40,34 @@ class CurrencyDao {
   Future<List<Currency>> getHistoricalData(List<String> currencyCodeList,
       String initialDate, String finalDate) async {
     final Database db = await AppDatabase().openAppDatabase();
-    var result = await db.query(
-      "currency",
-      columns: ["id", "value", "historicalDate", "timestamp"],
-      where: "id IN (?) AND historicalDate >= ? AND historicalDate <= ?",
-      whereArgs: [currencyCodeList.join(", "), initialDate, finalDate]
-    );
-    return List.generate(result.length, (index){
+    var result = await db.query("currency",
+        columns: ["id", "value", "historicalDate", "timestamp", "friendlyName"],
+        where: "id IN (?) AND historicalDate >= ? AND historicalDate <= ?",
+        whereArgs: [currencyCodeList.join(", "), initialDate, finalDate]);
+    return List.generate(result.length, (index) {
       return Currency(
-        id: result[index]["id"],
-        value: result[index]["value"],
-        timestamp: result[index]["timestamp"],
-        historicalDate: result[index]["historicalDate"]
-      );
+          id: result[index]["id"],
+          value: result[index]["value"],
+          timestamp: result[index]["timestamp"],
+          historicalDate: result[index]["historicalDate"],
+          friendlyName: result[index]["friendlyName"]);
     });
+  }
+
+  Future<Currency> getCurrencyByCode(String currencyCode) async {
+    final Database db = await AppDatabase().openAppDatabase();
+    var result = await db.query("currency",
+        columns: ["id", "value", "historicalDate", "timestamp", "friendlyName"],
+        where: "id=?",
+        whereArgs: [currencyCode]);
+    if (result.isEmpty)
+      return null;
+    else
+      return Currency(
+          id: currencyCode,
+          historicalDate: result.first["historicalDate"],
+          timestamp: result.first["timestamp"],
+          value: result.first["value"],
+          friendlyName: result.first["friendlyName"]);
   }
 }

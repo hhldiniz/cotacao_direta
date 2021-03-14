@@ -9,6 +9,7 @@ import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:sprintf/sprintf.dart';
+import 'package:xml/xml.dart';
 
 class CurrencyRepository {
   static CurrencyRepository _instance;
@@ -21,6 +22,8 @@ class CurrencyRepository {
   final String _exchangeHistoricalRateApi =
       "https://api.exchangeratesapi.io/history?start_at=%s&end_at=%s&base=%s&symbols=%s";
   final _enumValueAsStringUtil = EnumValueAsString();
+  final _currencyCodeFriendlyNameApi =
+      "https://supply-xml.booking.com/hotels/xml/currencies";
 
   factory CurrencyRepository() {
     if (_instance == null)
@@ -52,11 +55,23 @@ class CurrencyRepository {
     ]));
   }
 
+  Future<Map<String, String>> _friendlyCurrencyCodeNameList() async {
+    var response = await http.get(Uri.parse(_currencyCodeFriendlyNameApi));
+    var friendlyCurrencyNamesMap = Map<String, String>();
+    XmlDocument.parse(response.body)
+        .getElement("currencies")
+        .children
+        .forEach((child) {
+      friendlyCurrencyNamesMap[child.getAttribute("currencycode")] =
+          child.getAttribute("name");
+    });
+    return friendlyCurrencyNamesMap;
+  }
+
   Future<Currency> getLatestDataByCurrencyCode(String currencyCode) async {
     var networkAvailable = await _networkUtils.isNetworkAvailable();
     var savedCurrency =
         await _currencyDao.getLatestDataByCurrencyCode(currencyCode);
-
     if (networkAvailable &&
         (savedCurrency == null ||
             !_isCurrencyTimestampValid(savedCurrency.timestamp))) {
@@ -67,7 +82,8 @@ class CurrencyRepository {
           id: currencyCode,
           value: currencyValue,
           historicalDate: now,
-          timestamp: now);
+          timestamp: now,
+          friendlyName: (await _friendlyCurrencyCodeNameList())[currencyCode]);
       _currencyDao.insert(newCurrency);
       return newCurrency;
     } else
@@ -76,10 +92,10 @@ class CurrencyRepository {
 
   Future<List<Currency>> getCurrencyHistoricalData(
       List<String> currencyCodeList, initialDate, finalDate) async {
-    var isNetworkAvailable = await _networkUtils.isNetworkAvailable();
-    if (isNetworkAvailable) {
+    if (await _networkUtils.isNetworkAvailable()) {
       var response = await http.get(await _resolveExchangeHistoricalRateApiUri(
           currencyCodeList, initialDate, finalDate));
+      var friendlyNames = await _friendlyCurrencyCodeNameList();
       List<MapEntry> jsonData =
           jsonDecode(response.body)["rates"].entries.toList();
       var currencyListToSave = <Currency>[];
@@ -91,7 +107,8 @@ class CurrencyRepository {
               id: currencyEntry.key,
               historicalDate: historicalDate.toIso8601String(),
               value: currencyEntry.value,
-              timestamp: DateTime.now().toIso8601String()));
+              timestamp: DateTime.now().toIso8601String(),
+              friendlyName: friendlyNames[currencyEntry.key]));
         });
       });
       _currencyDao.insertMany(currencyListToSave
@@ -124,5 +141,9 @@ class CurrencyRepository {
     } catch (exception) {
       return false;
     }
+  }
+
+  Future<Currency> getCurrencyByCode(String currencyCode) async {
+    return _currencyDao.getCurrencyByCode(currencyCode);
   }
 }
