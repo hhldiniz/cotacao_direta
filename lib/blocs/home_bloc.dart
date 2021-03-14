@@ -8,9 +8,20 @@ import 'package:cotacao_direta/util/string_utils.dart';
 
 class HomeBloc extends BaseBloc {
   ConfigurationRepository _configurationRepository = ConfigurationRepository();
-  StreamController _headsUpTextStreamController = StreamController();
+  StreamController<String> _headsUpTextStreamController;
 
-  Stream get headsUpTextStream => _headsUpTextStreamController.stream;
+  Stream<String> getNextStreamController(){
+    if(_headsUpTextStreamController == null){
+      _headsUpTextStreamController = StreamController();
+      return _headsUpTextStreamController.stream;
+    } else if(!_headsUpTextStreamController.hasListener){
+      return _headsUpTextStreamController.stream;
+    } else {
+      _headsUpTextStreamController.close();
+      _headsUpTextStreamController = StreamController();
+      return _headsUpTextStreamController.stream;
+    }
+  }
 
   getSelectedOverrideCurrency() {
     _configurationRepository
