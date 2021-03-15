@@ -142,8 +142,4 @@ class CurrencyRepository {
       return false;
     }
   }
-
-  Future<Currency> getCurrencyByCode(String currencyCode) async {
-    return _currencyDao.getCurrencyByCode(currencyCode);
-  }
 }
