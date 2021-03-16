@@ -44,6 +44,7 @@ class HomeState extends State<Home> {
   Widget build(BuildContext context) {
     final orientation = MediaQuery.of(context).orientation;
     final _localization = MyAppLocalizations.of(context);
+    final _screenDimensions = MediaQuery.of(context);
     _bloc = HomeBlocProvider.of(context);
 
     WidgetsBinding.instance
@@ -51,9 +52,13 @@ class HomeState extends State<Home> {
 
     final pageHeader = StreamBuilder(
       builder: (BuildContext context, snapshot) {
-        return Text(
-          sprintf(_localization.homePageHeadsUpText, [snapshot.data]),
-          style: TextStyle(fontSize: 28),
+        return Container(
+          width: _screenDimensions.size.width,
+          child: Text(
+            sprintf(_localization.homePageHeadsUpText, [snapshot.data]),
+            style: TextStyle(fontSize: 28,),
+            textAlign: TextAlign.center,
+          ),
         );
       },
       initialData: "",
