@@ -86,8 +86,13 @@ class CurrencyRepository {
           friendlyName: (await _friendlyCurrencyCodeNameList())[currencyCode]);
       _currencyDao.insert(newCurrency);
       return newCurrency;
-    } else
+    } else{
+      if(savedCurrency.friendlyName == null){
+        savedCurrency.friendlyName = (await _friendlyCurrencyCodeNameList())[currencyCode];
+        _currencyDao.insert(savedCurrency);
+      }
       return savedCurrency;
+    }
   }
 
   Future<List<Currency>> getCurrencyHistoricalData(

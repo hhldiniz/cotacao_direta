@@ -52,16 +52,18 @@ class HomeState extends State<Home> {
 
     final pageHeader = StreamBuilder(
       builder: (BuildContext context, snapshot) {
-        return Container(
-          width: _screenDimensions.size.width,
-          child: Text(
-            sprintf(_localization.homePageHeadsUpText, [snapshot.data]),
-            style: TextStyle(fontSize: 28,),
-            textAlign: TextAlign.center,
-          ),
-        );
+        if(snapshot.data == null)
+          return Container();
+        else
+          return Container(
+            width: _screenDimensions.size.width,
+            child: Text(
+              sprintf(_localization.homePageHeadsUpText, [snapshot.data]),
+              style: TextStyle(fontSize: 28,),
+              textAlign: TextAlign.center,
+            ),
+          );
       },
-      initialData: "",
       stream: _bloc.getNextStreamController(),
     );
 
