@@ -3,8 +3,7 @@ import 'package:cotacao_direta/providers/exchange_value_bloc_provider.dart';
 import 'package:cotacao_direta/view/widgets/exchange_rate_value.dart';
 import 'package:flutter/material.dart';
 
-class DollarExchangeRate extends StatelessWidget{
-
+class DollarExchangeRate extends StatelessWidget {
   final exchangeRateValue = ExchangeRateValue(Currencies.USD);
 
   @override
@@ -13,7 +12,10 @@ class DollarExchangeRate extends StatelessWidget{
       children: <Widget>[
         Column(
           children: <Widget>[
-            Text("USD ", style: TextStyle(fontSize: 18, color: Colors.white),)
+            Text(
+              "USD ",
+              style: TextStyle(fontSize: 18, color: Colors.white),
+            )
           ],
         ),
         Column(
@@ -26,5 +28,4 @@ class DollarExchangeRate extends StatelessWidget{
       ],
     );
   }
-
 }

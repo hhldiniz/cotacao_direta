@@ -1,4 +1,5 @@
 import 'package:cotacao_direta/blocs/home_bloc.dart';
+import 'package:cotacao_direta/notifications/update_currency_value_notification.dart';
 import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
@@ -52,17 +53,21 @@ class HomeState extends State<Home> {
 
     final pageHeader = StreamBuilder(
       builder: (BuildContext context, snapshot) {
-        if(snapshot.data == null)
+        UpdateCurrencyValueNotification().dispatch(context);
+        if (snapshot.data == null)
           return Container();
-        else
+        else {
           return Container(
             width: _screenDimensions.size.width,
             child: Text(
               sprintf(_localization.homePageHeadsUpText, [snapshot.data]),
-              style: TextStyle(fontSize: 28,),
+              style: TextStyle(
+                fontSize: 28,
+              ),
               textAlign: TextAlign.center,
             ),
           );
+        }
       },
       stream: _bloc.getNextStreamController(),
     );
