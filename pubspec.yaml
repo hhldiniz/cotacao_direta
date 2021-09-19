@@ -1,24 +1,29 @@
 name: cotacao_direta
 description: Um aplicativo simples que mostra a cotação das principais moedas frente ao real
 version: 1.0.0+1
+publish_to: none
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
+
+enable-experiment:
+  - extension-methods
 
 dependencies:
   flutter:
     sdk: flutter
-  http: 0.12.0+2
-  intl: 0.16.0
-  cupertino_icons: ^0.1.2
+  sprintf: ^6.0.0
+  http: ^0.13.3
+  intl: ^0.17.0
+  xml: ^5.3.0
+  mobx: ^2.0.4
+  charts_flutter: ^0.11.0
+  sqflite: ^2.0.0+4
   flutter_localizations:
     sdk: flutter
-  flutter_cupertino_localizations: ^1.0.1
-  sqflite: 1.1.7+2
-  path: 1.6.4
 
 dev_dependencies:
-  flutter_launcher_icons: "^0.7.0"
+  flutter_launcher_icons: ^0.9.2
   flutter_test:
     sdk: flutter
 
@@ -36,3 +41,5 @@ flutter:
         - asset: fonts/Roboto/Roboto-Italic.ttf
         - asset: fonts/Roboto/Roboto-Regular.ttf
         - asset: fonts/Roboto/Roboto-Bold.ttf
+  assets:
+    - assets/secrets/secrets.json

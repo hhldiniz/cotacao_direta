@@ -7,24 +7,37 @@ import 'package:cotacao_direta/util/string_utils.dart';
 import 'base_bloc.dart';
 
 class ExchangeValueBloc extends BaseBloc {
-  final valueController = StreamController.broadcast();
+  StreamController<num>? valueController;
 
-  Stream get getExchangeValueStream => valueController.stream;
+  Stream<num> get getExchangeValueStream => valueController!.stream;
 
   final _currencyRepository = CurrencyRepository();
 
-  void updateValue(value) {
-    valueController.sink.add(value);
+  Stream<num> getNextStreamController() {
+    if (valueController == null) {
+      valueController = StreamController();
+      return valueController!.stream;
+    } else if (!valueController!.hasListener) {
+      return valueController!.stream;
+    } else {
+      valueController!.close();
+      valueController = StreamController();
+      return valueController!.stream;
+    }
   }
 
-  Future<double> retrieveRemote(Currencies currency) async {
-    return (await _currencyRepository.getByCurrencyCode(
-        EnumValueAsString().getEnumValue(currency.toString())))
+  void updateValue(value) {
+    valueController!.sink.add(value);
+  }
+
+  Future<double?> retrieveCurrencyValue(Currencies? currency) async {
+    return (await _currencyRepository.getLatestDataByCurrencyCode(
+        EnumValueAsString().getEnumValue(currency.toString())))!
         .value;
   }
 
   @override
   void dispose() {
-    valueController.close();
+    valueController!.close();
   }
 }

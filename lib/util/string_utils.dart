@@ -1,9 +1,9 @@
 class EnumValueAsString {
-  static EnumValueAsString _instance;
+  static EnumValueAsString? _instance;
 
   factory EnumValueAsString() {
     if (_instance == null) _instance = EnumValueAsString._internalConstructor();
-    return _instance;
+    return _instance!;
   }
 
   EnumValueAsString._internalConstructor();

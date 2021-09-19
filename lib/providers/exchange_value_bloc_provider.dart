@@ -6,7 +6,7 @@ class ExchangeValueBlocProvider extends InheritedWidget
 
   final ExchangeValueBloc bloc;
 
-  ExchangeValueBlocProvider({Key key, Widget child})
+  ExchangeValueBlocProvider({Key? key, required Widget child})
       : bloc = ExchangeValueBloc(),
         super(key: key, child: child);
 
@@ -14,6 +14,6 @@ class ExchangeValueBlocProvider extends InheritedWidget
   bool updateShouldNotify(InheritedWidget oldWidget) => true;
 
   static ExchangeValueBloc of(BuildContext context){
-    return context.dependOnInheritedWidgetOfExactType<ExchangeValueBlocProvider>().bloc;
+    return context.dependOnInheritedWidgetOfExactType<ExchangeValueBlocProvider>()!.bloc;
   }
 }
