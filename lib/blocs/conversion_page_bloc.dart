@@ -19,8 +19,8 @@ class ConversionPageBloc extends BaseBloc{
   final _exchangeValueBloc = ExchangeValueBloc();
 
   var _multiplierValue = 0.0;
-  var _selectedFromCurrency = Currencies.BRL;
-  var _selectedToCurrency = Currencies.USD;
+  Currencies? _selectedFromCurrency = Currencies.BRL;
+  Currencies? _selectedToCurrency = Currencies.USD;
 
   Stream get multiplierStream => _multiplierStreamController.stream;
 
@@ -58,8 +58,8 @@ class ConversionPageBloc extends BaseBloc{
   }
 
   updateResult() async{
-    var fromValue = await _exchangeValueBloc.retrieveCurrencyValue(_selectedFromCurrency);
-    var toValue = await _exchangeValueBloc.retrieveCurrencyValue(_selectedToCurrency);
+    var fromValue = await (_exchangeValueBloc.retrieveCurrencyValue(_selectedFromCurrency) as FutureOr<double>);
+    var toValue = await (_exchangeValueBloc.retrieveCurrencyValue(_selectedToCurrency) as FutureOr<double>);
     conversionResultSink.add(_multiplierValue * (toValue / fromValue));
   }
 

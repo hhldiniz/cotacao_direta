@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class ConfigurationsPageBlocProvider extends InheritedWidget {
   final ConfigurationsPageBloc bloc;
 
-  ConfigurationsPageBlocProvider({Key key, Widget child})
+  ConfigurationsPageBlocProvider({Key? key, required Widget child})
       : bloc = ConfigurationsPageBloc(),
         super(key: key, child: child);
 
@@ -13,7 +13,7 @@ class ConfigurationsPageBlocProvider extends InheritedWidget {
 
   static ConfigurationsPageBloc of(BuildContext context) {
     return context
-        .dependOnInheritedWidgetOfExactType<ConfigurationsPageBlocProvider>()
+        .dependOnInheritedWidgetOfExactType<ConfigurationsPageBlocProvider>()!
         .bloc;
   }
 }

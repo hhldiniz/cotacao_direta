@@ -1,3 +1,4 @@
+import 'package:charts_flutter/flutter.dart';
 import 'package:cotacao_direta/providers/selected_currency_details_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/view/widgets/charts.dart';
@@ -7,13 +8,13 @@ import 'package:flutter/rendering.dart';
 class SelectedCurrencyDetails extends StatelessWidget {
   final String selectedCurrencyCode;
 
-  SelectedCurrencyDetails({Key key, @required this.selectedCurrencyCode})
+  SelectedCurrencyDetails({Key? key, required this.selectedCurrencyCode})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final Size _screenSize = MediaQuery.of(context).size;
-    final localizations = MyAppLocalizations.of(context);
+    final localizations = MyAppLocalizations.of(context)!;
     var bloc = SelectedCurrencyDetailsBlocProvider.of(context);
 
     return Scaffold(
@@ -21,7 +22,7 @@ class SelectedCurrencyDetails extends StatelessWidget {
             onPressed: () {
               bloc.getCurrencyHistoryData(selectedCurrencyCode);
             },
-            label: Text(localizations.getCurrencyHistoryBtnLabel)),
+            label: Text(localizations.getCurrencyHistoryBtnLabel!)),
         body: Column(
           children: [
             Row(
@@ -86,7 +87,7 @@ class SelectedCurrencyDetails extends StatelessWidget {
             Expanded(
                 child: Row(
               children: [
-                StreamBuilder(
+                StreamBuilder<List<Series<dynamic, dynamic>>>(
                     builder: (context, snapshot) {
                       return Expanded(
                           child: Container(
@@ -95,7 +96,7 @@ class SelectedCurrencyDetails extends StatelessWidget {
                                 seriesList: snapshot.data,
                               )
                             : Text(
-                                localizations.noDataLabel,
+                                localizations.noDataLabel!,
                                 textAlign: TextAlign.center,
                               ),
                       ));

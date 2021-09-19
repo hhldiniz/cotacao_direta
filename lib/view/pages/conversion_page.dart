@@ -5,22 +5,22 @@ import 'package:flutter/material.dart';
 
 class ConversionPage extends StatelessWidget {
 
-  final String pageTitle;
+  final String? pageTitle;
 
   ConversionPage(this.pageTitle);
 
   @override
   Widget build(BuildContext context) {
     final conversionPageBloc = ConversionPageBlocProvider.of(context);
-    final _localization = MyAppLocalizations.of(context);
+    final _localization = MyAppLocalizations.of(context)!;
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(onPressed: (){
         conversionPageBloc.updateResult();
-      }, label: Text(_localization.convertActionBtnLabel),
+      }, label: Text(_localization.convertActionBtnLabel!),
       icon: Icon(Icons.autorenew),),
       appBar: AppBar(
-        title: Text(pageTitle),
+        title: Text(pageTitle!),
         leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () {

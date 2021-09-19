@@ -33,7 +33,7 @@ class HomeState extends State<Home> {
   final canadianDollarExchangeRate = CanadianDollarExchangeRate();
   final yenExchangeRate = YenExchangeRate();
   var _selectedIndex = 0;
-  HomeBloc _bloc;
+  late HomeBloc _bloc;
 
   final String _pageTitle;
 
@@ -44,11 +44,11 @@ class HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     final orientation = MediaQuery.of(context).orientation;
-    final _localization = MyAppLocalizations.of(context);
+    final _localization = MyAppLocalizations.of(context)!;
     final _screenDimensions = MediaQuery.of(context);
     _bloc = HomeBlocProvider.of(context);
 
-    WidgetsBinding.instance
+    WidgetsBinding.instance!
         .addPostFrameCallback((_) => _bloc.getSelectedOverrideCurrency());
 
     final pageHeader = StreamBuilder(
@@ -60,7 +60,7 @@ class HomeState extends State<Home> {
           return Container(
             width: _screenDimensions.size.width,
             child: Text(
-              sprintf(_localization.homePageHeadsUpText, [snapshot.data]),
+              sprintf(_localization.homePageHeadsUpText!, [snapshot.data]),
               style: TextStyle(
                 fontSize: 28,
               ),
@@ -258,7 +258,7 @@ class HomeState extends State<Home> {
               );
             }));
           },
-          label: Text(_localization.conversionButtonLabel),
+          label: Text(_localization.conversionButtonLabel!),
           icon: Icon(Icons.compare_arrows),
         ),
       ),

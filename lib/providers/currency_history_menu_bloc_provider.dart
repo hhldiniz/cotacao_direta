@@ -5,7 +5,7 @@ class CurrencyHistoryMenuBlocProvider extends InheritedWidget {
 
   final CurrencyHistoryMenuBloc bloc;
 
-  CurrencyHistoryMenuBlocProvider({Key key, Widget child}):
+  CurrencyHistoryMenuBlocProvider({Key? key, required Widget child}):
         bloc = CurrencyHistoryMenuBloc(),
         super(key: key, child: child);
 
@@ -13,7 +13,7 @@ class CurrencyHistoryMenuBlocProvider extends InheritedWidget {
   bool updateShouldNotify(InheritedWidget oldWidget) => true;
 
   static CurrencyHistoryMenuBloc of(BuildContext context){
-      return context.dependOnInheritedWidgetOfExactType<CurrencyHistoryMenuBlocProvider>().bloc;
+      return context.dependOnInheritedWidgetOfExactType<CurrencyHistoryMenuBlocProvider>()!.bloc;
   }
 
 }

@@ -11,18 +11,18 @@ import 'package:cotacao_direta/util/string_utils.dart';
 class HomeBloc extends BaseBloc {
   ConfigurationRepository _configurationRepository = ConfigurationRepository();
   CurrencyRepository _currencyRepository = CurrencyRepository();
-  StreamController<String> _headsUpTextStreamController;
+  StreamController<String?>? _headsUpTextStreamController;
 
-  Stream<String> getNextStreamController() {
+  Stream<String?> getNextStreamController() {
     if (_headsUpTextStreamController == null) {
       _headsUpTextStreamController = StreamController();
-      return _headsUpTextStreamController.stream;
-    } else if (!_headsUpTextStreamController.hasListener) {
-      return _headsUpTextStreamController.stream;
+      return _headsUpTextStreamController!.stream;
+    } else if (!_headsUpTextStreamController!.hasListener) {
+      return _headsUpTextStreamController!.stream;
     } else {
-      _headsUpTextStreamController.close();
+      _headsUpTextStreamController!.close();
       _headsUpTextStreamController = StreamController();
-      return _headsUpTextStreamController.stream;
+      return _headsUpTextStreamController!.stream;
     }
   }
 
@@ -33,8 +33,8 @@ class HomeBloc extends BaseBloc {
       if (configuration.overrideDefaultCurrency) {
         _currencyRepository
             .getLatestDataByCurrencyCode(configuration.selectedOverrideCurrencyCode)
-            .then((Currency currency) {
-          _headsUpTextStreamController.sink.add(currency != null
+            .then((Currency? currency) {
+          _headsUpTextStreamController!.sink.add(currency != null
               ? currency.friendlyName
               : configuration.selectedOverrideCurrencyCode);
         });
@@ -42,8 +42,8 @@ class HomeBloc extends BaseBloc {
         _currencyRepository
             .getLatestDataByCurrencyCode(
                 EnumValueAsString().getEnumValue(Currencies.USD.toString()))
-            .then((Currency currency) {
-          _headsUpTextStreamController.sink.add(currency != null
+            .then((Currency? currency) {
+          _headsUpTextStreamController!.sink.add(currency != null
               ? currency.friendlyName
               : EnumValueAsString().getEnumValue(Currencies.USD.toString()));
         });
@@ -53,6 +53,6 @@ class HomeBloc extends BaseBloc {
 
   @override
   void dispose() {
-    _headsUpTextStreamController.close();
+    _headsUpTextStreamController!.close();
   }
 }

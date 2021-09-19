@@ -5,7 +5,7 @@ class SelectedCurrencyDetailsBlocProvider extends InheritedWidget {
 
   final SelectedCurrencyDetailsBloc bloc;
 
-  SelectedCurrencyDetailsBlocProvider({Key key, Widget child})
+  SelectedCurrencyDetailsBlocProvider({Key? key, required Widget child})
       : bloc = SelectedCurrencyDetailsBloc(),
         super(key: key, child: child);
 
@@ -13,5 +13,5 @@ class SelectedCurrencyDetailsBlocProvider extends InheritedWidget {
   bool updateShouldNotify(InheritedWidget oldWidget) => true;
 
   static SelectedCurrencyDetailsBloc of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<SelectedCurrencyDetailsBlocProvider>().bloc;
+      context.dependOnInheritedWidgetOfExactType<SelectedCurrencyDetailsBlocProvider>()!.bloc;
 }

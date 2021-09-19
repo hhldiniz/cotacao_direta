@@ -3,7 +3,7 @@ import 'package:cotacao_direta/model/base_model.dart';
 class Configuration extends BaseModel {
   int id;
   bool overrideDefaultCurrency;
-  String selectedOverrideCurrencyCode;
+  String? selectedOverrideCurrencyCode;
 
   Configuration(this.id,
       {this.overrideDefaultCurrency = false,

@@ -1,6 +1,6 @@
 class OverrideCurrencyStateHelper {
   bool enableCurrencyOverride;
-  String selectedCurrencyOverride;
+  String? selectedCurrencyOverride;
 
   OverrideCurrencyStateHelper(
       {this.enableCurrencyOverride = false, this.selectedCurrencyOverride = ""});

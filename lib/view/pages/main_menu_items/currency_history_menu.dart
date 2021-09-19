@@ -28,7 +28,7 @@ class CurrencyHistory extends StatelessWidget {
                 stream: bloc.getCountryNameController(_currencyList[index]),
                 builder: (context, snapshot){
                     bloc.getCountryNameByCurrencyCode(_currencyList[index]);
-                    return Text(snapshot.data ?? "");
+                    return Text((snapshot.data as String?) ?? "");
                 },
               ),
             ),

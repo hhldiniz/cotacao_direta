@@ -41,7 +41,7 @@ class ConfigurationsPageBloc extends BaseBloc {
     });
   }
 
-  updateSelectedOverrideCurrency(String currencyCode) {
+  updateSelectedOverrideCurrency(String? currencyCode) {
     _overrideCurrencyStateHelper.selectedCurrencyOverride = currencyCode;
     overrideDefaultCurrencyValueSink.add(_overrideCurrencyStateHelper);
     _configurationRepository

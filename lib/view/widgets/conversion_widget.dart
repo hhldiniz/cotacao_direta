@@ -15,7 +15,7 @@ class ConversionWidget extends StatefulWidget {
 }
 
 class ConversionWidgetState extends State<ConversionWidget> {
-  ConversionPageBloc bloc;
+  late ConversionPageBloc bloc;
   final _formatter = NumberFormat("#.###");
 
   @override
@@ -26,7 +26,7 @@ class ConversionWidgetState extends State<ConversionWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final _localizations = MyAppLocalizations.of(context);
+    final _localizations = MyAppLocalizations.of(context)!;
 
     return Container(
         child: Column(
@@ -36,7 +36,7 @@ class ConversionWidgetState extends State<ConversionWidget> {
                 Expanded(
                   child: Padding(padding: EdgeInsets.only(top: 16),
                   child: Text(
-                    _localizations.conversionPageExplanationText,
+                    _localizations.conversionPageExplanationText!,
                     style: TextStyle(fontSize: 16),
                     textAlign: TextAlign.center,
                   ),)
@@ -84,7 +84,7 @@ class ConversionWidgetState extends State<ConversionWidget> {
                                   .getEnumValue(value.toString())),
                             );
                           }).toList(),
-                          onChanged: (value) {
+                          onChanged: (dynamic value) {
                             bloc.updateFromCurrency(value);
                           },
                           icon: Icon(Icons.arrow_downward),
@@ -123,7 +123,7 @@ class ConversionWidgetState extends State<ConversionWidget> {
                                   .getEnumValue(value.toString())),
                             );
                           }).toList(),
-                          onChanged: (value) {
+                          onChanged: (dynamic value) {
                             bloc.updateToCurrency(value);
                           },
                           icon: Icon(Icons.arrow_downward),
@@ -140,7 +140,7 @@ class ConversionWidgetState extends State<ConversionWidget> {
                     IconButton(
                       icon: Icon(
                         Icons.repeat,
-                        color: Theme.of(context).accentColor,
+                        color: Theme.of(context).colorScheme.secondary,
                       ),
                       onPressed: () {
                         bloc.switchCurrencies();

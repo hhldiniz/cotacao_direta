@@ -6,7 +6,7 @@ class MyAppLocalizations {
 
   final Locale locale;
 
-  static MyAppLocalizations of(BuildContext context) {
+  static MyAppLocalizations? of(BuildContext context) {
     return Localizations.of<MyAppLocalizations>(context, MyAppLocalizations);
   }
 
@@ -53,73 +53,73 @@ class MyAppLocalizations {
     }
   };
 
-  String get conversionButtonLabel {
-    return _localizedValues[locale.languageCode]['conversionButtonLabel'];
+  String? get conversionButtonLabel {
+    return _localizedValues[locale.languageCode]!['conversionButtonLabel'];
   }
 
-  String get conversionPageTitle {
-    return _localizedValues[locale.languageCode]['conversionPageTitle'];
+  String? get conversionPageTitle {
+    return _localizedValues[locale.languageCode]!['conversionPageTitle'];
   }
 
-  String get homePageHeadsUpText {
-    return _localizedValues[locale.languageCode]['homePageHeadsUpText'];
+  String? get homePageHeadsUpText {
+    return _localizedValues[locale.languageCode]!['homePageHeadsUpText'];
   }
 
-  String get convertActionBtnLabel {
-    return _localizedValues[locale.languageCode]['convertActionBtnLabel'];
+  String? get convertActionBtnLabel {
+    return _localizedValues[locale.languageCode]!['convertActionBtnLabel'];
   }
 
-  String get conversionMultiplierHint {
-    return _localizedValues[locale.languageCode]['conversionMultiplierHint'];
+  String? get conversionMultiplierHint {
+    return _localizedValues[locale.languageCode]!['conversionMultiplierHint'];
   }
 
-  String get conversionPageExplanationText {
-    return _localizedValues[locale.languageCode]
+  String? get conversionPageExplanationText {
+    return _localizedValues[locale.languageCode]!
         ['conversionPageExplanationText'];
   }
 
-  String get mainCurrenciesBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]
+  String? get mainCurrenciesBottomNavItemLabel {
+    return _localizedValues[locale.languageCode]!
         ['mainCurrenciesBottomNavItemLabel'];
   }
 
-  String get currencyHistoryBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]
+  String? get currencyHistoryBottomNavItemLabel {
+    return _localizedValues[locale.languageCode]!
         ['currencyHistoryBottomNavItemLabel'];
   }
 
-  String get aboutBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]['aboutBottomNavItemLabel'];
+  String? get aboutBottomNavItemLabel {
+    return _localizedValues[locale.languageCode]!['aboutBottomNavItemLabel'];
   }
 
-  String get currencyHistoryFromDateLabel {
-    return _localizedValues[locale.languageCode]
+  String? get currencyHistoryFromDateLabel {
+    return _localizedValues[locale.languageCode]!
         ['currencyHistoryFromDateLabel'];
   }
 
-  String get currencyHistoryToDateLabel {
-    return _localizedValues[locale.languageCode]['currencyHistoryToDateLabel'];
+  String? get currencyHistoryToDateLabel {
+    return _localizedValues[locale.languageCode]!['currencyHistoryToDateLabel'];
   }
 
-  String get noDataLabel {
-    return _localizedValues[locale.languageCode]['noDataLabel'];
+  String? get noDataLabel {
+    return _localizedValues[locale.languageCode]!['noDataLabel'];
   }
 
-  String get getCurrencyHistoryBtnLabel {
-    return _localizedValues[locale.languageCode]['getCurrencyHistoryBtnLabel'];
+  String? get getCurrencyHistoryBtnLabel {
+    return _localizedValues[locale.languageCode]!['getCurrencyHistoryBtnLabel'];
   }
 
-  String get getConfigBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]['configBottomNavItemLabel'];
+  String? get getConfigBottomNavItemLabel {
+    return _localizedValues[locale.languageCode]!['configBottomNavItemLabel'];
   }
 
-  String get overrideDefaultCurrencySwitchLabel {
-    return _localizedValues[locale.languageCode]
+  String? get overrideDefaultCurrencySwitchLabel {
+    return _localizedValues[locale.languageCode]!
         ['overrideDefaultCurrencySwitchLabel'];
   }
 
-  String get appConfigurationsSectionLabel {
-    return _localizedValues[locale.languageCode]
+  String? get appConfigurationsSectionLabel {
+    return _localizedValues[locale.languageCode]!
         ['appConfigurationsSectionLabel'];
   }
 }

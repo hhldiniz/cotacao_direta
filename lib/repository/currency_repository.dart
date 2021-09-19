@@ -12,30 +12,41 @@ import 'package:sprintf/sprintf.dart';
 import 'package:xml/xml.dart';
 
 class CurrencyRepository {
-  static CurrencyRepository _instance;
+  static CurrencyRepository? _instance;
   final CurrencyDao _currencyDao = CurrencyDao();
   final ConfigurationRepository _configurationRepository =
       ConfigurationRepository();
   final NetworkUtils _networkUtils = NetworkUtils();
+  /*final String _exchangeRateApi =
+      "https://european-exchange-api.herokuapp.com/latest?access_key=%s&symbol=%s";*/
   final String _exchangeRateApi =
-      "https://api.exchangeratesapi.io/latest?base=%s";
+      "https://european-exchange-api.herokuapp.com/latest?symbol=%s";
   final String _exchangeHistoricalRateApi =
-      "https://api.exchangeratesapi.io/history?start_at=%s&end_at=%s&base=%s&symbols=%s";
+      "https://european-exchange-api.herokuapp.com/history?access_key=%s&start_at=%s&end_at=%s&base=%s&symbols=%s";
   final _enumValueAsStringUtil = EnumValueAsString();
   final _currencyCodeFriendlyNameApi =
-      "https://supply-xml.booking.com/hotels/xml/currencies";
+      "https://european-exchange-api.herokuapp.com/currencies";
+  //final String? _apiKey = null;
 
   factory CurrencyRepository() {
     if (_instance == null)
       _instance = CurrencyRepository._internalConstructor();
-    return _instance;
+    return _instance!;
   }
 
   CurrencyRepository._internalConstructor();
 
+  /*Future<String> checkAndRetrieveApiKey() async {
+    return _apiKey ??
+        jsonDecode(await rootBundle.loadString('assets/secrets/secrets.json'))[
+            'exchange_api_key'];
+  }*/
+
   Future<Uri> _resolveExchangeRateApiUri() async {
+    // final apiKey = await checkAndRetrieveApiKey();
     final configuration = await _configurationRepository.getConfiguration();
     return Uri.parse(sprintf(_exchangeRateApi, [
+      /*apiKey,*/
       configuration.overrideDefaultCurrency
           ? configuration.selectedOverrideCurrencyCode
           : _enumValueAsStringUtil.getEnumValue(Currencies.USD.toString())
@@ -44,8 +55,10 @@ class CurrencyRepository {
 
   Future<Uri> _resolveExchangeHistoricalRateApiUri(
       currencyCodeList, initialDate, finalDate) async {
+    //final apiKey = await checkAndRetrieveApiKey();
     final configuration = await _configurationRepository.getConfiguration();
     return Uri.parse(sprintf(_exchangeHistoricalRateApi, [
+      /*apiKey,*/
       initialDate,
       finalDate,
       configuration.overrideDefaultCurrency
@@ -55,11 +68,11 @@ class CurrencyRepository {
     ]));
   }
 
-  Future<Map<String, String>> _friendlyCurrencyCodeNameList() async {
+  Future<Map<String?, String?>> _friendlyCurrencyCodeNameList() async {
     var response = await http.get(Uri.parse(_currencyCodeFriendlyNameApi));
-    var friendlyCurrencyNamesMap = Map<String, String>();
+    var friendlyCurrencyNamesMap = Map<String?, String?>();
     XmlDocument.parse(response.body)
-        .getElement("currencies")
+        .getElement("currencies")!
         .children
         .forEach((child) {
       friendlyCurrencyNamesMap[child.getAttribute("currencycode")] =
@@ -68,15 +81,20 @@ class CurrencyRepository {
     return friendlyCurrencyNamesMap;
   }
 
-  Future<Currency> getLatestDataByCurrencyCode(String currencyCode) async {
+  Future<Currency?> getLatestDataByCurrencyCode(String? currencyCode) async {
     var networkAvailable = await _networkUtils.isNetworkAvailable();
     var savedCurrency =
         await _currencyDao.getLatestDataByCurrencyCode(currencyCode);
     if (networkAvailable &&
         (savedCurrency == null ||
-            !_isCurrencyTimestampValid(savedCurrency.timestamp))) {
+            !_isCurrencyTimestampValid(savedCurrency.timestamp!))) {
       var response = await http.get(await _resolveExchangeRateApiUri());
-      var currencyValue = jsonDecode(response.body)["rates"][currencyCode];
+      var resultList = [];
+      var currencyValue = jsonDecode(response.body).forEach((item){
+        if(item["currency_code"] == currencyCode){
+          resultList.add(item);
+        }
+      });
       var now = DateTime.now().toIso8601String();
       var newCurrency = Currency(
           id: currencyCode,
@@ -86,9 +104,10 @@ class CurrencyRepository {
           friendlyName: (await _friendlyCurrencyCodeNameList())[currencyCode]);
       _currencyDao.insert(newCurrency);
       return newCurrency;
-    } else{
-      if(savedCurrency.friendlyName == null){
-        savedCurrency.friendlyName = (await _friendlyCurrencyCodeNameList())[currencyCode];
+    } else {
+      if (savedCurrency!.friendlyName == null) {
+        savedCurrency.friendlyName =
+            (await _friendlyCurrencyCodeNameList())[currencyCode];
         _currencyDao.insert(savedCurrency);
       }
       return savedCurrency;
@@ -119,12 +138,12 @@ class CurrencyRepository {
       _currencyDao.insertMany(currencyListToSave
           .where((currency) =>
               (DateTime.now().year -
-                  DateTime.parse(currency.historicalDate).year) <
+                  DateTime.parse(currency.historicalDate!).year) <
               10)
           .toList());
       currencyListToSave.sort((a, b) {
-        DateTime dateCurrencyA = DateTime.parse(a.historicalDate);
-        DateTime dateCurrencyB = DateTime.parse(b.historicalDate);
+        DateTime dateCurrencyA = DateTime.parse(a.historicalDate!);
+        DateTime dateCurrencyB = DateTime.parse(b.historicalDate!);
         if (dateCurrencyA.isBefore(dateCurrencyB)) {
           return -1;
         } else if (dateCurrencyA.isAfter(dateCurrencyB)) {

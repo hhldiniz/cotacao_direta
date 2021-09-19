@@ -12,13 +12,13 @@ class ConfigurationsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ConfigurationsPageBloc _bloc = ConfigurationsPageBlocProvider.of(context);
-    WidgetsBinding.instance
+    WidgetsBinding.instance!
         .addPostFrameCallback((_) => _bloc.loadCurrentConfiguration());
     final _currencyList = List.generate(Currencies.values.length, (index) {
       return EnumValueAsString()
           .getEnumValue(Currencies.values.elementAt(index).toString());
     });
-    var _localization = MyAppLocalizations.of(context);
+    var _localization = MyAppLocalizations.of(context)!;
     return Column(
       children: [
         Expanded(
@@ -31,15 +31,15 @@ class ConfigurationsPage extends StatelessWidget {
                     StreamBuilder<OverrideCurrencyStateHelper>(
                       builder: (BuildContext context, snapshot) {
                         return Switch(
-                            value: snapshot.data.enableCurrencyOverride,
+                            value: snapshot.data!.enableCurrencyOverride,
                             onChanged: (bool checked) {
                               _bloc.updateOverrideCurrencySwitch(checked);
                             });
                       },
-                      stream: _bloc.overrideDefaultCurrencyValueStream,
+                      stream: _bloc.overrideDefaultCurrencyValueStream as Stream<OverrideCurrencyStateHelper>?,
                       initialData: _bloc.overrideCurrencyStateHelper,
                     ),
-                    Text(_localization.overrideDefaultCurrencySwitchLabel)
+                    Text(_localization.overrideDefaultCurrencySwitchLabel!)
                   ],
                 ),
               ),
@@ -52,17 +52,17 @@ class ConfigurationsPage extends StatelessWidget {
                             value: _currencyList[index],
                             child: Text(_currencyList[index]))),
                     onChanged:
-                        switchSnapshot.data.enableCurrencyOverride == true
-                            ? (value) {
+                        switchSnapshot.data!.enableCurrencyOverride == true
+                            ? (dynamic value) {
                                 _bloc.updateSelectedOverrideCurrency(value);
                               }
                             : null,
-                    value: switchSnapshot.data.selectedCurrencyOverride.isEmpty
+                    value: switchSnapshot.data!.selectedCurrencyOverride!.isEmpty
                         ? _currencyList[0]
-                        : switchSnapshot.data.selectedCurrencyOverride,
+                        : switchSnapshot.data!.selectedCurrencyOverride,
                   );
                 },
-                stream: _bloc.overrideDefaultCurrencyValueStream,
+                stream: _bloc.overrideDefaultCurrencyValueStream as Stream<OverrideCurrencyStateHelper>?,
                 initialData: _bloc.overrideCurrencyStateHelper,
               )
             ],

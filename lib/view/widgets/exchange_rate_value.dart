@@ -17,7 +17,7 @@ class ExchangeRateValue extends StatefulWidget {
 }
 
 class ExchangeRateValueState extends State<ExchangeRateValue> {
-  ExchangeValueBloc bloc;
+  late ExchangeValueBloc bloc;
   final _formatter = NumberFormat("#.###");
   final Currencies _currency;
 
@@ -34,17 +34,18 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
+    return StreamBuilder<num>(
         stream: bloc.getNextStreamController(),
         initialData: 0,
         builder: (context, snapshot) =>
             NotificationListener<UpdateCurrencyValueNotification>(
-              onNotification: (UpdateCurrencyValueNotification notification){
+              onNotification: (UpdateCurrencyValueNotification notification) {
                 didChangeDependencies();
                 return true;
               },
               child: Text(
-                _formatter.format(1 / snapshot.data),
+                _formatter
+                    .format(snapshot.data != null ? 1 / snapshot.data! : 0),
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ));

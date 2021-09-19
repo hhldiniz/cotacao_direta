@@ -2,12 +2,12 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AppDatabase {
-  static AppDatabase _instance;
-  Database _database;
+  static AppDatabase? _instance;
+  Database? _database;
 
   factory AppDatabase() {
     if (_instance == null) _instance = AppDatabase._internalConstructor();
-    return _instance;
+    return _instance!;
   }
 
   AppDatabase._internalConstructor();
@@ -34,7 +34,7 @@ class AppDatabase {
     "DROP TABLE old_Currency"
   ];
 
-  Future<Database> openAppDatabase() async {
+  Future<Database?> openAppDatabase() async {
     var path = join(await getDatabasesPath(), 'doggie_database.db');
     if (_database == null)
       _database = await openDatabase(path, onCreate: (db, version) {

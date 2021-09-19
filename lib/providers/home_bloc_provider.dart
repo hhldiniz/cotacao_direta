@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 class HomeBlocProvider extends InheritedWidget {
   final HomeBloc _bloc;
 
-  HomeBlocProvider({Key key, Widget child})
+  HomeBlocProvider({Key? key, required Widget child})
       : _bloc = HomeBloc(),
         super(key: key, child: child);
 
@@ -13,7 +13,7 @@ class HomeBlocProvider extends InheritedWidget {
 
   static HomeBloc of(BuildContext context) {
     return context
-        .dependOnInheritedWidgetOfExactType<HomeBlocProvider>()
+        .dependOnInheritedWidgetOfExactType<HomeBlocProvider>()!
         ._bloc;
   }
 }

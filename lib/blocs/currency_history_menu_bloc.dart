@@ -6,7 +6,7 @@ import 'package:cotacao_direta/repository/country_names_repository.dart';
 class CurrencyHistoryMenuBloc extends BaseBloc {
   CountryNamesRepository _countryNameRepository = CountryNamesRepository();
   Map _countryNameControllerMap = Map<String, StreamController>();
-  Map _savedCountryNamesByCurrencyCod = Map<String, String>();
+  Map _savedCountryNamesByCurrencyCod = Map<String, String?>();
 
   void initStreamControllers(List<String> currencyCodList) {
     currencyCodList.forEach((element) {
@@ -16,7 +16,7 @@ class CurrencyHistoryMenuBloc extends BaseBloc {
     });
   }
 
-  Stream getCountryNameController(String currencyCod) {
+  Stream? getCountryNameController(String currencyCod) {
     return _countryNameControllerMap[currencyCod].stream.asBroadcastStream();
   }
 
@@ -26,7 +26,7 @@ class CurrencyHistoryMenuBloc extends BaseBloc {
           .sink
           .add(_savedCountryNamesByCurrencyCod[currencyCode]);
     } else {
-      String countryName = await _countryNameRepository
+      String? countryName = await _countryNameRepository
           .getCountryNameByCurrencyCode(currencyCode);
       _countryNameControllerMap[currencyCode].sink.add(countryName);
       _savedCountryNamesByCurrencyCod[currencyCode] = countryName;
