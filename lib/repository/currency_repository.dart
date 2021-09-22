@@ -89,19 +89,14 @@ class CurrencyRepository {
         (savedCurrency == null ||
             !_isCurrencyTimestampValid(savedCurrency.timestamp!))) {
       var response = await http.get(await _resolveExchangeRateApiUri());
-      var resultList = [];
-      var currencyValue = jsonDecode(response.body).forEach((item){
-        if(item["currency_code"] == currencyCode){
-          resultList.add(item);
-        }
-      });
+      Map<String, dynamic> currentListResponse = jsonDecode(response.body);
       var now = DateTime.now().toIso8601String();
       var newCurrency = Currency(
           id: currencyCode,
-          value: currencyValue,
+          value: currentListResponse['rate'],
           historicalDate: now,
           timestamp: now,
-          friendlyName: (await _friendlyCurrencyCodeNameList())[currencyCode]);
+          friendlyName: currentListResponse['friendly_name']);
       _currencyDao.insert(newCurrency);
       return newCurrency;
     } else {
