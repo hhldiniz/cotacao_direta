@@ -11,9 +11,7 @@ import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/euro_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/yen_exchange_rate.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:sprintf/sprintf.dart';
 
 import 'main_menu_items/currency_history_menu.dart';
@@ -48,7 +46,7 @@ class HomeState extends State<Home> {
     final _screenDimensions = MediaQuery.of(context);
     _bloc = HomeBlocProvider.of(context);
 
-    WidgetsBinding.instance!
+    WidgetsBinding.instance
         .addPostFrameCallback((_) => _bloc.getSelectedOverrideCurrency());
 
     final pageHeader = StreamBuilder(
