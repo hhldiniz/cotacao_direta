@@ -1,9 +1,7 @@
-import 'package:charts_flutter/flutter.dart';
 import 'package:cotacao_direta/providers/selected_currency_details_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/view/widgets/charts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 class SelectedCurrencyDetails extends StatelessWidget {
   final String selectedCurrencyCode;
@@ -87,7 +85,8 @@ class SelectedCurrencyDetails extends StatelessWidget {
             Expanded(
                 child: Row(
               children: [
-                StreamBuilder<List<Series<dynamic, dynamic>>>(
+                // TODO Substitute this block with the class from another chart library
+                /*StreamBuilder<List<Series<dynamic, dynamic>>>(
                     builder: (context, snapshot) {
                       return Expanded(
                           child: Container(
@@ -101,7 +100,7 @@ class SelectedCurrencyDetails extends StatelessWidget {
                               ),
                       ));
                     },
-                    stream: bloc.currencyHistoryStream)
+                    stream: bloc.currencyHistoryStream)*/
               ],
             ))
           ],

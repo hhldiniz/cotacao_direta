@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:charts_flutter/flutter.dart';
 import 'package:cotacao_direta/blocs/base_bloc.dart';
-import 'package:cotacao_direta/model/currency.dart';
 import 'package:cotacao_direta/repository/currency_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -35,16 +33,17 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
 
     var currencyList = await _currencyRepository.getCurrencyHistoricalData(
         [selectedCurrencyCod], _initialDate, _finalDate);
-    var dataToAdd = <Series<dynamic, DateTime>>[];
-    dataToAdd.add(
+    // TODO Replace this block when the chart library gets replaced
+    // var dataToAdd = <Series<dynamic, DateTime>>[];
+    /*dataToAdd.add(
         Series<Currency, DateTime>(
             id: selectedCurrencyCod,
             data: currencyList,
             domainFn: (Currency currency, _) =>
                 DateFormat("yyyy-MM-dd").parse(currency.historicalDate!),
             measureFn: (Currency currency, _) => currency.value)
-    );
-    _selectedCurrencyHistoryDataStreamController.sink.add(dataToAdd);
+    );*/
+    // _selectedCurrencyHistoryDataStreamController.sink.add(dataToAdd);
   }
 
   updateInitialDate(dateValue){
