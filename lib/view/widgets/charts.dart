@@ -1,16 +1,15 @@
-import 'package:charts_flutter/flutter.dart';
 import 'package:flutter/widgets.dart';
-import 'package:intl/intl.dart';
 
 class SimpleLineChart extends StatelessWidget {
-  final List<Series>? seriesList;
+  // final List<Series>? seriesList;
   final bool? animate;
 
-  SimpleLineChart({this.seriesList, this.animate});
+  SimpleLineChart({/*this.seriesList,*/ this.animate});
 
   @override
   Widget build(BuildContext context) {
-    return TimeSeriesChart(
+    // TODO Replace this with a chart from another library
+    /*return TimeSeriesChart(
       seriesList as List<Series<dynamic, DateTime>>,
       animate: animate,
       primaryMeasureAxis: NumericAxisSpec(
@@ -24,6 +23,9 @@ class SimpleLineChart extends StatelessWidget {
                   format: 'MM', transitionFormat: 'yyyy-MM-dd'),
               year: TimeFormatterSpec(
                   format: 'yyyy', transitionFormat: 'yyyy-MM-dd'))),
+    );*/
+    return Container(
+      child: Text("TODO"),
     );
   }
 }
