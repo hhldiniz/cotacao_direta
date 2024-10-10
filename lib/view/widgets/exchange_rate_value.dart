@@ -28,7 +28,11 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
     bloc = ExchangeValueBlocProvider.of(context);
     bloc.retrieveCurrencyValue(_currency).then((value) {
       bloc.updateValue(value);
-    });
+    }).onError(
+      (error, stackTrace) {
+        print(error.toString());
+      },
+    );
     super.didChangeDependencies();
   }
 

@@ -48,7 +48,7 @@ class HomeState extends State<Home> {
     final _screenDimensions = MediaQuery.of(context);
     _bloc = HomeBlocProvider.of(context);
 
-    WidgetsBinding.instance!
+    WidgetsBinding.instance
         .addPostFrameCallback((_) => _bloc.getSelectedOverrideCurrency());
 
     final pageHeader = StreamBuilder(
