@@ -15,6 +15,8 @@ class ConversionWidget extends StatefulWidget {
 }
 
 class ConversionWidgetState extends State<ConversionWidget> {
+  // O bloc pertence ao ConversionPageBlocProvider, que o descarta junto com o
+  // próprio State: este widget apenas o consome.
   late ConversionPageBloc bloc;
   final _formatter = NumberFormat("#.###");
 
@@ -200,11 +202,5 @@ class ConversionWidgetState extends State<ConversionWidget> {
             )
           ],
         ));
-  }
-
-  @override
-  void dispose() {
-    bloc.dispose();
-    super.dispose();
   }
 }

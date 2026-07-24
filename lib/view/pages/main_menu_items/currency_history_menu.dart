@@ -24,11 +24,12 @@ class CurrencyHistory extends StatelessWidget {
           return GestureDetector(
             child: ListTile(
               title: Text(_currencyList[index]),
-              subtitle: StreamBuilder(
+              subtitle: StreamBuilder<String?>(
+                initialData: bloc.cachedCountryName(_currencyList[index]),
                 stream: bloc.getCountryNameController(_currencyList[index]),
                 builder: (context, snapshot){
                     bloc.getCountryNameByCurrencyCode(_currencyList[index]);
-                    return Text((snapshot.data as String?) ?? "");
+                    return Text(snapshot.data ?? "");
                 },
               ),
             ),
