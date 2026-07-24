@@ -13,16 +13,18 @@ import 'package:xml/xml.dart';
 
 class CurrencyRepository {
   static CurrencyRepository? _instance;
-  final CurrencyDao _currencyDao = CurrencyDao();
-  final ConfigurationRepository _configurationRepository =
-      ConfigurationRepository();
-  final NetworkUtils _networkUtils = NetworkUtils();
+  final CurrencyDao _currencyDao;
+  final ConfigurationRepository _configurationRepository;
+  final NetworkUtils _networkUtils;
+  final http.Client _httpClient;
   /*final String _exchangeRateApi =
       "https://european-exchange-api.herokuapp.com/latest?access_key=%s&symbol=%s";*/
   final String _exchangeRateApi =
       "https://european-exchange-api.herokuapp.com/latest?symbol=%s";
+  /*final String _exchangeHistoricalRateApi =
+      "https://european-exchange-api.herokuapp.com/history?access_key=%s&start_at=%s&end_at=%s&base=%s&symbols=%s";*/
   final String _exchangeHistoricalRateApi =
-      "https://european-exchange-api.herokuapp.com/history?access_key=%s&start_at=%s&end_at=%s&base=%s&symbols=%s";
+      "https://european-exchange-api.herokuapp.com/history?start_at=%s&end_at=%s&base=%s&symbols=%s";
   final _enumValueAsStringUtil = EnumValueAsString();
   final _currencyCodeFriendlyNameApi =
       "https://european-exchange-api.herokuapp.com/currencies";
@@ -34,7 +36,32 @@ class CurrencyRepository {
     return _instance!;
   }
 
-  CurrencyRepository._internalConstructor();
+  /// Cria uma instância isolada (fora do singleton) com as dependências
+  /// fornecidas pelo chamador. Usado pelos testes.
+  factory CurrencyRepository.withDependencies(
+          {CurrencyDao? currencyDao,
+          ConfigurationRepository? configurationRepository,
+          NetworkUtils? networkUtils,
+          http.Client? httpClient}) =>
+      CurrencyRepository._internalConstructor(
+          currencyDao: currencyDao,
+          configurationRepository: configurationRepository,
+          networkUtils: networkUtils,
+          httpClient: httpClient);
+
+  CurrencyRepository._internalConstructor(
+      {CurrencyDao? currencyDao,
+      ConfigurationRepository? configurationRepository,
+      NetworkUtils? networkUtils,
+      http.Client? httpClient})
+      : _currencyDao = currencyDao ?? CurrencyDao(),
+        _configurationRepository =
+            configurationRepository ?? ConfigurationRepository(),
+        _networkUtils = networkUtils ?? NetworkUtils(),
+        _httpClient = httpClient ?? http.Client();
+
+  /// Descarta o singleton para que um teste não vaze estado para o seguinte.
+  static void resetInstance() => _instance = null;
 
   /*Future<String> checkAndRetrieveApiKey() async {
     return _apiKey ??
@@ -69,7 +96,8 @@ class CurrencyRepository {
   }
 
   Future<Map<String?, String?>> _friendlyCurrencyCodeNameList() async {
-    var response = await http.get(Uri.parse(_currencyCodeFriendlyNameApi));
+    var response =
+        await _httpClient.get(Uri.parse(_currencyCodeFriendlyNameApi));
     var friendlyCurrencyNamesMap = Map<String?, String?>();
     XmlDocument.parse(response.body)
         .getElement("currencies")!
@@ -88,7 +116,7 @@ class CurrencyRepository {
     if (networkAvailable &&
         (savedCurrency == null ||
             !_isCurrencyTimestampValid(savedCurrency.timestamp!))) {
-      var response = await http.get(await _resolveExchangeRateApiUri());
+      var response = await _httpClient.get(await _resolveExchangeRateApiUri());
       var resultList = [];
       var currencyValue = jsonDecode(response.body).forEach((item){
         if(item["currency_code"] == currencyCode){
@@ -117,8 +145,9 @@ class CurrencyRepository {
   Future<List<Currency>> getCurrencyHistoricalData(
       List<String> currencyCodeList, initialDate, finalDate) async {
     if (await _networkUtils.isNetworkAvailable()) {
-      var response = await http.get(await _resolveExchangeHistoricalRateApiUri(
-          currencyCodeList, initialDate, finalDate));
+      var response = await _httpClient.get(
+          await _resolveExchangeHistoricalRateApiUri(
+              currencyCodeList, initialDate, finalDate));
       var friendlyNames = await _friendlyCurrencyCodeNameList();
       List<MapEntry> jsonData =
           jsonDecode(response.body)["rates"].entries.toList();

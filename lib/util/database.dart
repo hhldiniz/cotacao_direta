@@ -5,12 +5,23 @@ class AppDatabase {
   static AppDatabase? _instance;
   Database? _database;
 
+  /// Substitui o caminho do arquivo do banco. Usado pelos testes, que rodam
+  /// sem os canais de plataforma que sustentam [getDatabasesPath].
+  static String? databasePathOverride;
+
   factory AppDatabase() {
     if (_instance == null) _instance = AppDatabase._internalConstructor();
     return _instance!;
   }
 
   AppDatabase._internalConstructor();
+
+  /// Fecha e descarta o singleton, para que cada teste comece de um banco novo.
+  static Future<void> reset() async {
+    await _instance?._database?.close();
+    _instance?._database = null;
+    _instance = null;
+  }
 
   var migrationsScripts1_2 = [
     "ALTER TABLE Currency ADD historicalDate TEXT NOT NULL DEFAULT ''"
@@ -35,7 +46,8 @@ class AppDatabase {
   ];
 
   Future<Database?> openAppDatabase() async {
-    var path = join(await getDatabasesPath(), 'doggie_database.db');
+    var path = databasePathOverride ??
+        join(await getDatabasesPath(), 'doggie_database.db');
     if (_database == null)
       _database = await openDatabase(path, onCreate: (db, version) {
         db.execute(
