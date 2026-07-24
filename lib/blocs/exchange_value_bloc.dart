@@ -39,6 +39,8 @@ class ExchangeValueBloc extends BaseBloc {
 
   @override
   void dispose() {
-    valueController!.close();
+    // Pode não haver controller se o bloc foi descartado antes de a tela
+    // chegar a construir a stream.
+    valueController?.close();
   }
 }

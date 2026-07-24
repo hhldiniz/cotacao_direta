@@ -18,6 +18,8 @@ class ExchangeRateValue extends StatefulWidget {
 }
 
 class ExchangeRateValueState extends State<ExchangeRateValue> {
+  // O bloc pertence ao ExchangeValueBlocProvider, que o descarta junto com o
+  // próprio State: este widget apenas o consome.
   late ExchangeValueBloc bloc;
   final _formatter = NumberFormat("#.###");
   final Currencies _currency;
@@ -64,13 +66,5 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ));
-  }
-
-  @override
-  void dispose() {
-    // Warning. Since the bloc is not being initialized inside UI, calling dispose causes exceptions when widgets are rebuild.
-    // Possible memory leaks were considered but not found with dev tools.
-    bloc.dispose();
-    super.dispose();
   }
 }
