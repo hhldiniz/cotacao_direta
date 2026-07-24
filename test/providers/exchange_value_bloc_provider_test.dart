@@ -84,8 +84,8 @@ void main() {
       await tester.pump();
 
       // Troca só o filho: o provider (e o bloc) continuam de pé.
-      await tester.pumpWidget(_app(
-          ExchangeValueBlocProvider(bloc: bloc, child: const SizedBox())));
+      await tester.pumpWidget(
+          _app(ExchangeValueBlocProvider(bloc: bloc, child: const SizedBox())));
 
       expect(bloc.valueController!.isClosed, isFalse);
       bloc.dispose();

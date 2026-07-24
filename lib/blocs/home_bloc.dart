@@ -53,6 +53,8 @@ class HomeBloc extends BaseBloc {
 
   @override
   void dispose() {
-    _headsUpTextStreamController!.close();
+    // Pode não haver controller se o bloc foi descartado antes de a tela
+    // chegar a construir a stream.
+    _headsUpTextStreamController?.close();
   }
 }
