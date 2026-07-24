@@ -5,7 +5,7 @@ import 'package:sqflite/sqlite_api.dart';
 class CurrencyDao {
   Future<void> insert(Currency currency) async {
     final Database? db = await (AppDatabase().openAppDatabase());
-    db?.insert("Currency", currency.toMap(),
+    await db?.insert("Currency", currency.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -34,16 +34,20 @@ class CurrencyDao {
           id: result?.first["id"] as String?,
           value: result?.first["value"] as double?,
           historicalDate: result?.first["historicalDate"] as String?,
-          timestamp: result?.first["timestamp"] as String?);
+          timestamp: result?.first["timestamp"] as String?,
+          friendlyName: result?.first["friendlyName"] as String?);
   }
 
   Future<List<Currency>> getHistoricalData(List<String> currencyCodeList,
       String initialDate, String finalDate) async {
+    if (currencyCodeList.isEmpty) return [];
     final Database? db = await (AppDatabase().openAppDatabase());
+    var placeholders = List.filled(currencyCodeList.length, "?").join(", ");
     var result = await db?.query("currency",
         columns: ["id", "value", "historicalDate", "timestamp", "friendlyName"],
-        where: "id IN (?) AND historicalDate >= ? AND historicalDate <= ?",
-        whereArgs: [currencyCodeList.join(", "), initialDate, finalDate]);
+        where:
+            "id IN ($placeholders) AND historicalDate >= ? AND historicalDate <= ?",
+        whereArgs: [...currencyCodeList, initialDate, finalDate]);
     return List.generate(result?.length ?? 0, (index) {
       return Currency(
           id: result?[index]["id"] as String?,

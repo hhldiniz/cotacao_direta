@@ -134,16 +134,13 @@ void main() {
       expect(await dao.getLatestDataByCurrencyCode(null), isNull);
     });
 
-    // Comportamento atual: o friendlyName é lido do banco na consulta, mas não
-    // é repassado para o objeto Currency. O CurrencyRepository depende disso
-    // para decidir se busca o nome amigável na API de novo.
-    test('não preenche o friendlyName do resultado', () async {
+    test('preenche o friendlyName do resultado', () async {
       await dao.insert(_currency("USD", "2024-01-01T00:00:00.000",
           friendlyName: "Dólar dos Estados Unidos"));
 
       var currency = await dao.getLatestDataByCurrencyCode("USD");
 
-      expect(currency!.friendlyName, isNull);
+      expect(currency!.friendlyName, "Dólar dos Estados Unidos");
     });
   });
 
@@ -212,12 +209,24 @@ void main() {
       expect(currency.timestamp, "2024-02-01T00:00:00.000");
     });
 
-    // Comportamento atual: a cláusula "id IN (?)" recebe um único parâmetro com
-    // os códigos concatenados ("USD, EUR"), que não corresponde a nenhum id.
-    // Consultas com mais de uma moeda sempre voltam vazias.
-    test('não suporta mais de uma moeda por consulta', () async {
+    test('devolve as cotações de várias moedas de uma vez', () async {
       var result = await dao.getHistoricalData(
           ["USD", "EUR"], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000");
+
+      expect(result, hasLength(4));
+      expect(result.map((currency) => currency.id).toSet(), {"USD", "EUR"});
+    });
+
+    test('traz só as moedas pedidas', () async {
+      var result = await dao.getHistoricalData(
+          ["EUR"], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000");
+
+      expect(result.map((currency) => currency.id), ["EUR"]);
+    });
+
+    test('devolve lista vazia quando nenhuma moeda é pedida', () async {
+      var result = await dao.getHistoricalData(
+          [], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000");
 
       expect(result, isEmpty);
     });

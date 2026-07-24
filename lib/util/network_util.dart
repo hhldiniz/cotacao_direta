@@ -1,11 +1,18 @@
 import 'dart:io';
 
-class NetworkUtils{
-  Future<bool> isNetworkAvailable() async{
-    final result = await InternetAddress.lookup("google.com");
-    try{
+typedef AddressLookup = Future<List<InternetAddress>> Function(String host);
+
+class NetworkUtils {
+  final AddressLookup _lookup;
+
+  NetworkUtils({AddressLookup? lookup})
+      : _lookup = lookup ?? InternetAddress.lookup;
+
+  Future<bool> isNetworkAvailable() async {
+    try {
+      final result = await _lookup("google.com");
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } on SocketException catch(_){
+    } on SocketException catch (_) {
       return false;
     }
   }

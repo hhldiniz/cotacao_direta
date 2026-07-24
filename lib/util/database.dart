@@ -29,7 +29,7 @@ class AppDatabase {
 
   var migrationsScripts2_3 = [
     "ALTER TABLE Currency RENAME TO old_Currency",
-    "CREATE TABLE Currency(id TEXT PRIMARY KEY, historicalDate TEXT PRIMARY KEY, value REAL, timestamp TEXT)",
+    "CREATE TABLE Currency(id TEXT, historicalDate TEXT, value REAL, timestamp TEXT, PRIMARY KEY(id, historicalDate))",
     "INSERT INTO Currency(id, historicalDate, value, timestamp) SELECT id, historicalDate, value, timestamp FROM old_Currency",
     "DROP TABLE old_Currency"
   ];
@@ -40,38 +40,35 @@ class AppDatabase {
 
   var migrationsScripts4_5 = [
     "ALTER TABLE Currency RENAME TO old_Currency",
-    "CREATE TABLE Currency(id TEXT PRIMARY KEY, historicalDate TEXT PRIMARY KEY, value REAL, timestamp TEXT, friendlyName TEXT NOT NULL DEFAULT '')",
+    "CREATE TABLE Currency(id TEXT, historicalDate TEXT, value REAL, timestamp TEXT, friendlyName TEXT NOT NULL DEFAULT '', PRIMARY KEY(id, historicalDate))",
     "INSERT INTO Currency(id, historicalDate, value, timestamp) SELECT id, historicalDate, value, timestamp FROM old_Currency",
     "DROP TABLE old_Currency"
   ];
+
+  /// Scripts a aplicar para chegar em cada versão, na ordem.
+  Map<int, List<String>> get _migrationsByVersion => {
+        2: migrationsScripts1_2,
+        3: migrationsScripts2_3,
+        4: migrationsScripts3_4,
+        5: migrationsScripts4_5,
+      };
 
   Future<Database?> openAppDatabase() async {
     var path = databasePathOverride ??
         join(await getDatabasesPath(), 'doggie_database.db');
     if (_database == null)
-      _database = await openDatabase(path, onCreate: (db, version) {
-        db.execute(
+      _database = await openDatabase(path, onCreate: (db, version) async {
+        await db.execute(
             "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, friendlyName TEXT NOT NULL DEFAULT '', PRIMARY KEY(id, historicalDate))");
-        db.execute(
+        await db.execute(
             "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT)");
-      }, onUpgrade: (database, oldVersion, newVersion) {
-        switch (newVersion) {
-          case 2:
-            migrationsScripts1_2
-                .forEach((script) async => await database.execute(script));
-            break;
-          case 3:
-            migrationsScripts2_3
-                .forEach((script) async => await database.execute(script));
-            break;
-          case 4:
-            migrationsScripts3_4
-                .forEach((script) async => await database.execute(script));
-            break;
-          case 5:
-            migrationsScripts4_5
-                .forEach((script) async => await database.execute(script));
-            break;
+      }, onUpgrade: (database, oldVersion, newVersion) async {
+        // Aplica todas as versões intermediárias, uma de cada vez: quem estava
+        // na versão 1 precisa passar por 2, 3 e 4 antes de chegar na 5.
+        for (var version = oldVersion + 1; version <= newVersion; version++) {
+          for (var script in _migrationsByVersion[version] ?? const <String>[]) {
+            await database.execute(script);
+          }
         }
       }, version: 5);
     return _database;

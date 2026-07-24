@@ -32,8 +32,8 @@ class ExchangeValueBloc extends BaseBloc {
 
   Future<double?> retrieveCurrencyValue(Currencies? currency) async {
     return (await _currencyRepository.getLatestDataByCurrencyCode(
-        EnumValueAsString().getEnumValue(currency.toString())))!
-        .value;
+            EnumValueAsString().getEnumValue(currency.toString())))
+        ?.value;
   }
 
   @override
