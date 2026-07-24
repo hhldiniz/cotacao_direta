@@ -26,6 +26,9 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   flutter_test:
     sdk: flutter
+  # Roda o sqflite sobre o SQLite nativo, permitindo testar os DAOs sem um
+  # emulador/dispositivo.
+  sqflite_common_ffi: ^2.3.3
 
 flutter_icons:
   android: true
