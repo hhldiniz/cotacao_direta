@@ -6,8 +6,9 @@ class ExchangeValueBlocProvider extends InheritedWidget
 
   final ExchangeValueBloc bloc;
 
-  ExchangeValueBlocProvider({Key? key, required Widget child})
-      : bloc = ExchangeValueBloc(),
+  ExchangeValueBlocProvider(
+      {Key? key, required Widget child, ExchangeValueBloc? bloc})
+      : bloc = bloc ?? ExchangeValueBloc(),
         super(key: key, child: child);
 
   @override

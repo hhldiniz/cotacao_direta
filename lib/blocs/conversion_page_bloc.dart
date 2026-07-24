@@ -6,8 +6,7 @@ import 'package:cotacao_direta/util/string_utils.dart';
 
 import 'exchange_value_bloc.dart';
 
-class ConversionPageBloc extends BaseBloc{
-
+class ConversionPageBloc extends BaseBloc {
   var _multiplierStreamController = StreamController();
   var _currencyFromStreamController = StreamController();
   var _currencyToStreamController = StreamController();
@@ -42,28 +41,36 @@ class ConversionPageBloc extends BaseBloc{
 
   Sink get currencyLabelSink => _currencyLabelStreamController.sink;
 
-  updateMultiplierValue(value){
+  updateMultiplierValue(value) {
     _multiplierValue = value == null || value == "" ? 0 : value;
     multiplierSink.add(_multiplierValue);
   }
 
-  updateFromCurrency(value){
+  updateFromCurrency(value) {
     _selectedFromCurrency = value;
     currencyFromSink.add(value);
   }
 
-  updateToCurrency(value){
+  updateToCurrency(value) {
     _selectedToCurrency = value;
     currencyToSink.add(value);
   }
 
-  updateResult() async{
-    var fromValue = await (_exchangeValueBloc.retrieveCurrencyValue(_selectedFromCurrency) as FutureOr<double>);
-    var toValue = await (_exchangeValueBloc.retrieveCurrencyValue(_selectedToCurrency) as FutureOr<double>);
+  updateResult() async {
+    var fromValue =
+        await _exchangeValueBloc.retrieveCurrencyValue(_selectedFromCurrency);
+    var toValue =
+        await _exchangeValueBloc.retrieveCurrencyValue(_selectedToCurrency);
+    // Sem cotação de alguma das moedas não há conversão possível: o null faz a
+    // tela mostrar "Sem Dados".
+    if (fromValue == null || fromValue == 0 || toValue == null) {
+      conversionResultSink.add(null);
+      return;
+    }
     conversionResultSink.add(_multiplierValue * (toValue / fromValue));
   }
 
-  switchCurrencies() async{
+  switchCurrencies() async {
     var currentSelectedToCurrency = _selectedToCurrency;
     var currentSelectedFromCurrency = _selectedFromCurrency;
     updateFromCurrency(currentSelectedToCurrency);
@@ -78,5 +85,4 @@ class ConversionPageBloc extends BaseBloc{
     _conversionResultStreamController.close();
     _currencyLabelStreamController.close();
   }
-
 }

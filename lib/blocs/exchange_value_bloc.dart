@@ -7,13 +7,14 @@ import 'package:cotacao_direta/util/string_utils.dart';
 import 'base_bloc.dart';
 
 class ExchangeValueBloc extends BaseBloc {
-  StreamController<num>? valueController;
+  // O valor é anulável: sem cotação disponível a tela mostra "Sem Dados".
+  StreamController<num?>? valueController;
 
-  Stream<num> get getExchangeValueStream => valueController!.stream;
+  Stream<num?> get getExchangeValueStream => valueController!.stream;
 
   final _currencyRepository = CurrencyRepository();
 
-  Stream<num> getNextStreamController() {
+  Stream<num?> getNextStreamController() {
     if (valueController == null) {
       valueController = StreamController();
       return valueController!.stream;
@@ -26,14 +27,14 @@ class ExchangeValueBloc extends BaseBloc {
     }
   }
 
-  void updateValue(value) {
+  void updateValue(num? value) {
     valueController!.sink.add(value);
   }
 
   Future<double?> retrieveCurrencyValue(Currencies? currency) async {
     return (await _currencyRepository.getLatestDataByCurrencyCode(
-        EnumValueAsString().getEnumValue(currency.toString())))!
-        .value;
+            EnumValueAsString().getEnumValue(currency.toString())))
+        ?.value;
   }
 
   @override

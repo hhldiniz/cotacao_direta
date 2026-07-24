@@ -7,7 +7,7 @@ class ConfigurationDao {
 
   Future<void> insert(Configuration configuration) async {
     final Database? db = await (AppDatabase().openAppDatabase());
-    db?.insert("Configurations", configuration.toMap(),
+    await db?.insert("Configurations", configuration.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -26,7 +26,8 @@ class ConfigurationDao {
       return Configuration(configurationId);
     } else
       return Configuration(configurationId,
-          overrideDefaultCurrency: result?.first["overrideDefaultCurrency"] == 1,
+          overrideDefaultCurrency:
+              result?.first["overrideDefaultCurrency"] == 1,
           selectedOverrideCurrencyCode:
               result?.first["selectedOverrideCurrencyCode"] as String?);
   }

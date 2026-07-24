@@ -188,7 +188,9 @@ class ConversionWidgetState extends State<ConversionWidget> {
                       initialData: 0,
                       stream: bloc.conversionResultStream,
                       builder: (context, snapshot) => Text(
-                        _formatter.format(snapshot.data),
+                        snapshot.data == null
+                            ? _localizations.noDataLabel!
+                            : _formatter.format(snapshot.data),
                         style: TextStyle(fontSize: 18),
                       ),
                     )

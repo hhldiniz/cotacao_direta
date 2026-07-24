@@ -204,26 +204,110 @@ void main() {
       expect(latestUri.queryParameters["symbol"], "USD");
     });
 
-    // Comportamento atual: `jsonDecode(...).forEach(...)` devolve null, então a
-    // cotação vinda da rede é sempre gravada sem valor.
-    test('a cotação obtida na rede vem sem valor', () async {
-      currencyDao.latestCurrency = null;
-
-      var currency = await buildRepository(
-              exchangeResponse: '[{"currency_code": "USD", "value": 5.5}]')
-          .getLatestDataByCurrencyCode("USD");
-
-      expect(currency!.value, isNull);
-    });
-
-    // Comportamento atual: `savedCurrency!` estoura quando não há rede e o
-    // banco ainda está vazio (primeiro uso do app offline).
-    test('sem rede e sem cotação salva, lança erro', () async {
+    test('sem rede e sem cotação salva, devolve null', () async {
       networkUtils.available = false;
       currencyDao.latestCurrency = null;
 
-      expect(buildRepository().getLatestDataByCurrencyCode("USD"),
-          throwsA(isA<TypeError>()));
+      expect(
+          await buildRepository().getLatestDataByCurrencyCode("USD"), isNull);
+      expect(requestedUris, isEmpty);
+    });
+
+    test('cotação salva sem timestamp é tratada como vencida', () async {
+      currencyDao.latestCurrency = Currency(
+          id: "USD",
+          value: 5.0,
+          historicalDate: "2024-01-01T00:00:00.000",
+          friendlyName: "Dólar dos Estados Unidos");
+
+      await buildRepository(exchangeResponse: '[]')
+          .getLatestDataByCurrencyCode("USD");
+
+      expect(
+          requestedUris.map((uri) => uri.path), contains(contains("latest")));
+    });
+
+    test('busca o nome amigável quando o salvo está vazio', () async {
+      currencyDao.latestCurrency = Currency(
+          id: "USD",
+          value: 5.0,
+          timestamp: DateTime.now().toIso8601String(),
+          historicalDate: "2024-01-01T00:00:00.000",
+          friendlyName: "");
+
+      var currency = await buildRepository().getLatestDataByCurrencyCode("USD");
+
+      expect(currency!.friendlyName, "Dólar dos Estados Unidos");
+    });
+
+    test('não busca o nome amigável quando o salvo já tem um', () async {
+      currencyDao.latestCurrency = Currency(
+          id: "USD",
+          value: 5.0,
+          timestamp: DateTime.now().toIso8601String(),
+          historicalDate: "2024-01-01T00:00:00.000",
+          friendlyName: "Dólar dos Estados Unidos");
+
+      await buildRepository().getLatestDataByCurrencyCode("USD");
+
+      expect(requestedUris, isEmpty);
+      expect(currencyDao.inserted, isEmpty);
+    });
+  });
+
+  group('CurrencyRepository: leitura do valor da cotação', () {
+    setUp(() => currencyDao.latestCurrency = null);
+
+    Future<double?> valueFrom(String response) async =>
+        (await buildRepository(exchangeResponse: response)
+                .getLatestDataByCurrencyCode("USD"))
+            ?.value;
+
+    test('lê o campo value do item da moeda pedida', () async {
+      expect(
+          await valueFrom('[{"currency_code": "EUR", "value": 6.1},'
+              '{"currency_code": "USD", "value": 5.42}]'),
+          5.42);
+    });
+
+    test('aceita os outros nomes de campo já usados pela API', () async {
+      expect(await valueFrom('[{"currency_code": "USD", "rate": 5.42}]'), 5.42);
+      expect(
+          await valueFrom('[{"currency_code": "USD", "exchange_rate": 5.42}]'),
+          5.42);
+    });
+
+    test('aceita valor numérico em texto', () async {
+      expect(
+          await valueFrom('[{"currency_code": "USD", "value": "5.42"}]'), 5.42);
+    });
+
+    test('cai no primeiro campo numérico quando o nome é desconhecido',
+        () async {
+      expect(
+          await valueFrom('[{"currency_code": "USD", "cotacao": 5.42}]'), 5.42);
+    });
+
+    test('converte inteiro para double', () async {
+      expect(await valueFrom('[{"currency_code": "USD", "value": 5}]'), 5.0);
+    });
+
+    test('devolve null quando a moeda não está na resposta', () async {
+      expect(
+          await valueFrom('[{"currency_code": "EUR", "value": 6.1}]'), isNull);
+    });
+
+    test('devolve null quando a resposta está vazia', () async {
+      expect(await valueFrom('[]'), isNull);
+    });
+
+    test('devolve null quando a resposta não é uma lista', () async {
+      expect(await valueFrom('{"rates": {"USD": 5.42}}'), isNull);
+    });
+
+    test('devolve null quando o item não tem nenhum número', () async {
+      expect(await valueFrom('[{"currency_code": "USD", "nome": "Dólar"}]'),
+          isNull);
     });
   });
 

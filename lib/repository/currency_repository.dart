@@ -115,14 +115,9 @@ class CurrencyRepository {
         await _currencyDao.getLatestDataByCurrencyCode(currencyCode);
     if (networkAvailable &&
         (savedCurrency == null ||
-            !_isCurrencyTimestampValid(savedCurrency.timestamp!))) {
+            !_isCurrencyTimestampValid(savedCurrency.timestamp))) {
       var response = await _httpClient.get(await _resolveExchangeRateApiUri());
-      var resultList = [];
-      var currencyValue = jsonDecode(response.body).forEach((item){
-        if(item["currency_code"] == currencyCode){
-          resultList.add(item);
-        }
-      });
+      var currencyValue = _extractCurrencyValue(response.body, currencyCode);
       var now = DateTime.now().toIso8601String();
       var newCurrency = Currency(
           id: currencyCode,
@@ -130,13 +125,16 @@ class CurrencyRepository {
           historicalDate: now,
           timestamp: now,
           friendlyName: (await _friendlyCurrencyCodeNameList())[currencyCode]);
-      _currencyDao.insert(newCurrency);
+      await _currencyDao.insert(newCurrency);
       return newCurrency;
     } else {
-      if (savedCurrency!.friendlyName == null) {
+      // Sem rede e sem nada salvo não há o que devolver: é o primeiro uso do
+      // aplicativo offline.
+      if (savedCurrency == null) return null;
+      if (savedCurrency.friendlyName?.isNotEmpty != true) {
         savedCurrency.friendlyName =
             (await _friendlyCurrencyCodeNameList())[currencyCode];
-        _currencyDao.insert(savedCurrency);
+        await _currencyDao.insert(savedCurrency);
       }
       return savedCurrency;
     }
@@ -164,7 +162,7 @@ class CurrencyRepository {
               friendlyName: friendlyNames[currencyEntry.key]));
         });
       });
-      _currencyDao.insertMany(currencyListToSave
+      await _currencyDao.insertMany(currencyListToSave
           .where((currency) =>
               (DateTime.now().year -
                   DateTime.parse(currency.historicalDate!).year) <
@@ -187,7 +185,46 @@ class CurrencyRepository {
           currencyCodeList, initialDate, finalDate);
   }
 
-  bool _isCurrencyTimestampValid(String timeStamp) {
+  /// Nomes de campo já usados pela API para carregar a cotação, em ordem de
+  /// preferência.
+  static const _valueFieldNames = [
+    "value",
+    "rate",
+    "exchange_rate",
+    "currency_value"
+  ];
+
+  /// A API devolve uma lista de itens identificados por `currency_code`. O nome
+  /// do campo com a cotação já mudou entre versões da API, então procuramos os
+  /// nomes conhecidos e, se nenhum aparecer, o primeiro campo numérico do item.
+  double? _extractCurrencyValue(String responseBody, String? currencyCode) {
+    var decoded = jsonDecode(responseBody);
+    if (decoded is! List) return null;
+    var item = decoded.firstWhere(
+        (element) => element is Map && element["currency_code"] == currencyCode,
+        orElse: () => null);
+    if (item is! Map) return null;
+
+    for (var fieldName in _valueFieldNames) {
+      var value = _asDouble(item[fieldName]);
+      if (value != null) return value;
+    }
+    for (var entry in item.entries) {
+      if (entry.key == "currency_code") continue;
+      var value = _asDouble(entry.value);
+      if (value != null) return value;
+    }
+    return null;
+  }
+
+  double? _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  bool _isCurrencyTimestampValid(String? timeStamp) {
+    if (timeStamp == null) return false;
     try {
       var timeStampDate = DateTime.parse(timeStamp);
       return DateTime.now().difference(timeStampDate).inHours < 1;
