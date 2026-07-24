@@ -25,9 +25,9 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
   get currencyHistoryStream =>
       _selectedCurrencyHistoryDataStreamController.stream;
 
-  get initialDateController => _initialDateController;
+  TextEditingController get initialDateController => _initialDateController;
 
-  get endDateController => _endDateController;
+  TextEditingController get endDateController => _endDateController;
 
   getCurrencyHistoryData(String selectedCurrencyCod) async {
 
@@ -59,5 +59,9 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
   @override
   void dispose() {
     _selectedCurrencyHistoryDataStreamController.close();
+    // Os campos de data são ChangeNotifier: sem dispose, os ouvintes ficam
+    // presos ao bloc depois que a tela sai.
+    _initialDateController.dispose();
+    _endDateController.dispose();
   }
 }
