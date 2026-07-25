@@ -59,6 +59,16 @@ void main() {
       expect(find.text("Sem Dados"), findsNothing);
     });
 
+    // O CurrencyRepository guarda o inverso do `bid` da AwesomeAPI justamente
+    // para esta conta bater: um bid de 5,42 reais por dólar precisa aparecer
+    // como 5,42 na tela.
+    testWidgets('mostra a cotação da API na mesma orientação que ela publica',
+        (WidgetTester tester) async {
+      await pumpExchangeRate(tester, 1 / 5.42);
+
+      expect(find.text("5.42"), findsOneWidget);
+    });
+
     testWidgets('não mostra nada enquanto a cotação não chega',
         (WidgetTester tester) async {
       await tester.pumpWidget(MaterialApp(

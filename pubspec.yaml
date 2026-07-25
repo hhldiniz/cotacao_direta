@@ -21,8 +21,6 @@ dependencies:
     sdk: flutter
   sqflite: 2.3.2
   path: ^1.9.0
-  # Usado para ler a lista de nomes amigáveis das moedas (XML).
-  xml: ^6.5.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
