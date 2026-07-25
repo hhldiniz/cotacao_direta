@@ -1,5 +1,7 @@
 # cotacao_direta
 
+[![CI](https://github.com/hhldiniz/cotacao_direta/actions/workflows/ci.yml/badge.svg)](https://github.com/hhldiniz/cotacao_direta/actions/workflows/ci.yml)
+
 A new Flutter project.
 
 ## Testes
@@ -20,6 +22,10 @@ Os testes são unitários e não precisam de emulador nem de rede:
 Testes que tocam o banco devem chamar `useInMemoryDatabase()`
 (`test/helpers/database_test_helper.dart`) para receber um banco novo a cada
 caso.
+
+O CI (`.github/workflows/ci.yml`) roda a análise e os testes a cada push na
+`master` e em todo pull request, além de compilar o APK de debug. A versão do
+Flutter está fixada no workflow.
 
 ## Getting Started
 
