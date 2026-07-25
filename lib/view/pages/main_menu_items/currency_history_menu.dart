@@ -4,7 +4,6 @@ import 'package:cotacao_direta/providers/selected_currency_details_bloc_provider
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:cotacao_direta/view/pages/selected_currency_details.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class CurrencyHistory extends StatelessWidget {
   @override

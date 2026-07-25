@@ -40,12 +40,10 @@ jobs:
       - name: Baixa as dependências
         run: flutter pub get
 
-      # O projeto tem apontamentos antigos do analisador (imports
-      # desnecessários e uma variável sem uso), todos de severidade info ou
-      # warning. Por ora só erros derrubam o CI; quando eles forem resolvidos,
-      # basta remover as duas flags para apertar a régua.
+      # Sem flags: qualquer apontamento do analisador, de info para cima,
+      # derruba o CI. O projeto está limpo, e a ideia é que continue.
       - name: Analisa
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: flutter analyze
 
       - name: Testa
         run: flutter test

@@ -1,6 +1,5 @@
 import 'package:cotacao_direta/providers/selected_currency_details_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
-import 'package:cotacao_direta/view/widgets/charts.dart';
 import 'package:flutter/material.dart';
 
 class SelectedCurrencyDetails extends StatelessWidget {
