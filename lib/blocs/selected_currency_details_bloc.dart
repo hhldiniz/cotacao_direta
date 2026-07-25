@@ -30,10 +30,13 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
   TextEditingController get endDateController => _endDateController;
 
   getCurrencyHistoryData(String selectedCurrencyCod) async {
-
-    var currencyList = await _currencyRepository.getCurrencyHistoricalData(
+    // O resultado é descartado por enquanto: o bloco que montava a série do
+    // gráfico está comentado abaixo, esperando a troca da biblioteca. A busca
+    // continua valendo porque guarda o histórico no banco.
+    await _currencyRepository.getCurrencyHistoricalData(
         [selectedCurrencyCod], _initialDate, _finalDate);
-    // TODO Replace this block when the chart library gets replaced
+    // TODO Replace this block when the chart library gets replaced. O valor
+    // devolvido pela chamada acima volta a ser usado como `currencyList`.
     // var dataToAdd = <Series<dynamic, DateTime>>[];
     /*dataToAdd.add(
         Series<Currency, DateTime>(

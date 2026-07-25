@@ -4,9 +4,7 @@ import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart'
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:cotacao_direta/view/widgets/widget_state_helpers/override_currency_state_helper.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class ConfigurationsPage extends StatelessWidget {
   @override
