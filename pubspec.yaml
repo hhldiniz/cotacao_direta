@@ -3,17 +3,15 @@ description: Um aplicativo simples que mostra a cotação das principais moedas 
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
-
-enable-experiment:
-  - extension-methods
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.44.0"
 
 dependencies:
   flutter:
     sdk: flutter
   sprintf: ^7.0.0
   http: ^1.6.0
-  intl: ^0.19.0
+  intl: ^0.20.2
   # flutter 1.22 not supported by this lib
   #  flutter_stetho: ^0.6.0-dev.1
   cupertino_icons: ^1.0.6
