@@ -11,11 +11,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Versão fixa de propósito: o pubspec.lock exige Dart >= 3.5, enquanto o
-  # pubspec.yaml ainda declara um limite antigo (< 3.0.0). Fixar evita que uma
-  # versão nova do Flutter mude a resolução sem ninguém pedir. Para atualizar,
-  # rode os testes na versão nova antes de trocar aqui.
-  FLUTTER_VERSION: 3.24.5
+  # Versão fixa de propósito, para que a resolução de dependências não mude
+  # sozinha. Deve acompanhar o `environment` do pubspec.yaml. Para atualizar,
+  # rode a análise e os testes na versão nova antes de trocar aqui.
+  FLUTTER_VERSION: 3.44.8
 
 jobs:
   test:
