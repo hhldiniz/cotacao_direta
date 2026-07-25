@@ -8,27 +8,33 @@ import 'package:cotacao_direta/util/network_util.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:sprintf/sprintf.dart';
-import 'package:xml/xml.dart';
 
+/// Cotações vindas da AwesomeAPI (economia.awesomeapi.com.br).
+///
+/// A API trabalha com pares MOEDA-CONTRAPARTIDA (USD-BRL) e devolve o valor no
+/// campo `bid`, em unidades da contrapartida por uma unidade da moeda cotada:
+/// para USD-BRL, quantos reais vale um dólar.
+///
+/// O app guarda o inverso disso em [Currency.value] — quantas unidades da moeda
+/// valem uma unidade da contrapartida. É a convenção que a tela inicial
+/// (que mostra `1 / value`) e a conversão (que divide um valor pelo outro) já
+/// usavam, então a inversão feita aqui mantém o resto do app funcionando sem
+/// alteração.
 class CurrencyRepository {
   static CurrencyRepository? _instance;
+
   final CurrencyDao _currencyDao;
   final ConfigurationRepository _configurationRepository;
   final NetworkUtils _networkUtils;
   final http.Client _httpClient;
-  /*final String _exchangeRateApi =
-      "https://european-exchange-api.herokuapp.com/latest?access_key=%s&symbol=%s";*/
-  final String _exchangeRateApi =
-      "https://european-exchange-api.herokuapp.com/latest?symbol=%s";
-  /*final String _exchangeHistoricalRateApi =
-      "https://european-exchange-api.herokuapp.com/history?access_key=%s&start_at=%s&end_at=%s&base=%s&symbols=%s";*/
-  final String _exchangeHistoricalRateApi =
-      "https://european-exchange-api.herokuapp.com/history?start_at=%s&end_at=%s&base=%s&symbols=%s";
+
+  static const _apiHost = "economia.awesomeapi.com.br";
+
+  /// Teto de registros por consulta ao histórico, imposto pela API.
+  static const _maxHistoryRecords = 360;
+
   final _enumValueAsStringUtil = EnumValueAsString();
-  final _currencyCodeFriendlyNameApi =
-      "https://european-exchange-api.herokuapp.com/currencies";
-  //final String? _apiKey = null;
+  final _apiDateFormatter = DateFormat("yyyyMMdd");
 
   factory CurrencyRepository() {
     if (_instance == null)
@@ -63,48 +69,59 @@ class CurrencyRepository {
   /// Descarta o singleton para que um teste não vaze estado para o seguinte.
   static void resetInstance() => _instance = null;
 
-  /*Future<String> checkAndRetrieveApiKey() async {
-    return _apiKey ??
-        jsonDecode(await rootBundle.loadString('assets/secrets/secrets.json'))[
-            'exchange_api_key'];
-  }*/
+  /// Moeda contra a qual as cotações são expressas quando o usuário não
+  /// escolheu outra nas configurações: o app cota "frente ao real".
+  String get _defaultCounterCurrency =>
+      _enumValueAsStringUtil.getEnumValue(Currencies.BRL.toString());
 
-  Future<Uri> _resolveExchangeRateApiUri() async {
-    // final apiKey = await checkAndRetrieveApiKey();
+  Future<String> _resolveCounterCurrency() async {
     final configuration = await _configurationRepository.getConfiguration();
-    return Uri.parse(sprintf(_exchangeRateApi, [
-      /*apiKey,*/
-      configuration.overrideDefaultCurrency
-          ? configuration.selectedOverrideCurrencyCode
-          : _enumValueAsStringUtil.getEnumValue(Currencies.USD.toString())
-    ]));
+    final selected = configuration.selectedOverrideCurrencyCode;
+    if (configuration.overrideDefaultCurrency &&
+        selected != null &&
+        selected.isNotEmpty) {
+      return selected;
+    }
+    return _defaultCounterCurrency;
   }
 
-  Future<Uri> _resolveExchangeHistoricalRateApiUri(
-      currencyCodeList, initialDate, finalDate) async {
-    //final apiKey = await checkAndRetrieveApiKey();
-    final configuration = await _configurationRepository.getConfiguration();
-    return Uri.parse(sprintf(_exchangeHistoricalRateApi, [
-      /*apiKey,*/
-      initialDate,
-      finalDate,
-      configuration.overrideDefaultCurrency
-          ? configuration.selectedOverrideCurrencyCode
-          : _enumValueAsStringUtil.getEnumValue(Currencies.USD.toString()),
-      currencyCodeList.join(", ")
-    ]));
+  Uri _lastQuoteUri(String currencyCode, String counterCurrency) =>
+      Uri.https(_apiHost, "/json/last/$currencyCode-$counterCurrency");
+
+  Uri _availableCurrenciesUri() => Uri.https(_apiHost, "/json/available/uniq");
+
+  Uri _historyUri(String currencyCode, String counterCurrency,
+      DateTime? initialDate, DateTime? finalDate) {
+    var records = _maxHistoryRecords;
+    if (initialDate != null && finalDate != null) {
+      records = finalDate.difference(initialDate).inDays + 1;
+      if (records < 1) records = 1;
+      if (records > _maxHistoryRecords) records = _maxHistoryRecords;
+    }
+    var query = <String, String>{};
+    if (initialDate != null)
+      query["start_date"] = _apiDateFormatter.format(initialDate);
+    if (finalDate != null)
+      query["end_date"] = _apiDateFormatter.format(finalDate);
+    // Mapa vazio deixaria a URL terminada em "?".
+    return Uri.https(
+        _apiHost,
+        "/json/daily/$currencyCode-$counterCurrency/$records",
+        query.isEmpty ? null : query);
   }
 
+  /// Nomes amigáveis das moedas, no formato {"USD-BRL": "Dólar Americano/Real
+  /// Brasileiro"}. Só é consultada quando um registro salvo está sem nome: nas
+  /// consultas de cotação o nome já vem junto do valor.
   Future<Map<String?, String?>> _friendlyCurrencyCodeNameList() async {
-    var response =
-        await _httpClient.get(Uri.parse(_currencyCodeFriendlyNameApi));
+    var response = await _httpClient.get(_availableCurrenciesUri());
     var friendlyCurrencyNamesMap = Map<String?, String?>();
-    XmlDocument.parse(response.body)
-        .getElement("currencies")!
-        .children
-        .forEach((child) {
-      friendlyCurrencyNamesMap[child.getAttribute("currencycode")] =
-          child.getAttribute("name");
+    var decoded = _tryDecode(response.body);
+    if (decoded is! Map) return friendlyCurrencyNamesMap;
+    decoded.forEach((pair, name) {
+      if (pair is! String || name is! String) return;
+      friendlyCurrencyNamesMap[pair.split("-").first] =
+          _quotedCurrencyName(name);
     });
     return friendlyCurrencyNamesMap;
   }
@@ -116,15 +133,11 @@ class CurrencyRepository {
     if (networkAvailable &&
         (savedCurrency == null ||
             !_isCurrencyTimestampValid(savedCurrency.timestamp))) {
-      var response = await _httpClient.get(await _resolveExchangeRateApiUri());
-      var currencyValue = _extractCurrencyValue(response.body, currencyCode);
-      var now = DateTime.now().toIso8601String();
-      var newCurrency = Currency(
-          id: currencyCode,
-          value: currencyValue,
-          historicalDate: now,
-          timestamp: now,
-          friendlyName: (await _friendlyCurrencyCodeNameList())[currencyCode]);
+      var newCurrency = await _fetchLatestQuote(currencyCode);
+      // Sem cotação nova (resposta inesperada, par inexistente), o que já está
+      // salvo continua valendo: gravar um registro sem valor esconderia a
+      // última cotação boa pela hora seguinte.
+      if (newCurrency == null) return savedCurrency;
       await _currencyDao.insert(newCurrency);
       return newCurrency;
     } else {
@@ -140,28 +153,39 @@ class CurrencyRepository {
     }
   }
 
+  Future<Currency?> _fetchLatestQuote(String? currencyCode) async {
+    if (currencyCode == null || currencyCode.isEmpty) return null;
+    var counterCurrency = await _resolveCounterCurrency();
+    // Uma moeda cotada contra ela mesma vale exatamente uma unidade; a API não
+    // tem esse par.
+    if (currencyCode == counterCurrency) {
+      var now = DateTime.now();
+      return Currency(
+          id: currencyCode,
+          value: 1,
+          historicalDate: now.toIso8601String(),
+          timestamp: now.toIso8601String());
+    }
+    var response =
+        await _httpClient.get(_lastQuoteUri(currencyCode, counterCurrency));
+    var quote = _parseLastQuote(response.body, currencyCode, counterCurrency);
+    return quote == null ? null : _currencyFromQuote(quote, currencyCode);
+  }
+
   Future<List<Currency>> getCurrencyHistoricalData(
       List<String> currencyCodeList, initialDate, finalDate) async {
     if (await _networkUtils.isNetworkAvailable()) {
-      var response = await _httpClient.get(
-          await _resolveExchangeHistoricalRateApiUri(
-              currencyCodeList, initialDate, finalDate));
-      var friendlyNames = await _friendlyCurrencyCodeNameList();
-      List<MapEntry> jsonData =
-          jsonDecode(response.body)["rates"].entries.toList();
+      var counterCurrency = await _resolveCounterCurrency();
+      var start = _parseAppDate(initialDate);
+      var end = _parseAppDate(finalDate);
       var currencyListToSave = <Currency>[];
-      jsonData.forEach((MapEntry element) {
-        var historicalDate = DateFormat("yyyy-MM-dd").parse(element.key);
-
-        element.value.entries.forEach((MapEntry currencyEntry) {
-          currencyListToSave.add(Currency(
-              id: currencyEntry.key,
-              historicalDate: historicalDate.toIso8601String(),
-              value: currencyEntry.value,
-              timestamp: DateTime.now().toIso8601String(),
-              friendlyName: friendlyNames[currencyEntry.key]));
-        });
-      });
+      // A API atende um par por consulta; o app costuma pedir uma moeda só.
+      for (var currencyCode in currencyCodeList) {
+        if (currencyCode == counterCurrency) continue;
+        var response = await _httpClient
+            .get(_historyUri(currencyCode, counterCurrency, start, end));
+        currencyListToSave.addAll(_parseHistory(response.body, currencyCode));
+      }
       await _currencyDao.insertMany(currencyListToSave
           .where((currency) =>
               (DateTime.now().year -
@@ -185,36 +209,79 @@ class CurrencyRepository {
           currencyCodeList, initialDate, finalDate);
   }
 
-  /// Nomes de campo já usados pela API para carregar a cotação, em ordem de
-  /// preferência.
-  static const _valueFieldNames = [
-    "value",
-    "rate",
-    "exchange_rate",
-    "currency_value"
-  ];
+  /// A resposta de `/json/last` é um objeto com o par sem o hífen como chave:
+  /// USD-BRL vira USDBRL.
+  Map? _parseLastQuote(
+      String responseBody, String currencyCode, String counterCurrency) {
+    var decoded = _tryDecode(responseBody);
+    if (decoded is! Map) return null;
+    var item = decoded["$currencyCode$counterCurrency"];
+    if (item is Map) return item;
+    // Pedimos um par só: se a chave vier em outro formato, o único item da
+    // resposta ainda é o que queremos. Respostas de erro não têm objetos
+    // aninhados e caem fora daqui.
+    var items = decoded.values.whereType<Map>().toList();
+    return items.length == 1 ? items.first : null;
+  }
 
-  /// A API devolve uma lista de itens identificados por `currency_code`. O nome
-  /// do campo com a cotação já mudou entre versões da API, então procuramos os
-  /// nomes conhecidos e, se nenhum aparecer, o primeiro campo numérico do item.
-  double? _extractCurrencyValue(String responseBody, String? currencyCode) {
-    var decoded = jsonDecode(responseBody);
-    if (decoded is! List) return null;
-    var item = decoded.firstWhere(
-        (element) => element is Map && element["currency_code"] == currencyCode,
-        orElse: () => null);
-    if (item is! Map) return null;
+  /// A resposta de `/json/daily` é uma lista de itens no mesmo formato do
+  /// `/json/last`, um por dia.
+  List<Currency> _parseHistory(String responseBody, String currencyCode) {
+    var decoded = _tryDecode(responseBody);
+    if (decoded is! List) return [];
+    return decoded
+        .whereType<Map>()
+        .map((item) => _currencyFromQuote(item, currencyCode))
+        .whereType<Currency>()
+        .toList();
+  }
 
-    for (var fieldName in _valueFieldNames) {
-      var value = _asDouble(item[fieldName]);
-      if (value != null) return value;
-    }
-    for (var entry in item.entries) {
-      if (entry.key == "currency_code") continue;
-      var value = _asDouble(entry.value);
-      if (value != null) return value;
-    }
+  /// Converte um item da API no [Currency] que o app guarda, invertendo o
+  /// `bid` para a convenção descrita na documentação da classe.
+  Currency? _currencyFromQuote(Map item, String currencyCode) {
+    var bid = _asDouble(item["bid"]) ?? _asDouble(item["ask"]);
+    if (bid == null || bid == 0) return null;
+    var quoteDate = _quoteDate(item) ?? DateTime.now();
+    return Currency(
+        id: currencyCode,
+        value: 1 / bid,
+        historicalDate: quoteDate.toIso8601String(),
+        timestamp: DateTime.now().toIso8601String(),
+        friendlyName: _quotedCurrencyName(item["name"]));
+  }
+
+  /// O `timestamp` vem em segundos desde a época; o `create_date`, como
+  /// "yyyy-MM-dd HH:mm:ss".
+  DateTime? _quoteDate(Map item) {
+    var timestamp = item["timestamp"];
+    var seconds =
+        timestamp is num ? timestamp.toInt() : int.tryParse("$timestamp");
+    if (seconds != null)
+      return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+    var createDate = item["create_date"];
+    return createDate is String ? DateTime.tryParse(createDate) : null;
+  }
+
+  /// O `name` vem como "Dólar Americano/Real Brasileiro": a parte antes da
+  /// barra é o nome da moeda cotada.
+  String? _quotedCurrencyName(dynamic name) {
+    if (name is! String || name.isEmpty) return null;
+    var separator = name.indexOf("/");
+    return separator < 0 ? name : name.substring(0, separator);
+  }
+
+  DateTime? _parseAppDate(dynamic date) {
+    if (date is DateTime) return date;
+    if (date is String && date.isNotEmpty) return DateTime.tryParse(date);
     return null;
+  }
+
+  dynamic _tryDecode(String responseBody) {
+    try {
+      return jsonDecode(responseBody);
+    } catch (exception) {
+      return null;
+    }
   }
 
   double? _asDouble(dynamic value) {
