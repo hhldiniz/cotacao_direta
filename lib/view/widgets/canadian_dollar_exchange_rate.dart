@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'exchange_rate_value.dart';
 
 class CanadianDollarExchangeRate extends StatelessWidget {
-  final exchangeRateValue = ExchangeRateValue(Currencies.CAD);
+  final Color color;
+
+  CanadianDollarExchangeRate({this.color = Colors.white});
 
   @override
   Widget build(BuildContext context) {
@@ -17,14 +19,16 @@ class CanadianDollarExchangeRate extends StatelessWidget {
               "CAD ",
               style: TextStyle(
                 fontSize: 18 * Responsive.scaleFactor(context),
-                color: Colors.white,
+                color: color,
               ),
             ),
           ],
         ),
         Column(
           children: <Widget>[
-            ExchangeValueBlocProvider(child: exchangeRateValue),
+            ExchangeValueBlocProvider(
+              child: ExchangeRateValue(Currencies.CAD, color: color),
+            ),
           ],
         ),
       ],

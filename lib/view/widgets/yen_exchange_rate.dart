@@ -5,7 +5,9 @@ import 'package:cotacao_direta/view/widgets/exchange_rate_value.dart';
 import 'package:flutter/material.dart';
 
 class YenExchangeRate extends StatelessWidget {
-  final exchangeRateValue = ExchangeRateValue(Currencies.JPY);
+  final Color color;
+
+  YenExchangeRate({this.color = Colors.white});
 
   @override
   Widget build(BuildContext context) {
@@ -17,14 +19,16 @@ class YenExchangeRate extends StatelessWidget {
               "JPY ",
               style: TextStyle(
                 fontSize: 18 * Responsive.scaleFactor(context),
-                color: Colors.white,
+                color: color,
               ),
             ),
           ],
         ),
         Column(
           children: <Widget>[
-            ExchangeValueBlocProvider(child: exchangeRateValue),
+            ExchangeValueBlocProvider(
+              child: ExchangeRateValue(Currencies.JPY, color: color),
+            ),
           ],
         ),
       ],

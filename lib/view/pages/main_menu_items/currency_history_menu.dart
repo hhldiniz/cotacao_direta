@@ -58,6 +58,11 @@ class CurrencyHistory extends StatelessWidget {
                   );
                 },
               ),
+              trailing: Icon(
+                Icons.chevron_right,
+                size: 20 * _scale,
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
             onTap: () {
               Navigator.push(

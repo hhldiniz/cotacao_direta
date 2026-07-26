@@ -9,8 +9,9 @@ import 'package:intl/intl.dart';
 
 class ExchangeRateValue extends StatefulWidget {
   final Currencies currency;
+  final Color color;
 
-  ExchangeRateValue(this.currency);
+  ExchangeRateValue(this.currency, {this.color = Colors.white});
 
   @override
   State<StatefulWidget> createState() {
@@ -65,11 +66,14 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
               didChangeDependencies();
               return true;
             },
-            child: Text(
-              _exchangeRateLabel(context, snapshot),
-              style: TextStyle(
-                fontSize: 18 * Responsive.scaleFactor(context),
-                color: Colors.white,
+            child: Semantics(
+              label: _exchangeRateLabel(context, snapshot),
+              child: Text(
+                _exchangeRateLabel(context, snapshot),
+                style: TextStyle(
+                  fontSize: 18 * Responsive.scaleFactor(context),
+                  color: widget.color,
+                ),
               ),
             ),
           ),

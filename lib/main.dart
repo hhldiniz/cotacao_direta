@@ -26,14 +26,22 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
         MyAppLocalizationsDelegate()
       ],
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        fontFamily: "Roboto",
+      ),
       darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
           brightness: Brightness.dark,
-          floatingActionButtonTheme: FloatingActionButtonThemeData(
-              backgroundColor: Colors.blue, foregroundColor: Colors.white)),
+        ),
+        fontFamily: "Roboto",
+      ),
       themeMode: ThemeMode.system,
       supportedLocales: [const Locale("en"), const Locale("pt")],
       title: appName,
-      theme: ThemeData(primarySwatch: Colors.blue, fontFamily: "Roboto"),
       home: HomeBlocProvider(
         child: Home(appName),
       ),
