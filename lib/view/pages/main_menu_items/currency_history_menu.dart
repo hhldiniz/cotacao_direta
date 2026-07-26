@@ -22,7 +22,10 @@ class CurrencyHistory extends StatelessWidget {
 
     bloc.initStreamControllers(_currencyList);
 
-    return ListView.builder(
+    return ListView.separated(
+      separatorBuilder: (BuildContext context, index) {
+        return const Divider(height: 1, thickness: 1);
+      },
       itemBuilder: (BuildContext context, index) {
         return GestureDetector(
           child: ListTile(

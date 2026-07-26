@@ -16,6 +16,7 @@ class SelectedCurrencyDetails extends StatelessWidget {
     final _contentWidth = Responsive.contentMaxWidth(context);
 
     return Scaffold(
+      appBar: AppBar(title: Text(selectedCurrencyCode)),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           bloc.getCurrencyHistoryData(selectedCurrencyCode);
