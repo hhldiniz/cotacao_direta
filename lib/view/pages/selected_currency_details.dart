@@ -94,38 +94,51 @@ class SelectedCurrencyDetails extends StatelessWidget {
                 ],
               ),
               Expanded(
-                child: StreamBuilder<List<Currency>>(
-                  stream: bloc.currencyHistoryStream,
-                  builder: (context, snapshot) {
-                    final currencyList = snapshot.data;
-                    if (currencyList == null || currencyList.isEmpty) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.show_chart,
-                                size: 48,
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                localizations.noDataLabel!,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
+                child: StreamBuilder<bool>(
+                  stream: bloc.isLoadingStream,
+                  initialData: false,
+                  builder: (context, loadingSnapshot) {
+                    if (loadingSnapshot.data == true) {
+                      return const Center(child: CircularProgressIndicator());
                     }
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 24, 24, 8),
-                      child: SimpleLineChart(currencyList: currencyList),
+                    return StreamBuilder<List<Currency>>(
+                      stream: bloc.currencyHistoryStream,
+                      builder: (context, snapshot) {
+                        final currencyList = snapshot.data;
+                        if (currencyList == null || currencyList.isEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.show_chart,
+                                    size: 48,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    localizations.noDataLabel!,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.outline,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 24, 24, 8),
+                          child: SimpleLineChart(currencyList: currencyList),
+                        );
+                      },
                     );
                   },
                 ),
