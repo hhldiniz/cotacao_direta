@@ -5,6 +5,7 @@ import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
+import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/configurations_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
@@ -44,10 +45,12 @@ class HomeState extends State<Home> {
     final orientation = MediaQuery.of(context).orientation;
     final _localization = MyAppLocalizations.of(context)!;
     final _screenDimensions = MediaQuery.of(context);
+    final _scale = Responsive.scaleFactor(context);
     _bloc = HomeBlocProvider.of(context);
 
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _bloc.getSelectedOverrideCurrency());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _bloc.getSelectedOverrideCurrency(),
+    );
 
     final pageHeader = StreamBuilder(
       builder: (BuildContext context, snapshot) {
@@ -59,9 +62,7 @@ class HomeState extends State<Home> {
             width: _screenDimensions.size.width,
             child: Text(
               sprintf(_localization.homePageHeadsUpText!, [snapshot.data]),
-              style: TextStyle(
-                fontSize: 28,
-              ),
+              style: TextStyle(fontSize: 28 * _scale),
               textAlign: TextAlign.center,
             ),
           );
@@ -79,9 +80,7 @@ class HomeState extends State<Home> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      Column(
-                        children: <Widget>[pageHeader],
-                      ),
+                      Column(children: <Widget>[pageHeader]),
                     ],
                   ),
                   Row(
@@ -90,9 +89,11 @@ class HomeState extends State<Home> {
                       Column(
                         children: <Widget>[
                           Container(
-                            padding: EdgeInsets.all(40.0),
+                            padding: EdgeInsets.all(40.0 * _scale),
                             decoration: BoxDecoration(
-                                shape: BoxShape.circle, color: Colors.amber),
+                              shape: BoxShape.circle,
+                              color: Colors.amber,
+                            ),
                             child: dollarExchangeRate,
                           ),
                         ],
@@ -100,14 +101,15 @@ class HomeState extends State<Home> {
                       Column(
                         children: <Widget>[
                           Container(
-                            padding: EdgeInsets.all(40.0),
+                            padding: EdgeInsets.all(40.0 * _scale),
                             decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.blueAccent),
+                              shape: BoxShape.circle,
+                              color: Colors.blueAccent,
+                            ),
                             child: euroExchangeRate,
-                          )
+                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                   Row(
@@ -116,26 +118,30 @@ class HomeState extends State<Home> {
                       Column(
                         children: <Widget>[
                           Container(
-                            padding: EdgeInsets.all(60.0),
+                            padding: EdgeInsets.all(60.0 * _scale),
                             decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.deepOrange),
+                              shape: BoxShape.circle,
+                              color: Colors.deepOrange,
+                            ),
                             child: canadianDollarExchangeRate,
-                          )
+                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       Container(
-                        padding: EdgeInsets.all(33.0),
+                        padding: EdgeInsets.all(33.0 * _scale),
                         decoration: BoxDecoration(
-                            shape: BoxShape.circle, color: Colors.pink),
+                          shape: BoxShape.circle,
+                          color: Colors.pink,
+                        ),
                         child: yenExchangeRate,
-                      )
+                      ),
                     ],
-                  )
+                  ),
                 ],
               )
             : Column(
@@ -143,9 +149,7 @@ class HomeState extends State<Home> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: <Widget>[
-                      Column(
-                        children: <Widget>[pageHeader],
-                      ),
+                      Column(children: <Widget>[pageHeader]),
                     ],
                   ),
                   Row(
@@ -154,9 +158,11 @@ class HomeState extends State<Home> {
                       Column(
                         children: <Widget>[
                           Container(
-                            padding: EdgeInsets.all(40.0),
+                            padding: EdgeInsets.all(40.0 * _scale),
                             decoration: BoxDecoration(
-                                shape: BoxShape.circle, color: Colors.amber),
+                              shape: BoxShape.circle,
+                              color: Colors.amber,
+                            ),
                             child: dollarExchangeRate,
                           ),
                         ],
@@ -164,79 +170,79 @@ class HomeState extends State<Home> {
                       Column(
                         children: <Widget>[
                           Padding(
-                            padding: EdgeInsets.only(top: 100.0),
+                            padding: EdgeInsets.only(top: 100.0 * _scale),
                             child: Container(
-                              padding: EdgeInsets.all(40.0),
+                              padding: EdgeInsets.all(40.0 * _scale),
                               decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.blueAccent),
+                                shape: BoxShape.circle,
+                                color: Colors.blueAccent,
+                              ),
                               child: euroExchangeRate,
                             ),
-                          )
+                          ),
                         ],
                       ),
                       Column(
                         children: <Widget>[
                           Container(
-                            padding: EdgeInsets.all(40.0),
+                            padding: EdgeInsets.all(40.0 * _scale),
                             decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.deepOrange),
+                              shape: BoxShape.circle,
+                              color: Colors.deepOrange,
+                            ),
                             child: canadianDollarExchangeRate,
-                          )
+                          ),
                         ],
                       ),
                       Column(
                         children: <Widget>[
                           Padding(
-                            padding: EdgeInsets.only(top: 100),
+                            padding: EdgeInsets.only(top: 100 * _scale),
                             child: Container(
-                              padding: EdgeInsets.all(35.0),
+                              padding: EdgeInsets.all(35.0 * _scale),
                               decoration: BoxDecoration(
-                                  shape: BoxShape.circle, color: Colors.pink),
+                                shape: BoxShape.circle,
+                                color: Colors.pink,
+                              ),
                               child: yenExchangeRate,
                             ),
-                          )
+                          ),
                         ],
-                      )
+                      ),
                     ],
-                  )
+                  ),
                 ],
               ),
       ),
       Container(
-        child: CurrencyHistoryMenuBlocProvider(
-          child: CurrencyHistory(),
-        ),
+        child: CurrencyHistoryMenuBlocProvider(child: CurrencyHistory()),
       ),
       Container(
-        child: ConfigurationsPageBlocProvider(
-          child: ConfigurationsPage(),
-        ),
+        child: ConfigurationsPageBlocProvider(child: ConfigurationsPage()),
       ),
-      Container(
-        child: Text("sobre"),
-      )
+      Container(child: Text("sobre")),
     ];
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_pageTitle),
-      ),
+      appBar: AppBar(title: Text(_pageTitle)),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: [
           BottomNavigationBarItem(
-              icon: Icon(Icons.attach_money),
-              label: _localization.mainCurrenciesBottomNavItemLabel),
+            icon: Icon(Icons.attach_money),
+            label: _localization.mainCurrenciesBottomNavItemLabel,
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              label: _localization.currencyHistoryBottomNavItemLabel),
+            icon: Icon(Icons.history),
+            label: _localization.currencyHistoryBottomNavItemLabel,
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: _localization.getConfigBottomNavItemLabel),
+            icon: Icon(Icons.settings),
+            label: _localization.getConfigBottomNavItemLabel,
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.short_text),
-              label: _localization.aboutBottomNavItemLabel),
+            icon: Icon(Icons.short_text),
+            label: _localization.aboutBottomNavItemLabel,
+          ),
         ],
         currentIndex: _selectedIndex,
         onTap: (index) {
@@ -250,11 +256,15 @@ class HomeState extends State<Home> {
         visible: fabVisibility,
         child: FloatingActionButton.extended(
           onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-              return ConversionPageBlocProvider(
-                child: ConversionPage(_localization.conversionPageTitle),
-              );
-            }));
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) {
+                  return ConversionPageBlocProvider(
+                    child: ConversionPage(_localization.conversionPageTitle),
+                  );
+                },
+              ),
+            );
           },
           label: Text(_localization.conversionButtonLabel!),
           icon: Icon(Icons.compare_arrows),
