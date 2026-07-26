@@ -27,7 +27,7 @@ class Home extends StatefulWidget {
   State<StatefulWidget> createState() => HomeState(_pageTitle);
 }
 
-class HomeState extends State<Home> {
+class HomeState extends State<Home> with SingleTickerProviderStateMixin {
   final dollarExchangeRate = DollarExchangeRate();
   final euroExchangeRate = EuroExchangeRate();
   final canadianDollarExchangeRate = CanadianDollarExchangeRate();
@@ -39,7 +39,58 @@ class HomeState extends State<Home> {
 
   var fabVisibility = true;
 
+  late final AnimationController _circlesAnimationController;
+  late final List<Animation<double>> _circleScaleAnimations;
+  late final List<Animation<double>> _circleFadeAnimations;
+
   HomeState(this._pageTitle);
+
+  @override
+  void initState() {
+    super.initState();
+    _circlesAnimationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 900),
+    );
+    final ranges = List.generate(4, (index) {
+      final start = index * 0.15;
+      final end = (start + 0.6).clamp(0.0, 1.0);
+      return (start: start, end: end);
+    });
+    _circleScaleAnimations = ranges
+        .map(
+          (range) => CurvedAnimation(
+            parent: _circlesAnimationController,
+            curve: Interval(range.start, range.end, curve: Curves.easeOutBack),
+          ),
+        )
+        .toList();
+    _circleFadeAnimations = ranges
+        .map(
+          (range) => CurvedAnimation(
+            parent: _circlesAnimationController,
+            curve: Interval(range.start, range.end, curve: Curves.easeOut),
+          ),
+        )
+        .toList();
+    _circlesAnimationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _circlesAnimationController.dispose();
+    super.dispose();
+  }
+
+  Widget _animatedCircle(int index, Widget circle) {
+    return ScaleTransition(
+      scale: _circleScaleAnimations[index],
+      child: FadeTransition(
+        opacity: _circleFadeAnimations[index],
+        child: circle,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,25 +140,31 @@ class HomeState extends State<Home> {
                     children: <Widget>[
                       Column(
                         children: <Widget>[
-                          Container(
-                            padding: EdgeInsets.all(40.0 * _scale),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.amber,
+                          _animatedCircle(
+                            0,
+                            Container(
+                              padding: EdgeInsets.all(40.0 * _scale),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.amber,
+                              ),
+                              child: dollarExchangeRate,
                             ),
-                            child: dollarExchangeRate,
                           ),
                         ],
                       ),
                       Column(
                         children: <Widget>[
-                          Container(
-                            padding: EdgeInsets.all(40.0 * _scale),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.blueAccent,
+                          _animatedCircle(
+                            1,
+                            Container(
+                              padding: EdgeInsets.all(40.0 * _scale),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.blueAccent,
+                              ),
+                              child: euroExchangeRate,
                             ),
-                            child: euroExchangeRate,
                           ),
                         ],
                       ),
@@ -118,13 +175,16 @@ class HomeState extends State<Home> {
                     children: <Widget>[
                       Column(
                         children: <Widget>[
-                          Container(
-                            padding: EdgeInsets.all(60.0 * _scale),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.deepOrange,
+                          _animatedCircle(
+                            2,
+                            Container(
+                              padding: EdgeInsets.all(60.0 * _scale),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.deepOrange,
+                              ),
+                              child: canadianDollarExchangeRate,
                             ),
-                            child: canadianDollarExchangeRate,
                           ),
                         ],
                       ),
@@ -133,13 +193,16 @@ class HomeState extends State<Home> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      Container(
-                        padding: EdgeInsets.all(33.0 * _scale),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.pink,
+                      _animatedCircle(
+                        3,
+                        Container(
+                          padding: EdgeInsets.all(33.0 * _scale),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.pink,
+                          ),
+                          child: yenExchangeRate,
                         ),
-                        child: yenExchangeRate,
                       ),
                     ],
                   ),
@@ -158,13 +221,16 @@ class HomeState extends State<Home> {
                     children: <Widget>[
                       Column(
                         children: <Widget>[
-                          Container(
-                            padding: EdgeInsets.all(40.0 * _scale),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.amber,
+                          _animatedCircle(
+                            0,
+                            Container(
+                              padding: EdgeInsets.all(40.0 * _scale),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.amber,
+                              ),
+                              child: dollarExchangeRate,
                             ),
-                            child: dollarExchangeRate,
                           ),
                         ],
                       ),
@@ -172,26 +238,32 @@ class HomeState extends State<Home> {
                         children: <Widget>[
                           Padding(
                             padding: EdgeInsets.only(top: 100.0 * _scale),
-                            child: Container(
-                              padding: EdgeInsets.all(40.0 * _scale),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.blueAccent,
+                            child: _animatedCircle(
+                              1,
+                              Container(
+                                padding: EdgeInsets.all(40.0 * _scale),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.blueAccent,
+                                ),
+                                child: euroExchangeRate,
                               ),
-                              child: euroExchangeRate,
                             ),
                           ),
                         ],
                       ),
                       Column(
                         children: <Widget>[
-                          Container(
-                            padding: EdgeInsets.all(40.0 * _scale),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.deepOrange,
+                          _animatedCircle(
+                            2,
+                            Container(
+                              padding: EdgeInsets.all(40.0 * _scale),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.deepOrange,
+                              ),
+                              child: canadianDollarExchangeRate,
                             ),
-                            child: canadianDollarExchangeRate,
                           ),
                         ],
                       ),
@@ -199,13 +271,16 @@ class HomeState extends State<Home> {
                         children: <Widget>[
                           Padding(
                             padding: EdgeInsets.only(top: 100 * _scale),
-                            child: Container(
-                              padding: EdgeInsets.all(35.0 * _scale),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.pink,
+                            child: _animatedCircle(
+                              3,
+                              Container(
+                                padding: EdgeInsets.all(35.0 * _scale),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.pink,
+                                ),
+                                child: yenExchangeRate,
                               ),
-                              child: yenExchangeRate,
                             ),
                           ),
                         ],
