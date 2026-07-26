@@ -26,66 +26,80 @@ class ConfigurationsPage extends StatelessWidget {
         constraints: BoxConstraints(
           maxWidth: Responsive.contentMaxWidth(context),
         ),
-        child: Column(
+        child: ListView(
+          padding: EdgeInsets.symmetric(vertical: 16 * _scale),
           children: [
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24 * _scale),
+              child: Text(
+                _localization.appConfigurationsSectionLabel!,
+                style: TextStyle(
+                  fontSize: 14 * _scale,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+            SizedBox(height: 8 * _scale),
+            Card(
+              margin: EdgeInsets.symmetric(horizontal: 12 * _scale),
+              child: Column(
                 children: [
-                  Container(
-                    child: Row(
-                      children: [
-                        StreamBuilder<OverrideCurrencyStateHelper>(
-                          builder: (BuildContext context, snapshot) {
-                            return Transform.scale(
-                              scale: _scale,
-                              child: Switch(
-                                value: snapshot.data!.enableCurrencyOverride,
-                                onChanged: (bool checked) {
-                                  _bloc.updateOverrideCurrencySwitch(checked);
-                                },
-                              ),
-                            );
-                          },
-                          stream:
-                              _bloc.overrideDefaultCurrencyValueStream
-                                  as Stream<OverrideCurrencyStateHelper>?,
-                          initialData: _bloc.overrideCurrencyStateHelper,
-                        ),
-                        Text(
+                  StreamBuilder<OverrideCurrencyStateHelper>(
+                    builder: (BuildContext context, snapshot) {
+                      return SwitchListTile(
+                        value: snapshot.data!.enableCurrencyOverride,
+                        onChanged: (bool checked) {
+                          _bloc.updateOverrideCurrencySwitch(checked);
+                        },
+                        title: Text(
                           _localization.overrideDefaultCurrencySwitchLabel!,
                           style: TextStyle(fontSize: 16 * _scale),
                         ),
-                      ],
-                    ),
+                      );
+                    },
+                    stream:
+                        _bloc.overrideDefaultCurrencyValueStream
+                            as Stream<OverrideCurrencyStateHelper>?,
+                    initialData: _bloc.overrideCurrencyStateHelper,
                   ),
+                  const Divider(height: 1),
                   StreamBuilder<OverrideCurrencyStateHelper>(
                     builder: (BuildContext context, switchSnapshot) {
-                      return DropdownButton(
-                        items: List.generate(
-                          _currencyList.length,
-                          (index) => DropdownMenuItem(
-                            value: _currencyList[index],
-                            child: Text(
-                              _currencyList[index],
-                              style: TextStyle(fontSize: 16 * _scale),
+                      final _enabled =
+                          switchSnapshot.data!.enableCurrencyOverride == true;
+                      return ListTile(
+                        enabled: _enabled,
+                        leading: const Icon(Icons.attach_money),
+                        title: Text(
+                          _localization.selectedOverrideCurrencyLabel!,
+                          style: TextStyle(fontSize: 16 * _scale),
+                        ),
+                        trailing: DropdownButton(
+                          items: List.generate(
+                            _currencyList.length,
+                            (index) => DropdownMenuItem(
+                              value: _currencyList[index],
+                              child: Text(
+                                _currencyList[index],
+                                style: TextStyle(fontSize: 16 * _scale),
+                              ),
                             ),
                           ),
+                          onChanged: _enabled
+                              ? (dynamic value) {
+                                  _bloc.updateSelectedOverrideCurrency(value);
+                                }
+                              : null,
+                          value:
+                              switchSnapshot
+                                  .data!
+                                  .selectedCurrencyOverride!
+                                  .isEmpty
+                              ? _currencyList[0]
+                              : switchSnapshot.data!.selectedCurrencyOverride,
+                          iconSize: 24 * _scale,
                         ),
-                        onChanged:
-                            switchSnapshot.data!.enableCurrencyOverride == true
-                            ? (dynamic value) {
-                                _bloc.updateSelectedOverrideCurrency(value);
-                              }
-                            : null,
-                        value:
-                            switchSnapshot
-                                .data!
-                                .selectedCurrencyOverride!
-                                .isEmpty
-                            ? _currencyList[0]
-                            : switchSnapshot.data!.selectedCurrencyOverride,
-                        iconSize: 24 * _scale,
                       );
                     },
                     stream:
@@ -95,7 +109,6 @@ class ConfigurationsPage extends StatelessWidget {
                   ),
                 ],
               ),
-              flex: 1,
             ),
           ],
         ),

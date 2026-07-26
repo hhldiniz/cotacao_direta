@@ -24,6 +24,7 @@ dependencies:
   sqflite_common_ffi: ^2.3.3
   flag: ^7.0.2
   package_info_plus: ^8.1.2
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4

@@ -2,6 +2,7 @@ import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AboutPage extends StatelessWidget {
   static const String _sourceCodeUrl =
@@ -59,9 +60,24 @@ class AboutPage extends StatelessWidget {
               ),
               SizedBox(height: 8 * scale),
               Text(
-                '${localization.aboutSourceCodeLabel}: $_sourceCodeUrl',
+                '${localization.aboutSourceCodeLabel}:',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14 * scale),
+              ),
+              InkWell(
+                onTap: () => launchUrl(
+                  Uri.parse(_sourceCodeUrl),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: Text(
+                  _sourceCodeUrl,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14 * scale,
+                    color: Theme.of(context).colorScheme.primary,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ),
             ],
           ),

@@ -92,25 +92,29 @@ class SelectedCurrencyDetails extends StatelessWidget {
                 ],
               ),
               Expanded(
-                child: Row(
-                  children: [
-                    // TODO Substitute this block with the class from another chart library
-                    /*StreamBuilder<List<Series<dynamic, dynamic>>>(
-                    builder: (context, snapshot) {
-                      return Expanded(
-                          child: Container(
-                        child: snapshot.data != null
-                            ? SimpleLineChart(
-                                seriesList: snapshot.data,
-                              )
-                            : Text(
-                                localizations.noDataLabel!,
-                                textAlign: TextAlign.center,
-                              ),
-                      ));
-                    },
-                    stream: bloc.currencyHistoryStream)*/
-                  ],
+                // TODO Substitute this block with the class from another chart library
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.show_chart,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          localizations.chartUnavailableLabel!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],

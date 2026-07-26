@@ -28,7 +28,10 @@ class MyAppLocalizations {
       'currencyHistoryToDateLabel': 'Until',
       'noDataLabel': 'No Data',
       'getCurrencyHistoryBtnLabel': 'Get history',
+      'chartUnavailableLabel':
+          'The chart for this period is temporarily unavailable.',
       'overrideDefaultCurrencySwitchLabel': 'Override default currency',
+      'selectedOverrideCurrencyLabel': 'Currency',
       'appConfigurationsSectionLabel': 'App Configurations',
       'aboutAppDescription': 'A simple app that shows the exchange rate of '
           'the main currencies against the Brazilian real.',
@@ -53,7 +56,10 @@ class MyAppLocalizations {
       'currencyHistoryToDateLabel': 'Até',
       'noDataLabel': 'Sem Dados',
       'getCurrencyHistoryBtnLabel': 'Obter histórico',
+      'chartUnavailableLabel':
+          'O gráfico para este período está temporariamente indisponível.',
       'overrideDefaultCurrencySwitchLabel': 'Sobrescrever moeda padrão',
+      'selectedOverrideCurrencyLabel': 'Moeda',
       'appConfigurationsSectionLabel': 'Configurações do Aplicativo',
       'aboutAppDescription': 'Um aplicativo simples que mostra a cotação das '
           'principais moedas frente ao real.',
@@ -119,6 +125,10 @@ class MyAppLocalizations {
     return _localizedValues[locale.languageCode]!['getCurrencyHistoryBtnLabel'];
   }
 
+  String? get chartUnavailableLabel {
+    return _localizedValues[locale.languageCode]!['chartUnavailableLabel'];
+  }
+
   String? get getConfigBottomNavItemLabel {
     return _localizedValues[locale.languageCode]!['configBottomNavItemLabel'];
   }
@@ -126,6 +136,11 @@ class MyAppLocalizations {
   String? get overrideDefaultCurrencySwitchLabel {
     return _localizedValues[locale.languageCode]!
         ['overrideDefaultCurrencySwitchLabel'];
+  }
+
+  String? get selectedOverrideCurrencyLabel {
+    return _localizedValues[locale.languageCode]!
+        ['selectedOverrideCurrencyLabel'];
   }
 
   String? get appConfigurationsSectionLabel {

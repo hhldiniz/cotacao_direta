@@ -4,6 +4,7 @@ import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart'
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
+import 'package:cotacao_direta/util/color_utils.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
@@ -28,10 +29,6 @@ class Home extends StatefulWidget {
 }
 
 class HomeState extends State<Home> with SingleTickerProviderStateMixin {
-  final dollarExchangeRate = DollarExchangeRate();
-  final euroExchangeRate = EuroExchangeRate();
-  final canadianDollarExchangeRate = CanadianDollarExchangeRate();
-  final yenExchangeRate = YenExchangeRate();
   var _selectedIndex = 0;
   late HomeBloc _bloc;
 
@@ -92,6 +89,41 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
     );
   }
 
+  /// Círculo de cotação com sombra (para dar profundidade) e cor de fundo
+  /// já ajustada ao tema claro/escuro.
+  Widget _currencyCircle(
+    BuildContext context, {
+    required int index,
+    required Color baseColor,
+    required double padding,
+    required Widget child,
+  }) {
+    return _animatedCircle(
+      index,
+      Container(
+        padding: EdgeInsets.all(padding),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: circleBackgroundColor(context, baseColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  Future<void> _refreshRates(BuildContext context) async {
+    _bloc.getSelectedOverrideCurrency();
+    UpdateCurrencyValueNotification().dispatch(context);
+    await Future.delayed(const Duration(milliseconds: 400));
+  }
+
   @override
   Widget build(BuildContext context) {
     final orientation = MediaQuery.of(context).orientation;
@@ -123,172 +155,161 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
       stream: _bloc.getNextStreamController(),
     );
 
+    final dollarExchangeRate = DollarExchangeRate(
+      color: contrastingTextColor(circleBackgroundColor(context, Colors.amber)),
+    );
+    final euroExchangeRate = EuroExchangeRate(
+      color: contrastingTextColor(
+        circleBackgroundColor(context, Colors.blueAccent),
+      ),
+    );
+    final canadianDollarExchangeRate = CanadianDollarExchangeRate(
+      color: contrastingTextColor(
+        circleBackgroundColor(context, Colors.deepOrange),
+      ),
+    );
+    final yenExchangeRate = YenExchangeRate(
+      color: contrastingTextColor(circleBackgroundColor(context, Colors.pink)),
+    );
+
     final List<Widget> _widgetOptions = <Widget>[
-      Container(
-        child: orientation == Orientation.portrait
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Column(children: <Widget>[pageHeader]),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: <Widget>[
-                      Column(
-                        children: <Widget>[
-                          _animatedCircle(
-                            0,
-                            Container(
-                              padding: EdgeInsets.all(40.0 * _scale),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.amber,
-                              ),
+      RefreshIndicator(
+        onRefresh: () => _refreshRates(context),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: orientation == Orientation.portrait
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Column(children: <Widget>[pageHeader]),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        Column(
+                          children: <Widget>[
+                            _currencyCircle(
+                              context,
+                              index: 0,
+                              baseColor: Colors.amber,
+                              padding: 40.0 * _scale,
                               child: dollarExchangeRate,
                             ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        children: <Widget>[
-                          _animatedCircle(
-                            1,
-                            Container(
-                              padding: EdgeInsets.all(40.0 * _scale),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.blueAccent,
-                              ),
+                          ],
+                        ),
+                        Column(
+                          children: <Widget>[
+                            _currencyCircle(
+                              context,
+                              index: 1,
+                              baseColor: Colors.blueAccent,
+                              padding: 40.0 * _scale,
                               child: euroExchangeRate,
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Column(
-                        children: <Widget>[
-                          _animatedCircle(
-                            2,
-                            Container(
-                              padding: EdgeInsets.all(60.0 * _scale),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.deepOrange,
-                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Column(
+                          children: <Widget>[
+                            _currencyCircle(
+                              context,
+                              index: 2,
+                              baseColor: Colors.deepOrange,
+                              padding: 60.0 * _scale,
                               child: canadianDollarExchangeRate,
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      _animatedCircle(
-                        3,
-                        Container(
-                          padding: EdgeInsets.all(33.0 * _scale),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.pink,
-                          ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        _currencyCircle(
+                          context,
+                          index: 3,
+                          baseColor: Colors.pink,
+                          padding: 33.0 * _scale,
                           child: yenExchangeRate,
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              )
-            : Column(
-                children: <Widget>[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: <Widget>[
-                      Column(children: <Widget>[pageHeader]),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: <Widget>[
-                      Column(
-                        children: <Widget>[
-                          _animatedCircle(
-                            0,
-                            Container(
-                              padding: EdgeInsets.all(40.0 * _scale),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.amber,
-                              ),
+                      ],
+                    ),
+                  ],
+                )
+              : Column(
+                  children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        Column(children: <Widget>[pageHeader]),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        Column(
+                          children: <Widget>[
+                            _currencyCircle(
+                              context,
+                              index: 0,
+                              baseColor: Colors.amber,
+                              padding: 40.0 * _scale,
                               child: dollarExchangeRate,
                             ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.only(top: 100.0 * _scale),
-                            child: _animatedCircle(
-                              1,
-                              Container(
-                                padding: EdgeInsets.all(40.0 * _scale),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.blueAccent,
-                                ),
+                          ],
+                        ),
+                        Column(
+                          children: <Widget>[
+                            Padding(
+                              padding: EdgeInsets.only(top: 100.0 * _scale),
+                              child: _currencyCircle(
+                                context,
+                                index: 1,
+                                baseColor: Colors.blueAccent,
+                                padding: 40.0 * _scale,
                                 child: euroExchangeRate,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        children: <Widget>[
-                          _animatedCircle(
-                            2,
-                            Container(
-                              padding: EdgeInsets.all(40.0 * _scale),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.deepOrange,
-                              ),
+                          ],
+                        ),
+                        Column(
+                          children: <Widget>[
+                            _currencyCircle(
+                              context,
+                              index: 2,
+                              baseColor: Colors.deepOrange,
+                              padding: 40.0 * _scale,
                               child: canadianDollarExchangeRate,
                             ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.only(top: 100 * _scale),
-                            child: _animatedCircle(
-                              3,
-                              Container(
-                                padding: EdgeInsets.all(35.0 * _scale),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.pink,
-                                ),
+                          ],
+                        ),
+                        Column(
+                          children: <Widget>[
+                            Padding(
+                              padding: EdgeInsets.only(top: 100 * _scale),
+                              child: _currencyCircle(
+                                context,
+                                index: 3,
+                                baseColor: Colors.pink,
+                                padding: 35.0 * _scale,
                                 child: yenExchangeRate,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+        ),
       ),
       Container(
         child: CurrencyHistoryMenuBlocProvider(child: CurrencyHistory()),
@@ -316,7 +337,7 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
             label: _localization.getConfigBottomNavItemLabel,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.short_text),
+            icon: Icon(Icons.info_outline),
             label: _localization.aboutBottomNavItemLabel,
           ),
         ],

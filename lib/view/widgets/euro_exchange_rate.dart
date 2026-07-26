@@ -5,7 +5,9 @@ import 'package:cotacao_direta/view/widgets/exchange_rate_value.dart';
 import 'package:flutter/material.dart';
 
 class EuroExchangeRate extends StatelessWidget {
-  final exchangeRateValue = ExchangeRateValue(Currencies.EUR);
+  final Color color;
+
+  EuroExchangeRate({this.color = Colors.white});
 
   @override
   Widget build(BuildContext context) {
@@ -17,14 +19,16 @@ class EuroExchangeRate extends StatelessWidget {
               "EUR ",
               style: TextStyle(
                 fontSize: 18 * Responsive.scaleFactor(context),
-                color: Colors.white,
+                color: color,
               ),
             ),
           ],
         ),
         Column(
           children: <Widget>[
-            ExchangeValueBlocProvider(child: exchangeRateValue),
+            ExchangeValueBlocProvider(
+              child: ExchangeRateValue(Currencies.EUR, color: color),
+            ),
           ],
         ),
       ],
