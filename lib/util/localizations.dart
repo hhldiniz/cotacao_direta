@@ -29,7 +29,12 @@ class MyAppLocalizations {
       'noDataLabel': 'No Data',
       'getCurrencyHistoryBtnLabel': 'Get history',
       'overrideDefaultCurrencySwitchLabel': 'Override default currency',
-      'appConfigurationsSectionLabel': 'App Configurations'
+      'appConfigurationsSectionLabel': 'App Configurations',
+      'aboutAppDescription': 'A simple app that shows the exchange rate of '
+          'the main currencies against the Brazilian real.',
+      'aboutVersionLabel': 'Version',
+      'aboutDeveloperLabel': 'Developed by',
+      'aboutSourceCodeLabel': 'Source code',
     },
     'pt': {
       'conversionButtonLabel': "Conversões",
@@ -49,7 +54,12 @@ class MyAppLocalizations {
       'noDataLabel': 'Sem Dados',
       'getCurrencyHistoryBtnLabel': 'Obter histórico',
       'overrideDefaultCurrencySwitchLabel': 'Sobrescrever moeda padrão',
-      'appConfigurationsSectionLabel': 'Configurações do Aplicativo'
+      'appConfigurationsSectionLabel': 'Configurações do Aplicativo',
+      'aboutAppDescription': 'Um aplicativo simples que mostra a cotação das '
+          'principais moedas frente ao real.',
+      'aboutVersionLabel': 'Versão',
+      'aboutDeveloperLabel': 'Desenvolvido por',
+      'aboutSourceCodeLabel': 'Código fonte',
     }
   };
 
@@ -121,6 +131,22 @@ class MyAppLocalizations {
   String? get appConfigurationsSectionLabel {
     return _localizedValues[locale.languageCode]!
         ['appConfigurationsSectionLabel'];
+  }
+
+  String? get aboutAppDescription {
+    return _localizedValues[locale.languageCode]!['aboutAppDescription'];
+  }
+
+  String? get aboutVersionLabel {
+    return _localizedValues[locale.languageCode]!['aboutVersionLabel'];
+  }
+
+  String? get aboutDeveloperLabel {
+    return _localizedValues[locale.languageCode]!['aboutDeveloperLabel'];
+  }
+
+  String? get aboutSourceCodeLabel {
+    return _localizedValues[locale.languageCode]!['aboutSourceCodeLabel'];
   }
 }
 

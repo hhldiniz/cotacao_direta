@@ -22,6 +22,10 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.getConfigBottomNavItemLabel,
       localizations.overrideDefaultCurrencySwitchLabel,
       localizations.appConfigurationsSectionLabel,
+      localizations.aboutAppDescription,
+      localizations.aboutVersionLabel,
+      localizations.aboutDeveloperLabel,
+      localizations.aboutSourceCodeLabel,
     ];
 
 void main() {
