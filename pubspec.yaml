@@ -19,14 +19,14 @@ dependencies:
     sdk: flutter
   sqflite: ^2.4.1
   path: ^1.9.0
+  # sqflite não tem implementação para desktop; no Linux o databaseFactory é
+  # trocado para o sqflite_common_ffi (SQLite nativo) em tempo de execução.
+  sqflite_common_ffi: ^2.3.3
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   flutter_test:
     sdk: flutter
-  # Roda o sqflite sobre o SQLite nativo, permitindo testar os DAOs sem um
-  # emulador/dispositivo.
-  sqflite_common_ffi: ^2.3.3
 
 # A chave flutter_icons foi deprecada na versão 0.14 do gerador.
 # Atenção: assets/launcher/icon.png não existe no repositório, então
