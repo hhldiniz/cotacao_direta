@@ -7,6 +7,7 @@ import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
+import 'package:cotacao_direta/view/pages/main_menu_items/about_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/configurations_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
@@ -220,7 +221,7 @@ class HomeState extends State<Home> {
       Container(
         child: ConfigurationsPageBlocProvider(child: ConfigurationsPage()),
       ),
-      Container(child: Text("sobre")),
+      Container(child: AboutPage()),
     ];
     return Scaffold(
       appBar: AppBar(title: Text(_pageTitle)),
