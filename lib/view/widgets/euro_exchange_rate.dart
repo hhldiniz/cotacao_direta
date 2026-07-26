@@ -1,10 +1,10 @@
 import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/providers/exchange_value_bloc_provider.dart';
+import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/view/widgets/exchange_rate_value.dart';
 import 'package:flutter/material.dart';
 
-class EuroExchangeRate extends StatelessWidget{
-
+class EuroExchangeRate extends StatelessWidget {
   final exchangeRateValue = ExchangeRateValue(Currencies.EUR);
 
   @override
@@ -13,16 +13,20 @@ class EuroExchangeRate extends StatelessWidget{
       children: <Widget>[
         Column(
           children: <Widget>[
-            Text("EUR ", style: TextStyle(fontSize: 18, color: Colors.white),)
+            Text(
+              "EUR ",
+              style: TextStyle(
+                fontSize: 18 * Responsive.scaleFactor(context),
+                color: Colors.white,
+              ),
+            ),
           ],
         ),
         Column(
           children: <Widget>[
-            ExchangeValueBlocProvider(
-              child: exchangeRateValue,
-            )
+            ExchangeValueBlocProvider(child: exchangeRateValue),
           ],
-        )
+        ),
       ],
     );
   }
