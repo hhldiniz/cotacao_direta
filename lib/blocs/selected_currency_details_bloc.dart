@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:cotacao_direta/blocs/base_bloc.dart';
+import 'package:cotacao_direta/model/currency.dart';
 import 'package:cotacao_direta/repository/currency_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class SelectedCurrencyDetailsBloc extends BaseBloc {
-  StreamController _selectedCurrencyHistoryDataStreamController =
-  StreamController();
+  StreamController<List<Currency>> _selectedCurrencyHistoryDataStreamController =
+      StreamController<List<Currency>>();
 
   final DateFormat _viewDateFormatter = DateFormat("dd/MM/yyyy");
   final DateFormat _apiDateFormatter = DateFormat("yyyy-MM-dd");
@@ -22,7 +23,7 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
 
   final _currencyRepository = CurrencyRepository();
 
-  get currencyHistoryStream =>
+  Stream<List<Currency>> get currencyHistoryStream =>
       _selectedCurrencyHistoryDataStreamController.stream;
 
   TextEditingController get initialDateController => _initialDateController;
@@ -30,23 +31,9 @@ class SelectedCurrencyDetailsBloc extends BaseBloc {
   TextEditingController get endDateController => _endDateController;
 
   getCurrencyHistoryData(String selectedCurrencyCod) async {
-    // O resultado é descartado por enquanto: o bloco que montava a série do
-    // gráfico está comentado abaixo, esperando a troca da biblioteca. A busca
-    // continua valendo porque guarda o histórico no banco.
-    await _currencyRepository.getCurrencyHistoricalData(
+    var currencyList = await _currencyRepository.getCurrencyHistoricalData(
         [selectedCurrencyCod], _initialDate, _finalDate);
-    // TODO Replace this block when the chart library gets replaced. O valor
-    // devolvido pela chamada acima volta a ser usado como `currencyList`.
-    // var dataToAdd = <Series<dynamic, DateTime>>[];
-    /*dataToAdd.add(
-        Series<Currency, DateTime>(
-            id: selectedCurrencyCod,
-            data: currencyList,
-            domainFn: (Currency currency, _) =>
-                DateFormat("yyyy-MM-dd").parse(currency.historicalDate!),
-            measureFn: (Currency currency, _) => currency.value)
-    );*/
-    // _selectedCurrencyHistoryDataStreamController.sink.add(dataToAdd);
+    _selectedCurrencyHistoryDataStreamController.sink.add(currencyList);
   }
 
   updateInitialDate(dateValue){
