@@ -22,6 +22,7 @@ dependencies:
   # sqflite não tem implementação para desktop; no Linux o databaseFactory é
   # trocado para o sqflite_common_ffi (SQLite nativo) em tempo de execução.
   sqflite_common_ffi: ^2.3.3
+  flag: ^7.0.2
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4
