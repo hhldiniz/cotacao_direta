@@ -28,8 +28,6 @@ class MyAppLocalizations {
       'currencyHistoryToDateLabel': 'Until',
       'noDataLabel': 'No Data',
       'getCurrencyHistoryBtnLabel': 'Get history',
-      'chartUnavailableLabel':
-          'The chart for this period is temporarily unavailable.',
       'overrideDefaultCurrencySwitchLabel': 'Override default currency',
       'selectedOverrideCurrencyLabel': 'Currency',
       'appConfigurationsSectionLabel': 'App Configurations',
@@ -56,8 +54,6 @@ class MyAppLocalizations {
       'currencyHistoryToDateLabel': 'Até',
       'noDataLabel': 'Sem Dados',
       'getCurrencyHistoryBtnLabel': 'Obter histórico',
-      'chartUnavailableLabel':
-          'O gráfico para este período está temporariamente indisponível.',
       'overrideDefaultCurrencySwitchLabel': 'Sobrescrever moeda padrão',
       'selectedOverrideCurrencyLabel': 'Moeda',
       'appConfigurationsSectionLabel': 'Configurações do Aplicativo',
@@ -123,10 +119,6 @@ class MyAppLocalizations {
 
   String? get getCurrencyHistoryBtnLabel {
     return _localizedValues[locale.languageCode]!['getCurrencyHistoryBtnLabel'];
-  }
-
-  String? get chartUnavailableLabel {
-    return _localizedValues[locale.languageCode]!['chartUnavailableLabel'];
   }
 
   String? get getConfigBottomNavItemLabel {

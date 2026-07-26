@@ -1,6 +1,8 @@
+import 'package:cotacao_direta/model/currency.dart';
 import 'package:cotacao_direta/providers/selected_currency_details_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
+import 'package:cotacao_direta/view/widgets/charts.dart';
 import 'package:flutter/material.dart';
 
 class SelectedCurrencyDetails extends StatelessWidget {
@@ -92,29 +94,40 @@ class SelectedCurrencyDetails extends StatelessWidget {
                 ],
               ),
               Expanded(
-                // TODO Substitute this block with the class from another chart library
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.show_chart,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          localizations.chartUnavailableLabel!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.outline,
+                child: StreamBuilder<List<Currency>>(
+                  stream: bloc.currencyHistoryStream,
+                  builder: (context, snapshot) {
+                    final currencyList = snapshot.data;
+                    if (currencyList == null || currencyList.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.show_chart,
+                                size: 48,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                localizations.noDataLabel!,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                      );
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 24, 24, 8),
+                      child: SimpleLineChart(currencyList: currencyList),
+                    );
+                  },
                 ),
               ),
             ],
