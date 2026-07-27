@@ -1,7 +1,9 @@
+import 'package:cotacao_direta/blocs/currency_alerts_bloc.dart';
 import 'package:cotacao_direta/blocs/home_bloc.dart';
 import 'package:cotacao_direta/notifications/update_currency_value_notification.dart';
 import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
+import 'package:cotacao_direta/providers/currency_alerts_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:cotacao_direta/util/color_utils.dart';
@@ -10,6 +12,7 @@ import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/about_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/configurations_page.dart';
+import 'package:cotacao_direta/view/pages/main_menu_items/currency_alerts_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/euro_exchange_rate.dart';
@@ -31,6 +34,7 @@ class Home extends StatefulWidget {
 class HomeState extends State<Home> with SingleTickerProviderStateMixin {
   var _selectedIndex = 0;
   late HomeBloc _bloc;
+  late CurrencyAlertsBloc _alertsBloc;
 
   final String _pageTitle;
 
@@ -120,8 +124,22 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   Future<void> _refreshRates(BuildContext context) async {
     _bloc.getSelectedOverrideCurrency();
+    _checkCurrencyAlerts(context);
     UpdateCurrencyValueNotification().dispatch(context);
     await Future.delayed(const Duration(milliseconds: 400));
+  }
+
+  /// Confere os alertas de câmbio cadastrados contra a cotação mais recente.
+  /// O app não roda em segundo plano, então esta é a checagem possível: toda
+  /// vez que a tela busca cotações novas.
+  void _checkCurrencyAlerts(BuildContext context) {
+    final _localization = MyAppLocalizations.of(context)!;
+    _alertsBloc.checkAlerts(
+      notificationTitle: _localization.currencyAlertNotificationTitle!,
+      notificationBody: (alert, value) => sprintf(
+          _localization.currencyAlertNotificationBody!,
+          [alert.currencyCode, value.toStringAsFixed(4)]),
+    );
   }
 
   @override
@@ -131,9 +149,13 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
     final _screenDimensions = MediaQuery.of(context);
     final _scale = Responsive.scaleFactor(context);
     _bloc = HomeBlocProvider.of(context);
+    _alertsBloc = CurrencyAlertsBlocProvider.of(context);
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _bloc.getSelectedOverrideCurrency(),
+    );
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _checkCurrencyAlerts(context),
     );
 
     final pageHeader = StreamBuilder(
@@ -314,6 +336,7 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
       Container(
         child: CurrencyHistoryMenuBlocProvider(child: CurrencyHistory()),
       ),
+      Container(child: CurrencyAlertsPage()),
       Container(
         child: ConfigurationsPageBlocProvider(child: ConfigurationsPage()),
       ),
@@ -331,6 +354,10 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: _localization.currencyHistoryBottomNavItemLabel,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications),
+            label: _localization.currencyAlertsBottomNavItemLabel,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

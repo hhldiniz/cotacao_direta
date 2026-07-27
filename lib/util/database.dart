@@ -50,12 +50,17 @@ class AppDatabase {
     "DROP TABLE old_Currency"
   ];
 
+  var migrationsScripts5_6 = [
+    "CREATE TABLE CurrencyAlerts(id INTEGER PRIMARY KEY AUTOINCREMENT, currencyCode TEXT NOT NULL, targetValue REAL NOT NULL, condition TEXT NOT NULL, triggered INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1)"
+  ];
+
   /// Scripts a aplicar para chegar em cada versão, na ordem.
   Map<int, List<String>> get _migrationsByVersion => {
         2: migrationsScripts1_2,
         3: migrationsScripts2_3,
         4: migrationsScripts3_4,
         5: migrationsScripts4_5,
+        6: migrationsScripts5_6,
       };
 
   Future<Database?> openAppDatabase() async {
@@ -67,6 +72,8 @@ class AppDatabase {
             "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, friendlyName TEXT NOT NULL DEFAULT '', PRIMARY KEY(id, historicalDate))");
         await db.execute(
             "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT)");
+        await db.execute(
+            "CREATE TABLE CurrencyAlerts(id INTEGER PRIMARY KEY AUTOINCREMENT, currencyCode TEXT NOT NULL, targetValue REAL NOT NULL, condition TEXT NOT NULL, triggered INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1)");
       }, onUpgrade: (database, oldVersion, newVersion) async {
         // Aplica todas as versões intermediárias, uma de cada vez: quem estava
         // na versão 1 precisa passar por 2, 3 e 4 antes de chegar na 5.
@@ -75,7 +82,7 @@ class AppDatabase {
             await database.execute(script);
           }
         }
-      }, version: 5);
+      }, version: 6);
     return _database;
   }
 }

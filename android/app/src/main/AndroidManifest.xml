@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Necessária no Android 13+ para exibir a notificação dos alertas de
+         câmbio; o app pede a permissão em tempo de execução (ver
+         lib/util/notification_service_io.dart). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="cotacao_direta"
         android:name="${applicationName}"

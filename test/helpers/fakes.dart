@@ -1,9 +1,13 @@
 import 'package:cotacao_direta/dao/configuration_dao.dart';
+import 'package:cotacao_direta/dao/currency_alert_dao.dart';
 import 'package:cotacao_direta/dao/currency_dao.dart';
 import 'package:cotacao_direta/model/configuration.dart';
 import 'package:cotacao_direta/model/currency.dart';
+import 'package:cotacao_direta/model/currency_alert.dart';
 import 'package:cotacao_direta/repository/configuration_repository.dart';
+import 'package:cotacao_direta/repository/currency_alert_repository.dart';
 import 'package:cotacao_direta/util/network_util.dart';
+import 'package:cotacao_direta/util/notification_service.dart';
 
 /// Substitui a checagem real de rede (que faz um DNS lookup) por um valor fixo.
 class FakeNetworkUtils implements NetworkUtils {
@@ -82,4 +86,104 @@ class FakeConfigurationRepository implements ConfigurationRepository {
 
   @override
   Future<Configuration> getConfiguration() async => configuration;
+}
+
+/// DAO de alertas de câmbio em memória.
+class FakeCurrencyAlertDao implements CurrencyAlertDao {
+  final List<CurrencyAlert> alerts = [];
+  int _nextId = 1;
+
+  @override
+  Future<int> insert(CurrencyAlert alert) async {
+    var id = alert.id ?? _nextId++;
+    alert.id = id;
+    alerts.removeWhere((existing) => existing.id == id);
+    alerts.add(alert);
+    return id;
+  }
+
+  @override
+  Future<void> update(CurrencyAlert alert) async {
+    var index = alerts.indexWhere((existing) => existing.id == alert.id);
+    if (index >= 0) alerts[index] = alert;
+  }
+
+  @override
+  Future<void> delete(int id) async {
+    alerts.removeWhere((alert) => alert.id == id);
+  }
+
+  @override
+  Future<List<CurrencyAlert>> getAll() async => List.of(alerts);
+
+  @override
+  Future<List<CurrencyAlert>> getActiveByCurrencyCode(
+          String currencyCode) async =>
+      alerts
+          .where((alert) =>
+              alert.currencyCode == currencyCode &&
+              alert.active &&
+              !alert.triggered)
+          .toList();
+}
+
+/// Repositório de alertas de câmbio em memória, para isolar o
+/// CurrencyAlertsBloc.
+class FakeCurrencyAlertRepository implements CurrencyAlertRepository {
+  final List<CurrencyAlert> alerts;
+  final List<CurrencyAlert> updated = [];
+  final List<int> deletedIds = [];
+  int _nextId = 1;
+
+  FakeCurrencyAlertRepository({List<CurrencyAlert>? alerts})
+      : alerts = alerts ?? [];
+
+  @override
+  Future<int> insert(CurrencyAlert alert) async {
+    var id = alert.id ?? _nextId++;
+    alert.id = id;
+    alerts.add(alert);
+    return id;
+  }
+
+  @override
+  Future<void> update(CurrencyAlert alert) async {
+    updated.add(alert);
+    var index = alerts.indexWhere((existing) => existing.id == alert.id);
+    if (index >= 0) alerts[index] = alert;
+  }
+
+  @override
+  Future<void> delete(int id) async {
+    deletedIds.add(id);
+    alerts.removeWhere((alert) => alert.id == id);
+  }
+
+  @override
+  Future<List<CurrencyAlert>> getAll() async => List.of(alerts);
+
+  @override
+  Future<List<CurrencyAlert>> getActiveByCurrencyCode(
+          String currencyCode) async =>
+      alerts
+          .where((alert) =>
+              alert.currencyCode == currencyCode &&
+              alert.active &&
+              !alert.triggered)
+          .toList();
+}
+
+/// Serviço de notificações em memória: registra o que teria sido mostrado em
+/// vez de acionar o plugin de verdade.
+class FakeNotificationService implements NotificationService {
+  final List<Map<String, Object>> shown = [];
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<void> showAlertTriggered(
+      {required int id, required String title, required String body}) async {
+    shown.add({'id': id, 'title': title, 'body': body});
+  }
 }
