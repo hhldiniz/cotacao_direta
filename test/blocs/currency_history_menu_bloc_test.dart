@@ -1,10 +1,14 @@
 import 'dart:convert';
 
 import 'package:cotacao_direta/blocs/currency_history_menu_bloc.dart';
+import 'package:cotacao_direta/model/configuration.dart';
 import 'package:cotacao_direta/repository/country_names_repository.dart';
+import 'package:cotacao_direta/repository/currency_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+
+import '../helpers/fakes.dart';
 
 void main() {
   late List<Uri> requestedUris;
@@ -12,14 +16,50 @@ void main() {
   setUp(() => requestedUris = []);
 
   CurrencyHistoryMenuBloc buildBloc(
-      {String body = '[{"name": "Brazil"}]', int status = 200}) {
-    return CurrencyHistoryMenuBloc(countryNamesRepository:
-        CountryNamesRepository(httpClient: MockClient((request) async {
-      requestedUris.add(request.url);
-      return http.Response.bytes(utf8.encode(body), status,
-          headers: {"content-type": "application/json; charset=utf-8"});
-    })));
+      {String body = '[{"name": "Brazil"}]',
+      int status = 200,
+      Configuration? configuration}) {
+    return CurrencyHistoryMenuBloc(
+        countryNamesRepository:
+            CountryNamesRepository(httpClient: MockClient((request) async {
+          requestedUris.add(request.url);
+          return http.Response.bytes(utf8.encode(body), status,
+              headers: {"content-type": "application/json; charset=utf-8"});
+        })),
+        // Sem isto, resolveCounterCurrency() cairia no CurrencyRepository
+        // real e tentaria abrir o banco de configuração de verdade.
+        currencyRepository: CurrencyRepository.withDependencies(
+            configurationRepository:
+                FakeConfigurationRepository(configuration: configuration)));
   }
+
+  group('CurrencyHistoryMenuBloc.counterCurrencyCode', () {
+    test('BRL por padrão, sem configuração de override', () async {
+      var bloc = buildBloc();
+
+      expect(await bloc.counterCurrencyCode, "BRL");
+    });
+
+    test('a moeda escolhida nas configurações, quando o override está ligado',
+        () async {
+      var bloc = buildBloc(
+          configuration: Configuration(1,
+              overrideDefaultCurrency: true,
+              selectedOverrideCurrencyCode: "USD"));
+
+      expect(await bloc.counterCurrencyCode, "USD");
+    });
+
+    test('resolve uma única vez e mantém em cache', () async {
+      var bloc = buildBloc();
+
+      await bloc.counterCurrencyCode;
+      var second = bloc.counterCurrencyCode;
+
+      expect(identical(bloc.counterCurrencyCode, second), isTrue,
+          reason: "a mesma Future precisa voltar sem consultar de novo");
+    });
+  });
 
   group('CurrencyHistoryMenuBloc.initStreamControllers', () {
     test('cria um controller por moeda', () {

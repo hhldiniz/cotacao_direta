@@ -2,16 +2,31 @@ import 'dart:async';
 
 import 'package:cotacao_direta/blocs/base_bloc.dart';
 import 'package:cotacao_direta/repository/country_names_repository.dart';
+import 'package:cotacao_direta/repository/currency_repository.dart';
 
 class CurrencyHistoryMenuBloc extends BaseBloc {
   final CountryNamesRepository _countryNameRepository;
+  final CurrencyRepository _currencyRepository;
   final Map<String, StreamController<String?>> _countryNameControllerMap = {};
   final Map<String, String?> _savedCountryNamesByCurrencyCod = {};
   final Set<String> _pendingRequests = {};
 
-  CurrencyHistoryMenuBloc({CountryNamesRepository? countryNamesRepository})
+  Future<String>? _counterCurrencyFuture;
+
+  CurrencyHistoryMenuBloc(
+      {CountryNamesRepository? countryNamesRepository,
+      CurrencyRepository? currencyRepository})
       : _countryNameRepository =
-            countryNamesRepository ?? CountryNamesRepository();
+            countryNamesRepository ?? CountryNamesRepository(),
+        _currencyRepository = currencyRepository ?? CurrencyRepository();
+
+  /// Moeda usada hoje como contrapartida (ver
+  /// [CurrencyRepository.resolveCounterCurrency]), para a tela excluí-la da
+  /// lista de histórico. Resolvida uma vez e mantida em cache: a tela
+  /// reconsulta isto a cada rebuild, e a configuração não muda enquanto a
+  /// lista está aberta.
+  Future<String> get counterCurrencyCode =>
+      _counterCurrencyFuture ??= _currencyRepository.resolveCounterCurrency();
 
   /// Cria um controller por moeda. É idempotente de propósito: a tela chama
   /// isto a cada build, e recriar os controllers deixaria os anteriores
