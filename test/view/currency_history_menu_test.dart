@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cotacao_direta/blocs/currency_history_menu_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
+import 'package:cotacao_direta/model/configuration.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/repository/country_names_repository.dart';
 import 'package:cotacao_direta/repository/currency_repository.dart';
@@ -25,7 +26,7 @@ void main() {
 
   setUp(() => requests = 0);
 
-  CurrencyHistoryMenuBloc buildBloc() {
+  CurrencyHistoryMenuBloc buildBloc({Configuration? configuration}) {
     return CurrencyHistoryMenuBloc(
         countryNamesRepository:
             CountryNamesRepository(httpClient: MockClient((request) async {
@@ -36,11 +37,13 @@ void main() {
         // Sem isto, resolveCounterCurrency() cairia no CurrencyRepository
         // real e tentaria abrir o banco de configuração de verdade.
         currencyRepository: CurrencyRepository.withDependencies(
-            configurationRepository: FakeConfigurationRepository()));
+            configurationRepository:
+                FakeConfigurationRepository(configuration: configuration)));
   }
 
-  Future<CurrencyHistoryMenuBloc> pumpMenu(WidgetTester tester) async {
-    var bloc = buildBloc();
+  Future<CurrencyHistoryMenuBloc> pumpMenu(WidgetTester tester,
+      {Configuration? configuration}) async {
+    var bloc = buildBloc(configuration: configuration);
     await tester.pumpWidget(_menuApp(bloc));
     return bloc;
   }
@@ -81,6 +84,21 @@ void main() {
       expect(find.text("BRL"), findsNothing,
           reason:
               "BRL contra ela mesma não tem série para o gráfico de histórico");
+    });
+
+    testWidgets(
+        'BRL volta a aparecer quando outra moeda vira a contrapartida',
+        (WidgetTester tester) async {
+      await pumpMenu(tester,
+          configuration: Configuration(1,
+              overrideDefaultCurrency: true,
+              selectedOverrideCurrencyCode: "USD"));
+      await tester.pumpAndSettle();
+
+      expect(find.text("BRL"), findsOneWidget,
+          reason: "BRL contra USD tem série normalmente");
+      expect(find.text("USD"), findsNothing,
+          reason: "agora é USD quem virou a própria contrapartida");
     });
 
     testWidgets('reaproveita os controllers quando a lista é reconstruída',
