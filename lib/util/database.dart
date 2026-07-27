@@ -1,7 +1,8 @@
-import 'dart:io';
-
 import 'package:path/path.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common/sqflite.dart';
+
+import 'database_platform_io.dart'
+    if (dart.library.js_interop) 'database_platform_web.dart';
 
 class AppDatabase {
   static AppDatabase? _instance;
@@ -17,12 +18,7 @@ class AppDatabase {
   }
 
   AppDatabase._internalConstructor() {
-    // O plugin sqflite não tem implementação para desktop Linux; troca o
-    // databaseFactory pelo backend FFI, que usa o SQLite nativo do sistema.
-    if (Platform.isLinux) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
-    }
+    configureDatabaseFactory();
   }
 
   /// Fecha e descarta o singleton, para que cada teste comece de um banco novo.

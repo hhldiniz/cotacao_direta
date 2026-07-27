@@ -96,3 +96,23 @@ jobs:
 
       - name: Compila o app Linux (debug)
         run: flutter build linux --debug
+
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Baixa as dependências
+        run: flutter pub get
+
+      # Os binários do sqflite_common_ffi_web (sqflite_sw.js e sqlite3.wasm)
+      # já ficam versionados em web/; nada a gerar aqui.
+      - name: Compila o app Web (debug)
+        run: flutter build web --debug
