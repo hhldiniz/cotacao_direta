@@ -36,6 +36,25 @@ class MyAppLocalizations {
       'aboutVersionLabel': 'Version',
       'aboutDeveloperLabel': 'Developed by',
       'aboutSourceCodeLabel': 'Source code',
+      'currencyAlertsBottomNavItemLabel': 'Alerts',
+      'currencyAlertsSectionLabel': 'Exchange rate alerts',
+      'currencyAlertEmptyListLabel':
+          'No alerts yet. Tap the button below to create one.',
+      'addCurrencyAlertBtnLabel': 'New alert',
+      'addCurrencyAlertDialogTitle': 'New exchange rate alert',
+      'currencyAlertCurrencyLabel': 'Currency',
+      'currencyAlertConditionLabel': 'Condition',
+      'currencyAlertConditionAbove': 'Rises above',
+      'currencyAlertConditionBelow': 'Falls below',
+      'currencyAlertTargetValueLabel': 'Target value',
+      'currencyAlertInvalidValueError': 'Enter a valid value',
+      'currencyAlertSaveBtnLabel': 'Save',
+      'currencyAlertCancelBtnLabel': 'Cancel',
+      'currencyAlertTriggeredLabel': 'Triggered',
+      'currencyAlertActiveLabel': 'Waiting',
+      'currencyAlertDeleteTooltip': 'Delete',
+      'currencyAlertNotificationTitle': 'Exchange rate alert',
+      'currencyAlertNotificationBody': '%s reached %s',
     },
     'pt': {
       'conversionButtonLabel': "Conversões",
@@ -62,6 +81,25 @@ class MyAppLocalizations {
       'aboutVersionLabel': 'Versão',
       'aboutDeveloperLabel': 'Desenvolvido por',
       'aboutSourceCodeLabel': 'Código fonte',
+      'currencyAlertsBottomNavItemLabel': 'Alertas',
+      'currencyAlertsSectionLabel': 'Alertas de câmbio',
+      'currencyAlertEmptyListLabel':
+          'Nenhum alerta cadastrado. Toque no botão abaixo para criar um.',
+      'addCurrencyAlertBtnLabel': 'Novo alerta',
+      'addCurrencyAlertDialogTitle': 'Novo alerta de câmbio',
+      'currencyAlertCurrencyLabel': 'Moeda',
+      'currencyAlertConditionLabel': 'Condição',
+      'currencyAlertConditionAbove': 'Subir acima de',
+      'currencyAlertConditionBelow': 'Cair abaixo de',
+      'currencyAlertTargetValueLabel': 'Valor alvo',
+      'currencyAlertInvalidValueError': 'Informe um valor válido',
+      'currencyAlertSaveBtnLabel': 'Salvar',
+      'currencyAlertCancelBtnLabel': 'Cancelar',
+      'currencyAlertTriggeredLabel': 'Disparado',
+      'currencyAlertActiveLabel': 'Aguardando',
+      'currencyAlertDeleteTooltip': 'Excluir',
+      'currencyAlertNotificationTitle': 'Alerta de câmbio',
+      'currencyAlertNotificationBody': '%s atingiu %s',
     }
   };
 
@@ -154,6 +192,88 @@ class MyAppLocalizations {
 
   String? get aboutSourceCodeLabel {
     return _localizedValues[locale.languageCode]!['aboutSourceCodeLabel'];
+  }
+
+  String? get currencyAlertsBottomNavItemLabel {
+    return _localizedValues[locale.languageCode]!
+        ['currencyAlertsBottomNavItemLabel'];
+  }
+
+  String? get currencyAlertsSectionLabel {
+    return _localizedValues[locale.languageCode]!['currencyAlertsSectionLabel'];
+  }
+
+  String? get currencyAlertEmptyListLabel {
+    return _localizedValues[locale.languageCode]!['currencyAlertEmptyListLabel'];
+  }
+
+  String? get addCurrencyAlertBtnLabel {
+    return _localizedValues[locale.languageCode]!['addCurrencyAlertBtnLabel'];
+  }
+
+  String? get addCurrencyAlertDialogTitle {
+    return _localizedValues[locale.languageCode]!
+        ['addCurrencyAlertDialogTitle'];
+  }
+
+  String? get currencyAlertCurrencyLabel {
+    return _localizedValues[locale.languageCode]!['currencyAlertCurrencyLabel'];
+  }
+
+  String? get currencyAlertConditionLabel {
+    return _localizedValues[locale.languageCode]!
+        ['currencyAlertConditionLabel'];
+  }
+
+  String? get currencyAlertConditionAbove {
+    return _localizedValues[locale.languageCode]!
+        ['currencyAlertConditionAbove'];
+  }
+
+  String? get currencyAlertConditionBelow {
+    return _localizedValues[locale.languageCode]!
+        ['currencyAlertConditionBelow'];
+  }
+
+  String? get currencyAlertTargetValueLabel {
+    return _localizedValues[locale.languageCode]!
+        ['currencyAlertTargetValueLabel'];
+  }
+
+  String? get currencyAlertInvalidValueError {
+    return _localizedValues[locale.languageCode]!
+        ['currencyAlertInvalidValueError'];
+  }
+
+  String? get currencyAlertSaveBtnLabel {
+    return _localizedValues[locale.languageCode]!['currencyAlertSaveBtnLabel'];
+  }
+
+  String? get currencyAlertCancelBtnLabel {
+    return _localizedValues[locale.languageCode]!
+        ['currencyAlertCancelBtnLabel'];
+  }
+
+  String? get currencyAlertTriggeredLabel {
+    return _localizedValues[locale.languageCode]!['currencyAlertTriggeredLabel'];
+  }
+
+  String? get currencyAlertActiveLabel {
+    return _localizedValues[locale.languageCode]!['currencyAlertActiveLabel'];
+  }
+
+  String? get currencyAlertDeleteTooltip {
+    return _localizedValues[locale.languageCode]!['currencyAlertDeleteTooltip'];
+  }
+
+  String? get currencyAlertNotificationTitle {
+    return _localizedValues[locale.languageCode]!
+        ['currencyAlertNotificationTitle'];
+  }
+
+  String? get currencyAlertNotificationBody {
+    return _localizedValues[locale.languageCode]!
+        ['currencyAlertNotificationBody'];
   }
 }
 

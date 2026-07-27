@@ -46,12 +46,12 @@ void main() {
       expect(identical(AppDatabase(), AppDatabase()), isTrue);
     });
 
-    test('abre o banco na versão 5', () async {
+    test('abre o banco na versão 6', () async {
       var db = await AppDatabase().openAppDatabase();
 
       expect(db, isNotNull);
       expect(db!.isOpen, isTrue);
-      expect(await db.getVersion(), 5);
+      expect(await db.getVersion(), 6);
     });
 
     test('reaproveita a mesma conexão em chamadas seguintes', () async {
@@ -109,6 +109,22 @@ void main() {
           ]));
     });
 
+    test('cria a tabela CurrencyAlerts com as colunas usadas pelo DAO',
+        () async {
+      var db = (await AppDatabase().openAppDatabase())!;
+
+      expect(
+          await _columnsOf(db, "CurrencyAlerts"),
+          containsAll([
+            "id",
+            "currencyCode",
+            "targetValue",
+            "condition",
+            "triggered",
+            "active"
+          ]));
+    });
+
     test('reset fecha a conexão e a próxima abertura cria um banco novo',
         () async {
       var db = (await AppDatabase().openAppDatabase())!;
@@ -127,7 +143,7 @@ void main() {
       expect(await reopened.query("Currency"), isEmpty);
     });
 
-    test('migra um banco da versão 1 até a 5, passando por todas as etapas',
+    test('migra um banco da versão 1 até a 6, passando por todas as etapas',
         () async {
       var path = await _createLegacyDatabase(version: 1, tables: [
         "CREATE TABLE Currency(id TEXT PRIMARY KEY, value REAL, timestamp TEXT)"
@@ -142,19 +158,22 @@ void main() {
 
       var db = (await AppDatabase().openAppDatabase())!;
 
-      expect(await db.getVersion(), 5);
+      expect(await db.getVersion(), 6);
       expect(await _columnsOf(db, "Currency"),
           containsAll(["historicalDate", "friendlyName"]));
       expect(await _columnsOf(db, "Configurations"),
           containsAll(["overrideDefaultCurrency"]),
           reason: "a etapa 3→4 não pode ser pulada");
+      expect(await _columnsOf(db, "CurrencyAlerts"),
+          containsAll(["currencyCode", "targetValue", "condition"]),
+          reason: "a etapa 5→6 não pode ser pulada");
       var row = (await db.query("Currency")).single;
       expect(row["id"], "USD");
       expect(row["value"], 5.0);
     });
 
-    test('migra um banco da versão 4 para a 5 acrescentando o friendlyName',
-        () async {
+    test('migra um banco da versão 4 para a 6 acrescentando o friendlyName e '
+        'os alertas', () async {
       var path = await _createLegacyDatabase(version: 4, tables: [
         "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, PRIMARY KEY(id, historicalDate))",
         "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT)"
@@ -170,11 +189,12 @@ void main() {
 
       var db = (await AppDatabase().openAppDatabase())!;
 
-      expect(await db.getVersion(), 5);
+      expect(await db.getVersion(), 6);
       var row = (await db.query("Currency")).single;
       expect(row["historicalDate"], "2024-01-01T00:00:00.000");
       expect(row["friendlyName"], "",
           reason: "quem já estava no banco fica com o nome amigável vazio");
+      expect(await db.query("CurrencyAlerts"), isEmpty);
     });
 
     test('a tabela migrada aceita a mesma moeda em datas diferentes', () async {
@@ -218,7 +238,7 @@ void main() {
       await AppDatabase.reset();
 
       var reopened = (await AppDatabase().openAppDatabase())!;
-      expect(await reopened.getVersion(), 5,
+      expect(await reopened.getVersion(), 6,
           reason: "reabrir não deve disparar onCreate/onUpgrade de novo");
       expect((await reopened.query("Currency")).single["id"], "USD");
     });

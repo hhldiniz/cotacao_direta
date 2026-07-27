@@ -1,12 +1,14 @@
 import 'package:cotacao_direta/blocs/base_bloc.dart';
 import 'package:cotacao_direta/blocs/configurations_page_bloc.dart';
 import 'package:cotacao_direta/blocs/conversion_page_bloc.dart';
+import 'package:cotacao_direta/blocs/currency_alerts_bloc.dart';
 import 'package:cotacao_direta/blocs/currency_history_menu_bloc.dart';
 import 'package:cotacao_direta/blocs/exchange_value_bloc.dart';
 import 'package:cotacao_direta/blocs/home_bloc.dart';
 import 'package:cotacao_direta/blocs/selected_currency_details_bloc.dart';
 import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
+import 'package:cotacao_direta/providers/currency_alerts_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/providers/exchange_value_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
@@ -34,6 +36,8 @@ class _SpyConfigurationsPageBloc extends ConfigurationsPageBloc
 
 class _SpyCurrencyHistoryMenuBloc extends CurrencyHistoryMenuBloc
     with _DisposeSpy {}
+
+class _SpyCurrencyAlertsBloc extends CurrencyAlertsBloc with _DisposeSpy {}
 
 class _SpySelectedCurrencyDetailsBloc extends SelectedCurrencyDetailsBloc
     with _DisposeSpy {}
@@ -76,6 +80,12 @@ final _cases = <String, _ProviderCase>{
         child: child, bloc: bloc as CurrencyHistoryMenuBloc?),
     read: (context) => CurrencyHistoryMenuBlocProvider.of(context),
     spy: () => _SpyCurrencyHistoryMenuBloc(),
+  ),
+  'CurrencyAlertsBlocProvider': _ProviderCase(
+    build: (child, bloc) => CurrencyAlertsBlocProvider(
+        child: child, bloc: bloc as CurrencyAlertsBloc?),
+    read: (context) => CurrencyAlertsBlocProvider.of(context),
+    spy: () => _SpyCurrencyAlertsBloc(),
   ),
   'SelectedCurrencyDetailsBlocProvider': _ProviderCase(
     build: (child, bloc) => SelectedCurrencyDetailsBlocProvider(
