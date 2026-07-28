@@ -1,0 +1,42 @@
+name: Build APK
+
+# Sem gatilhos de push/pull_request de propósito: este workflow só roda
+# quando disparado manualmente (aba Actions > Run workflow).
+on:
+  workflow_dispatch:
+
+env:
+  # Deve acompanhar o FLUTTER_VERSION do ci.yml.
+  FLUTTER_VERSION: 3.44.8
+
+jobs:
+  build-apk:
+    name: Build e publica APK (debug)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Baixa as dependências
+        run: flutter pub get
+
+      # Build de debug: não depende de chave de assinatura.
+      - name: Compila o APK de debug
+        run: flutter build apk --debug
+
+      - name: Publica o APK como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: cotacao_direta-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
