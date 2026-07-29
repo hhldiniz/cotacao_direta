@@ -1,0 +1,60 @@
+name: Deploy Web no GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  # Permite disparar manualmente pela aba Actions, sem precisar de um push novo.
+  workflow_dispatch:
+
+env:
+  # Deve acompanhar o FLUTTER_VERSION do ci.yml.
+  FLUTTER_VERSION: 3.44.8
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Publicações concorrentes no Pages não fazem sentido: a mais recente sempre
+# vence. Diferente do `cancel-in-progress` do ci.yml, aqui uma publicação em
+# andamento não é cancelada por uma nova (evita deixar o site pela metade).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build e publica no GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Baixa as dependências
+        run: flutter pub get
+
+      # --base-href precisa bater com o caminho do site de projeto no GitHub
+      # Pages (https://<usuário>.github.io/<repositório>/); sem isso os
+      # assets carregam com o caminho errado e a página fica em branco.
+      - name: Compila o app Web (release)
+        run: flutter build web --release --base-href /cotacao_direta/
+
+      - name: Configura o GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Publica os arquivos como artefato do Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+      - name: Publica no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
