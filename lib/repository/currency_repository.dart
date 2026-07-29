@@ -191,24 +191,22 @@ class CurrencyRepository {
             .get(_historyUri(currencyCode, counterCurrency, start, end));
         currencyListToSave.addAll(_parseHistory(response.body, currencyCode));
       }
-      await _currencyDao.insertMany(currencyListToSave
-          .where((currency) =>
-              (DateTime.now().year -
-                  DateTime.parse(currency.historicalDate!).year) <
-              10)
+
+      // Cada registro carrega sua data já convertida uma única vez, em vez de
+      // reparsear a mesma string repetidamente no filtro e no comparador do
+      // sort.
+      var dated = currencyListToSave
+          .map((currency) =>
+              (currency: currency, date: DateTime.parse(currency.historicalDate!)))
+          .toList();
+
+      await _currencyDao.insertMany(dated
+          .where((entry) => (DateTime.now().year - entry.date.year) < 10)
+          .map((entry) => entry.currency)
           .toList());
-      currencyListToSave.sort((a, b) {
-        DateTime dateCurrencyA = DateTime.parse(a.historicalDate!);
-        DateTime dateCurrencyB = DateTime.parse(b.historicalDate!);
-        if (dateCurrencyA.isBefore(dateCurrencyB)) {
-          return -1;
-        } else if (dateCurrencyA.isAfter(dateCurrencyB)) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
-      return currencyListToSave;
+
+      dated.sort((a, b) => a.date.compareTo(b.date));
+      return dated.map((entry) => entry.currency).toList();
     } else
       return await _currencyDao.getHistoricalData(
           currencyCodeList, initialDate, finalDate);

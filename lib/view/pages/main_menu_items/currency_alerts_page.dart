@@ -8,11 +8,21 @@ import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:flutter/material.dart';
 
-class CurrencyAlertsPage extends StatelessWidget {
+class CurrencyAlertsPage extends StatefulWidget {
+  @override
+  State<CurrencyAlertsPage> createState() => _CurrencyAlertsPageState();
+}
+
+class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
+  var _alertsLoaded = false;
+
   @override
   Widget build(BuildContext context) {
     final _bloc = CurrencyAlertsBlocProvider.of(context);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _bloc.loadAlerts());
+    if (!_alertsLoaded) {
+      _alertsLoaded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _bloc.loadAlerts());
+    }
     final _localization = MyAppLocalizations.of(context)!;
     final _scale = Responsive.scaleFactor(context);
     final _currencyList = List.generate(Currencies.values.length, (index) {
