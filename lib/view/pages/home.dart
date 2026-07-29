@@ -40,6 +40,11 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   var fabVisibility = true;
 
+  // Garante que a busca inicial de cotação/alertas rode uma única vez: como
+  // ela depende do context (localizations), não pode ir para initState, mas
+  // build() roda de novo a cada troca de aba e não deve refazer a busca.
+  var _initialFetchScheduled = false;
+
   late final AnimationController _circlesAnimationController;
   late final List<Animation<double>> _circleScaleAnimations;
   late final List<Animation<double>> _circleFadeAnimations;
@@ -151,12 +156,15 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
     _bloc = HomeBlocProvider.of(context);
     _alertsBloc = CurrencyAlertsBlocProvider.of(context);
 
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _bloc.getSelectedOverrideCurrency(),
-    );
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _checkCurrencyAlerts(context),
-    );
+    if (!_initialFetchScheduled) {
+      _initialFetchScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _bloc.getSelectedOverrideCurrency(),
+      );
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _checkCurrencyAlerts(context),
+      );
+    }
 
     final pageHeader = StreamBuilder(
       builder: (BuildContext context, snapshot) {
@@ -394,7 +402,12 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
           icon: Icon(Icons.compare_arrows),
         ),
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
+      // IndexedStack mantém as 5 abas montadas o tempo todo, só alternando
+      // qual fica visível. Isso evita que trocar de aba destrua e recrie o
+      // estado da anterior (cotações já buscadas, animações etc.), o que
+      // forçaria buscas repetidas de rede/banco toda vez que o usuário volta
+      // para uma aba já visitada.
+      body: IndexedStack(index: _selectedIndex, children: _widgetOptions),
     );
   }
 }

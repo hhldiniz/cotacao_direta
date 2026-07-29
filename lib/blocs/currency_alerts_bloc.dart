@@ -54,11 +54,21 @@ class CurrencyAlertsBloc extends BaseBloc {
     var alerts = await _currencyAlertRepository.getAll();
     var pendingAlerts =
         alerts.where((alert) => alert.active && !alert.triggered).toList();
+    if (pendingAlerts.isEmpty) return;
+
+    // Vários alertas costumam ser da mesma moeda: busca cada código uma única
+    // vez, e em paralelo, em vez de uma consulta sequencial por alerta.
+    var currencyCodes = pendingAlerts.map((alert) => alert.currencyCode).toSet();
+    var latestValueByCode = Map.fromEntries(
+      await Future.wait(currencyCodes.map((code) async {
+        var currency = await _currencyRepository.getLatestDataByCurrencyCode(code);
+        return MapEntry(code, currency?.value);
+      })),
+    );
+
     var triggeredAny = false;
     for (var alert in pendingAlerts) {
-      var currency = await _currencyRepository
-          .getLatestDataByCurrencyCode(alert.currencyCode);
-      var value = currency?.value;
+      var value = latestValueByCode[alert.currencyCode];
       if (value == null || !alert.isMetBy(value)) continue;
       alert.triggered = true;
       await _currencyAlertRepository.update(alert);
