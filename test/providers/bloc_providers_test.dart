@@ -170,7 +170,7 @@ void main() {
       })));
       await _pump(tester, const SizedBox());
 
-      expect(() => bloc.conversionResultSink.add(1), throwsStateError);
+      expect(() => bloc.amountSink.add(1), throwsStateError);
     });
 
     testWidgets('ConfigurationsPageBlocProvider fecha as streams do bloc',
