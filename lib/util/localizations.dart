@@ -20,6 +20,17 @@ class MyAppLocalizations {
       'conversionPageExplanationText': 'Insert the amount value of the currency '
           'that will be converted, selected a currency to be converted and the '
           'currency that it will be converted to.',
+      'conversionFromLabel': 'From',
+      'conversionToLabel': 'To',
+      'conversionSwapTooltip': 'Swap currencies',
+      'conversionClearAmountTooltip': 'Clear amount',
+      'conversionInvalidAmountError': 'Enter a valid amount',
+      'conversionCurrencyPickerTitle': 'Choose a currency',
+      'conversionCurrencySearchHint': 'Search by name or code',
+      'conversionCurrencyNotFoundLabel': 'No currency found',
+      'conversionRateUnavailableLabel': 'Exchange rate unavailable',
+      'conversionCopyResultTooltip': 'Copy result',
+      'conversionResultCopiedLabel': 'Result copied',
       'mainCurrenciesBottomNavItemLabel': 'Currencies',
       'currencyHistoryBottomNavItemLabel': 'History',
       'configBottomNavItemLabel': 'Options',
@@ -67,6 +78,17 @@ class MyAppLocalizations {
       'conversionPageExplanationText': 'Insira a quantidade da moeda que será '
           'convertida, selecionada a moeda que será convertida e a moeda para '
           'a qual será feita a conversão.',
+      'conversionFromLabel': 'De',
+      'conversionToLabel': 'Para',
+      'conversionSwapTooltip': 'Inverter as moedas',
+      'conversionClearAmountTooltip': 'Limpar a quantidade',
+      'conversionInvalidAmountError': 'Informe um valor válido',
+      'conversionCurrencyPickerTitle': 'Escolha a moeda',
+      'conversionCurrencySearchHint': 'Busque pelo nome ou código',
+      'conversionCurrencyNotFoundLabel': 'Nenhuma moeda encontrada',
+      'conversionRateUnavailableLabel': 'Cotação indisponível',
+      'conversionCopyResultTooltip': 'Copiar o resultado',
+      'conversionResultCopiedLabel': 'Resultado copiado',
       'mainCurrenciesBottomNavItemLabel': 'Moedas',
       'currencyHistoryBottomNavItemLabel': 'Histórico',
       'configBottomNavItemLabel': 'Opções',
@@ -130,6 +152,58 @@ class MyAppLocalizations {
   String? get conversionPageExplanationText {
     return _localizedValues[locale.languageCode]!
         ['conversionPageExplanationText'];
+  }
+
+  String? get conversionFromLabel {
+    return _localizedValues[locale.languageCode]!['conversionFromLabel'];
+  }
+
+  String? get conversionToLabel {
+    return _localizedValues[locale.languageCode]!['conversionToLabel'];
+  }
+
+  String? get conversionSwapTooltip {
+    return _localizedValues[locale.languageCode]!['conversionSwapTooltip'];
+  }
+
+  String? get conversionClearAmountTooltip {
+    return _localizedValues[locale.languageCode]!
+        ['conversionClearAmountTooltip'];
+  }
+
+  String? get conversionInvalidAmountError {
+    return _localizedValues[locale.languageCode]!
+        ['conversionInvalidAmountError'];
+  }
+
+  String? get conversionCurrencyPickerTitle {
+    return _localizedValues[locale.languageCode]!
+        ['conversionCurrencyPickerTitle'];
+  }
+
+  String? get conversionCurrencySearchHint {
+    return _localizedValues[locale.languageCode]!
+        ['conversionCurrencySearchHint'];
+  }
+
+  String? get conversionCurrencyNotFoundLabel {
+    return _localizedValues[locale.languageCode]!
+        ['conversionCurrencyNotFoundLabel'];
+  }
+
+  String? get conversionRateUnavailableLabel {
+    return _localizedValues[locale.languageCode]!
+        ['conversionRateUnavailableLabel'];
+  }
+
+  String? get conversionCopyResultTooltip {
+    return _localizedValues[locale.languageCode]!
+        ['conversionCopyResultTooltip'];
+  }
+
+  String? get conversionResultCopiedLabel {
+    return _localizedValues[locale.languageCode]!
+        ['conversionResultCopiedLabel'];
   }
 
   String? get mainCurrenciesBottomNavItemLabel {

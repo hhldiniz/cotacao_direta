@@ -2,87 +2,233 @@ import 'dart:async';
 
 import 'package:cotacao_direta/blocs/base_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
-import 'package:cotacao_direta/util/string_utils.dart';
 
 import 'exchange_value_bloc.dart';
 
+/// Em que pé está a conversão mostrada na tela.
+enum ConversionStatus {
+  /// Buscando as cotações das duas moedas.
+  loading,
+
+  /// Há um valor convertido para mostrar.
+  success,
+
+  /// Falta a cotação de alguma das moedas, então não há conversão possível.
+  unavailable,
+}
+
+/// Tudo o que a tela precisa para desenhar uma conversão de uma vez só: o
+/// valor convertido sozinho não basta, porque a tela também mostra a que
+/// quantidade e a que par de moedas ele corresponde e qual foi a cotação
+/// usada. Em streams separadas esses dados chegariam em momentos diferentes e
+/// a tela piscaria combinações que nunca existiram (o valor novo com o par
+/// antigo, por exemplo).
+class ConversionResult {
+  final ConversionStatus status;
+
+  /// Quantidade informada pelo usuário, na moeda [from].
+  final double amount;
+  final Currencies from;
+  final Currencies to;
+
+  /// [amount] convertido para [to]; nulo enquanto não houver cotação.
+  final double? convertedAmount;
+
+  /// Quanto vale uma unidade de [from] em [to]; nulo enquanto não houver
+  /// cotação.
+  final double? unitRate;
+
+  const ConversionResult({
+    required this.status,
+    required this.amount,
+    required this.from,
+    required this.to,
+    this.convertedAmount,
+    this.unitRate,
+  });
+
+  /// O caminho contrário: quanto vale uma unidade de [to] em [from].
+  double? get inverseUnitRate =>
+      unitRate == null || unitRate == 0 ? null : 1 / unitRate!;
+
+  bool get hasValue => convertedAmount != null && unitRate != null;
+
+  bool get isLoading => status == ConversionStatus.loading;
+}
+
 class ConversionPageBloc extends BaseBloc {
-  var _multiplierStreamController = StreamController();
-  var _currencyFromStreamController = StreamController();
-  var _currencyToStreamController = StreamController();
-  var _conversionResultStreamController = StreamController();
-  var _currencyLabelStreamController = StreamController();
+  static const initialAmount = 1.0;
+  static const initialFromCurrency = Currencies.BRL;
+  static const initialToCurrency = Currencies.USD;
 
-  final enumAsValueUtil = EnumValueAsString();
+  // Broadcast porque mais de um trecho da tela acompanha a mesma informação
+  // (a moeda de origem aparece no campo de quantidade e no seletor, por
+  // exemplo) e um StreamController comum só aceita um ouvinte.
+  final _amountController = StreamController<double>.broadcast();
+  final _currencyFromController = StreamController<Currencies>.broadcast();
+  final _currencyToController = StreamController<Currencies>.broadcast();
+  final _conversionResultController =
+      StreamController<ConversionResult>.broadcast();
 
-  final _exchangeValueBloc = ExchangeValueBloc();
+  final ExchangeValueBloc _exchangeValueBloc;
 
-  var _multiplierValue = 0.0;
-  Currencies? _selectedFromCurrency = Currencies.BRL;
-  Currencies? _selectedToCurrency = Currencies.USD;
+  /// Só descarta o bloc de cotações se foi ele quem o criou: um bloc recebido
+  /// de fora pertence a quem o passou.
+  final bool _ownsExchangeValueBloc;
 
-  Stream get multiplierStream => _multiplierStreamController.stream;
+  ConversionPageBloc({ExchangeValueBloc? exchangeValueBloc})
+      : _exchangeValueBloc = exchangeValueBloc ?? ExchangeValueBloc(),
+        _ownsExchangeValueBloc = exchangeValueBloc == null;
 
-  Sink get multiplierSink => _multiplierStreamController.sink;
+  var _amount = initialAmount;
+  var _fromCurrency = initialFromCurrency;
+  var _toCurrency = initialToCurrency;
 
-  Stream get currencyFromStream => _currencyFromStreamController.stream;
+  var _result = const ConversionResult(
+      status: ConversionStatus.loading,
+      amount: initialAmount,
+      from: initialFromCurrency,
+      to: initialToCurrency);
 
-  Sink get currencyFromSink => _currencyFromStreamController.sink;
+  /// Cada conversão leva um número de ordem para que a resposta de uma
+  /// conversão antiga — a busca das cotações é assíncrona — não sobrescreva o
+  /// resultado de uma conversão pedida depois dela.
+  var _lastRequestId = 0;
 
-  Stream get currencyToStream => _currencyToStreamController.stream;
+  var _disposed = false;
 
-  Sink get currencyToSink => _currencyToStreamController.sink;
+  Stream<double> get amountStream => _amountController.stream;
 
-  Stream get conversionResultStream => _conversionResultStreamController.stream;
+  Sink<double> get amountSink => _amountController.sink;
 
-  Sink get conversionResultSink => _conversionResultStreamController.sink;
+  Stream<Currencies> get currencyFromStream => _currencyFromController.stream;
 
-  Stream get currencyLabelStream => _currencyLabelStreamController.stream;
+  Sink<Currencies> get currencyFromSink => _currencyFromController.sink;
 
-  Sink get currencyLabelSink => _currencyLabelStreamController.sink;
+  Stream<Currencies> get currencyToStream => _currencyToController.stream;
 
-  updateMultiplierValue(value) {
-    _multiplierValue = value == null || value == "" ? 0 : value;
-    multiplierSink.add(_multiplierValue);
+  Sink<Currencies> get currencyToSink => _currencyToController.sink;
+
+  Stream<ConversionResult> get conversionResultStream =>
+      _conversionResultController.stream;
+
+  Sink<ConversionResult> get conversionResultSink =>
+      _conversionResultController.sink;
+
+  /// Estado atual, para a tela desenhar o primeiro quadro sem esperar a
+  /// primeira emissão das streams.
+  double get amount => _amount;
+
+  Currencies get fromCurrency => _fromCurrency;
+
+  Currencies get toCurrency => _toCurrency;
+
+  ConversionResult get result => _result;
+
+  /// Quantidade a converter. Um texto vazio ou inválido na tela vira zero, que
+  /// converte para zero em vez de deixar o resultado anterior no lugar.
+  void updateAmount(double? value) {
+    _amount = value ?? 0;
+    _amountController.add(_amount);
+    updateResult();
   }
 
-  updateFromCurrency(value) {
-    _selectedFromCurrency = value;
-    currencyFromSink.add(value);
+  /// Escolher para a origem a moeda que já está no destino inverte o par, em
+  /// vez de deixar as duas pontas iguais: é o que o usuário quis dizer ao
+  /// escolher "converter para" a moeda que estava convertendo.
+  void updateFromCurrency(Currencies value) {
+    if (value == _toCurrency) return switchCurrencies();
+    _fromCurrency = value;
+    _currencyFromController.add(value);
+    updateResult();
   }
 
-  updateToCurrency(value) {
-    _selectedToCurrency = value;
-    currencyToSink.add(value);
+  void updateToCurrency(Currencies value) {
+    if (value == _fromCurrency) return switchCurrencies();
+    _toCurrency = value;
+    _currencyToController.add(value);
+    updateResult();
   }
 
-  updateResult() async {
-    var fromValue =
-        await _exchangeValueBloc.retrieveCurrencyValue(_selectedFromCurrency);
-    var toValue =
-        await _exchangeValueBloc.retrieveCurrencyValue(_selectedToCurrency);
-    // Sem cotação de alguma das moedas não há conversão possível: o null faz a
-    // tela mostrar "Sem Dados".
-    if (fromValue == null || fromValue == 0 || toValue == null) {
-      conversionResultSink.add(null);
-      return;
+  void switchCurrencies() {
+    var previousFromCurrency = _fromCurrency;
+    _fromCurrency = _toCurrency;
+    _toCurrency = previousFromCurrency;
+    _currencyFromController.add(_fromCurrency);
+    _currencyToController.add(_toCurrency);
+    updateResult();
+  }
+
+  Future<void> updateResult() async {
+    var requestId = ++_lastRequestId;
+    var amount = _amount;
+    var from = _fromCurrency;
+    var to = _toCurrency;
+    _emit(_loadingResult());
+
+    var rate = await _unitRate(from, to);
+
+    // Chegou tarde: outra conversão já foi pedida (ou a tela foi embora).
+    if (_disposed || requestId != _lastRequestId) return;
+    _emit(ConversionResult(
+      status: rate == null ? ConversionStatus.unavailable : ConversionStatus.success,
+      amount: amount,
+      from: from,
+      to: to,
+      unitRate: rate,
+      convertedAmount: rate == null ? null : amount * rate,
+    ));
+  }
+
+  /// Quantas unidades de [to] valem uma unidade de [from], ou nulo quando
+  /// falta a cotação de alguma das duas.
+  Future<double?> _unitRate(Currencies from, Currencies to) async {
+    // Uma moeda vale exatamente uma unidade dela mesma; a cotação do par nem
+    // existe.
+    if (from == to) return 1;
+    try {
+      var fromValue = await _exchangeValueBloc.retrieveCurrencyValue(from);
+      var toValue = await _exchangeValueBloc.retrieveCurrencyValue(to);
+      // As cotações guardadas dizem quantas unidades da moeda valem uma
+      // unidade da contrapartida (ver CurrencyRepository), então a taxa entre
+      // duas moedas é a razão entre elas.
+      if (fromValue == null || fromValue == 0 || toValue == null) return null;
+      return toValue / fromValue;
+    } catch (exception) {
+      // Sem rede e sem nada salvo a busca pode falhar; para a tela é o mesmo
+      // que não ter cotação.
+      return null;
     }
-    conversionResultSink.add(_multiplierValue * (toValue / fromValue));
   }
 
-  switchCurrencies() async {
-    var currentSelectedToCurrency = _selectedToCurrency;
-    var currentSelectedFromCurrency = _selectedFromCurrency;
-    updateFromCurrency(currentSelectedToCurrency);
-    updateToCurrency(currentSelectedFromCurrency);
+  /// Enquanto as cotações não chegam, o par que já estava na tela continua
+  /// mostrando seu último valor (recalculado para a quantidade nova) para que
+  /// a tela não pisque em branco a cada tecla digitada.
+  ConversionResult _loadingResult() {
+    var keepsRate = _result.from == _fromCurrency && _result.to == _toCurrency;
+    var rate = keepsRate ? _result.unitRate : null;
+    return ConversionResult(
+      status: ConversionStatus.loading,
+      amount: _amount,
+      from: _fromCurrency,
+      to: _toCurrency,
+      unitRate: rate,
+      convertedAmount: rate == null ? null : _amount * rate,
+    );
+  }
+
+  void _emit(ConversionResult result) {
+    _result = result;
+    _conversionResultController.add(result);
   }
 
   @override
   void dispose() {
-    _multiplierStreamController.close();
-    _currencyFromStreamController.close();
-    _currencyToStreamController.close();
-    _conversionResultStreamController.close();
-    _currencyLabelStreamController.close();
+    _disposed = true;
+    _amountController.close();
+    _currencyFromController.close();
+    _currencyToController.close();
+    _conversionResultController.close();
+    if (_ownsExchangeValueBloc) _exchangeValueBloc.dispose();
   }
 }
