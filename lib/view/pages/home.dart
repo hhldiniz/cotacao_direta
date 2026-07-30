@@ -49,6 +49,14 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
   late final List<Animation<double>> _circleScaleAnimations;
   late final List<Animation<double>> _circleFadeAnimations;
 
+  // getNextStreamController() fecha e recria o StreamController se já houver
+  // um listener; chamá-la a cada build (o que acontece ao trocar de aba, já
+  // que dispara setState) descartaria o stream em uso e o cabeçalho pararia
+  // de receber atualizações. Por isso a stream é obtida uma única vez por
+  // bloc, aqui em cache.
+  Stream<String?>? _headerStream;
+  HomeBloc? _headerStreamBloc;
+
   HomeState(this._pageTitle);
 
   @override
@@ -155,6 +163,10 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
     final _scale = Responsive.scaleFactor(context);
     _bloc = HomeBlocProvider.of(context);
     _alertsBloc = CurrencyAlertsBlocProvider.of(context);
+    if (!identical(_headerStreamBloc, _bloc)) {
+      _headerStreamBloc = _bloc;
+      _headerStream = _bloc.getNextStreamController();
+    }
 
     if (!_initialFetchScheduled) {
       _initialFetchScheduled = true;
@@ -182,7 +194,7 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
           );
         }
       },
-      stream: _bloc.getNextStreamController(),
+      stream: _headerStream,
     );
 
     final dollarExchangeRate = DollarExchangeRate(

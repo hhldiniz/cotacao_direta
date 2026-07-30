@@ -69,6 +69,52 @@ void main() {
       expect(find.text("5.42"), findsOneWidget);
     });
 
+    testWidgets(
+        'mantém o valor após um rebuild da árvore (troca de aba e volta)',
+        (WidgetTester tester) async {
+      late StateSetter rebuild;
+
+      // O StatefulBuilder por cima do ExchangeValueBlocProvider reproduz o
+      // que o Home faz ao trocar de aba: chama setState, o que reconstrói a
+      // subárvore inteira (novas instâncias de ExchangeValueBlocProvider e
+      // ExchangeRateValue) sem que nenhum InheritedWidget do qual o widget
+      // dependa realmente mude — então didChangeDependencies não é chamado
+      // de novo, só build().
+      await tester.pumpWidget(MaterialApp(
+        locale: const Locale("pt"),
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          MyAppLocalizationsDelegate()
+        ],
+        supportedLocales: const [Locale("pt"), Locale("en")],
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            rebuild = setState;
+            return ExchangeValueBlocProvider(
+              bloc: _FakeExchangeValueBloc(0.2),
+              child: ExchangeRateValue(Currencies.USD),
+            );
+          },
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.text("5"), findsOneWidget);
+
+      // Antes da correção, esse rebuild descartava o StreamController em uso
+      // (getNextStreamController fechava e recriava o stream porque já
+      // havia um listener) e nada mais empurrava um novo valor para ele, já
+      // que nenhuma busca é refeita nesse tipo de rebuild.
+      rebuild(() {});
+      await tester.pump();
+
+      expect(find.text("5"), findsOneWidget);
+      expect(find.text(""), findsNothing);
+      expect(find.text("Sem Dados"), findsNothing);
+    });
+
     testWidgets('não mostra nada enquanto a cotação não chega',
         (WidgetTester tester) async {
       await tester.pumpWidget(MaterialApp(
