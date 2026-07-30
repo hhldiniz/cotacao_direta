@@ -17,6 +17,8 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.aboutBottomNavItemLabel,
       localizations.currencyHistoryFromDateLabel,
       localizations.currencyHistoryToDateLabel,
+      localizations.currencyHistoryCurrenciesSectionLabel,
+      localizations.currencyHistoryCryptocurrenciesSectionLabel,
       localizations.noDataLabel,
       localizations.getCurrencyHistoryBtnLabel,
       localizations.getConfigBottomNavItemLabel,

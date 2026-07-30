@@ -26,6 +26,8 @@ class MyAppLocalizations {
       'aboutBottomNavItemLabel': 'About',
       'currencyHistoryFromDateLabel': 'From',
       'currencyHistoryToDateLabel': 'Until',
+      'currencyHistoryCurrenciesSectionLabel': 'Currencies',
+      'currencyHistoryCryptocurrenciesSectionLabel': 'Cryptocurrencies',
       'noDataLabel': 'No Data',
       'getCurrencyHistoryBtnLabel': 'Get history',
       'overrideDefaultCurrencySwitchLabel': 'Override default currency',
@@ -71,6 +73,8 @@ class MyAppLocalizations {
       'aboutBottomNavItemLabel': 'Sobre',
       'currencyHistoryFromDateLabel': 'De',
       'currencyHistoryToDateLabel': 'Até',
+      'currencyHistoryCurrenciesSectionLabel': 'Moedas',
+      'currencyHistoryCryptocurrenciesSectionLabel': 'Criptomoedas',
       'noDataLabel': 'Sem Dados',
       'getCurrencyHistoryBtnLabel': 'Obter histórico',
       'overrideDefaultCurrencySwitchLabel': 'Sobrescrever moeda padrão',
@@ -149,6 +153,16 @@ class MyAppLocalizations {
 
   String? get currencyHistoryToDateLabel {
     return _localizedValues[locale.languageCode]!['currencyHistoryToDateLabel'];
+  }
+
+  String? get currencyHistoryCurrenciesSectionLabel {
+    return _localizedValues[locale.languageCode]!
+        ['currencyHistoryCurrenciesSectionLabel'];
+  }
+
+  String? get currencyHistoryCryptocurrenciesSectionLabel {
+    return _localizedValues[locale.languageCode]!
+        ['currencyHistoryCryptocurrenciesSectionLabel'];
   }
 
   String? get noDataLabel {
