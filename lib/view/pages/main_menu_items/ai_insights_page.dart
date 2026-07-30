@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sprintf/sprintf.dart';
 
-/// Um ativo oferecido na lista da tela.
+/// An asset offered in the screen's list.
 class _AssetOption {
   final String code;
   final AssetKind kind;
@@ -23,8 +23,8 @@ class _AssetOption {
 
   const _AssetOption({required this.code, required this.kind, required this.name});
 
-  // O DropdownButtonFormField compara o valor selecionado com os itens da lista
-  // por igualdade, e a lista é remontada a cada build.
+  // DropdownButtonFormField compares the selected value against the list items
+  // by equality, and the list is rebuilt on every build.
   @override
   bool operator ==(Object other) =>
       other is _AssetOption && other.code == code && other.kind == kind;
@@ -33,11 +33,13 @@ class _AssetOption {
   int get hashCode => Object.hash(code, kind);
 }
 
-/// Tela de insights gerados pelo modelo de IA que roda no próprio aparelho.
+/// Screen for the insights produced by the AI model that runs on the device
+/// itself.
 ///
-/// O fluxo é: escolher o ativo e o horizonte, tocar em analisar, e a tela mostra
-/// o resumo de mercado, a projeção com faixa de confiança, o gráfico e as
-/// observações em texto. Nenhuma dessas contas sai do celular.
+/// The flow is: pick the asset and the horizon, tap analyse, and the screen
+/// shows the market summary, the projection with its confidence band, the
+/// chart and the remarks in text form. None of these computations leave the
+/// phone.
 class AiInsightsPage extends StatefulWidget {
   AiInsightsPage({Key? key}) : super(key: key);
 
@@ -50,8 +52,8 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
       EnumValueAsString().getEnumValue(enumValue.toString());
 
   List<_AssetOption> _assetOptions(String counterCurrency) => [
-        // A moeda de contrapartida não tem série própria: cotada contra ela
-        // mesma valeria sempre 1, e o repositório pula a consulta.
+        // The counter currency has no series of its own: quoted against
+        // itself it would always be 1, and the repository skips the query.
         ...Currencies.values
             .where((currency) => _codeOf(currency) != counterCurrency)
             .map((currency) => _AssetOption(
@@ -84,8 +86,8 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
               option.kind == bloc.selectedAssetKind,
           orElse: () => options.first,
         );
-        // A moeda de contrapartida pode ter mudado nas opções e deixado o ativo
-        // selecionado fora da lista.
+        // The counter currency may have changed in the settings, leaving the
+        // selected asset out of the list.
         if (selected.code != bloc.selectedAssetCode)
           bloc.selectAsset(selected.code, selected.kind);
 
@@ -231,8 +233,8 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
         labelText: localizations.aiInsightsAmountLabel,
         prefixIcon: const Icon(Icons.savings_outlined),
       ),
-      // O valor simulado é uma regra de três sobre a projeção já calculada:
-      // basta redesenhar, sem treinar de novo.
+      // The simulated amount is a rule of three over the projection already
+      // computed: it is enough to redraw, with no retraining.
       onChanged: (_) => setState(() {}),
     );
   }
@@ -314,8 +316,8 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
           child: Padding(
             padding: EdgeInsets.only(right: 8 * scale, top: 8 * scale),
             child: ForecastChart(
-              // Um trimestre de histórico já dá contexto para a projeção sem
-              // espremer as duas semanas que interessam.
+              // A quarter of history gives the projection enough context
+              // without squeezing the two weeks that matter.
               history: analysis.series.tail(60),
               forecast: analysis.forecast.points,
             ),
@@ -563,7 +565,7 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
   }
 }
 
-/// Formatação dos números da tela no idioma corrente.
+/// Formatting of the screen's numbers in the current language.
 class _NumberFormatter {
   final String languageCode;
 
@@ -579,19 +581,19 @@ class _NumberFormatter {
               locale: languageCode, decimalDigits: digits)
           .format(fraction);
 
-  /// Percentual com sinal explícito: numa variação, "+1,2%" e "-1,2%" se
-  /// distinguem à primeira vista, e o "+" não aparece sozinho por engano no
+  /// Percentage with an explicit sign: on a change, "+1.2%" and "-1.2%" are
+  /// told apart at a glance, and the "+" does not show up by mistake on
   /// zero.
   String signedPercent(double fraction, {int digits = 1}) {
     final formatted = percent(fraction, digits: digits);
     return fraction > 0 ? "+$formatted" : formatted;
   }
 
-  /// Cotação, com casas decimais conforme a ordem de grandeza (cripto em real
-  /// tem preço na casa dos milhares; alguns pares, na casa dos centésimos).
+  /// Quote, with decimal places following the order of magnitude (crypto in
+  /// reais runs in the thousands; some pairs, in the hundredths).
   String price(double value) => decimal(value,
       digits: quoteDecimalDigits(value, minimumDigits: 2, significantDigits: 4));
 
-  /// Valor monetário simulado: duas casas bastam, é dinheiro.
+  /// Simulated monetary amount: two places are enough, it is money.
   String money(double value) => decimal(value, digits: 2);
 }

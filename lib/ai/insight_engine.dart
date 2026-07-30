@@ -3,34 +3,34 @@ import 'package:cotacao_direta/model/financial_analysis.dart';
 import 'package:cotacao_direta/util/quote_format.dart';
 import 'package:intl/intl.dart';
 
-/// Traduz os números da análise em observações curtas.
+/// Turns the numbers of the analysis into short remarks.
 ///
-/// A camada de linguagem do recurso mora aqui: o modelo produz estatísticas e
-/// uma projeção, e esta classe decide o que merece ser dito e com que tom. O
-/// texto final não sai daqui — sai do arquivo de traduções, que a tela preenche
-/// com [FinancialInsight.arguments]. Assim o motor continua sendo Dart puro,
-/// sem depender de Flutter, e os dois idiomas do app são atendidos pelo mesmo
-/// código.
+/// The language layer of the feature lives here: the model produces statistics
+/// and a projection, and this class decides what is worth saying and in what
+/// tone. The final text does not come from here — it comes from the
+/// translations file, which the screen fills in with
+/// [FinancialInsight.arguments]. That keeps the engine in pure Dart, free of
+/// Flutter, while both app languages are served by the same code.
 class InsightEngine {
-  /// Idioma em que os números são formatados ("pt" ou "en"): muda a vírgula
-  /// decimal e o separador de milhar.
+  /// Language the numbers are formatted in ("pt" or "en"): it changes the
+  /// decimal comma and the thousands separator.
   final String languageCode;
 
   const InsightEngine({this.languageCode = "pt"});
 
-  /// Acima disto a variação do período deixa de ser ruído e vira tendência.
+  /// Above this the period's change stops being noise and becomes a trend.
   static const double _trendThreshold = 0.025;
 
-  /// Faixa em que a projeção é considerada estável.
+  /// Range within which the projection counts as stable.
   static const double _projectionThreshold = 0.01;
 
   static const double _overboughtLevel = 70;
   static const double _oversoldLevel = 30;
 
-  /// A partir daqui a queda do topo merece aviso.
+  /// From here on the drop from the peak deserves a warning.
   static const double _drawdownThreshold = 0.15;
 
-  /// Vantagem mínima sobre o passeio aleatório para a rede ser digna de nota.
+  /// Minimum edge over the random walk for the network to be worth mentioning.
   static const double _meaningfulSkill = 0.05;
 
   List<FinancialInsight> generate({
@@ -73,7 +73,8 @@ class InsightEngine {
   List<FinancialInsight> _trendInsights(MarketStatistics statistics) {
     final change = statistics.referenceChange;
     if (change == null) return const [];
-    // A variação de referência é a de 30 dias quando existe; senão, a de 7.
+    // The reference change is the 30-day one when it exists; otherwise the
+    // 7-day one.
     final days = statistics.monthlyChange != null ? "30" : "7";
     final arguments = [_percent(change.abs()), days];
     if (change > _trendThreshold) {
@@ -152,9 +153,9 @@ class InsightEngine {
     return const [];
   }
 
-  /// Cripto oscila numa ordem de grandeza acima de moeda fiduciária: 40% ao ano
-  /// é rotina para bitcoin e seria um susto para o euro. Por isso os limiares
-  /// dependem do tipo de ativo.
+  /// Crypto swings an order of magnitude more than fiat currency: 40% a year
+  /// is routine for bitcoin and would be alarming for the euro. Hence the
+  /// thresholds depend on the kind of asset.
   double _highVolatilityLevel(AssetKind kind) => switch (kind) {
         AssetKind.currency => 0.15,
         AssetKind.stock => 0.35,
@@ -203,9 +204,9 @@ class InsightEngine {
               locale: languageCode, decimalDigits: decimalDigits)
           .format(value);
 
-  /// Cotação com casas decimais suficientes para o preço não virar "0,00":
-  /// cripto cotada em real anda na casa das centenas de milhares, e a mesma
-  /// tela mostra pares de moeda na casa das unidades.
+  /// Quote with enough decimal places for the price not to turn into "0.00":
+  /// crypto quoted in reais runs in the hundreds of thousands, and the same
+  /// screen shows currency pairs in the units.
   String _price(double value) => _number(value,
       decimalDigits:
           quoteDecimalDigits(value, minimumDigits: 2, significantDigits: 4));

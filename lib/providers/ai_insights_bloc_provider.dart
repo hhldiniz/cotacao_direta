@@ -1,15 +1,15 @@
 import 'package:cotacao_direta/blocs/ai_insights_bloc.dart';
 import 'package:flutter/material.dart';
 
-/// Cria o [AiInsightsBloc] e o mantém vivo enquanto esta parte da árvore
-/// existir. Um InheritedWidget sozinho não dá conta disso: ele é recriado a cada
-/// rebuild e não tem dispose, então o bloc precisa de um State para acompanhar o
-/// ciclo de vida.
+/// Creates the [AiInsightsBloc] and keeps it alive for as long as this part of
+/// the tree exists. An InheritedWidget alone cannot do that: it is rebuilt on
+/// every rebuild and has no dispose, so the bloc needs a State to follow the
+/// lifecycle.
 class AiInsightsBlocProvider extends StatefulWidget {
   final Widget child;
 
-  /// Bloc pronto, fornecido pelo chamador. Quem cria também descarta: o
-  /// provider só chama dispose no bloc que ele mesmo criou.
+  /// Ready-made bloc supplied by the caller. Whoever creates it also disposes
+  /// of it: the provider only disposes the bloc it created itself.
   final AiInsightsBloc? bloc;
 
   AiInsightsBlocProvider({Key? key, required this.child, this.bloc})

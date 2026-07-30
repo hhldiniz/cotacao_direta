@@ -1,23 +1,24 @@
 import 'dart:math';
 
-/// Funções estatísticas usadas pelo modelo local. Ficam separadas do modelo por
-/// serem puras: entram números, saem números, sem depender de Flutter nem de
-/// rede — o que as deixa testáveis isoladamente e reaproveitáveis pelos
-/// indicadores.
+/// Statistical helpers used by the local model. They live apart from the model
+/// because they are pure: numbers in, numbers out, with no Flutter and no
+/// network — which keeps them testable in isolation and reusable by the
+/// indicators.
 
-/// Média aritmética. Lança se a lista estiver vazia: uma média de nada não tem
-/// valor neutro razoável, e todo chamador aqui já sabe quantos pontos tem.
+/// Arithmetic mean. Throws on an empty list: the mean of nothing has no
+/// sensible neutral value, and every caller here already knows how many points
+/// it has.
 double mean(List<double> values) {
-  if (values.isEmpty) throw ArgumentError("mean de uma lista vazia");
+  if (values.isEmpty) throw ArgumentError("mean of an empty list");
   var total = 0.0;
   for (var value in values) total += value;
   return total / values.length;
 }
 
-/// Variância amostral (divisor n-1) por padrão; com [sample] falso, a
-/// populacional. Com um único ponto não há dispersão a medir: devolve zero.
+/// Sample variance (divisor n-1) by default; with [sample] false, the
+/// population one. A single point has no dispersion to measure: returns zero.
 double variance(List<double> values, {bool sample = true}) {
-  if (values.isEmpty) throw ArgumentError("variance de uma lista vazia");
+  if (values.isEmpty) throw ArgumentError("variance of an empty list");
   if (values.length == 1) return 0;
   final average = mean(values);
   var accumulated = 0.0;
@@ -31,15 +32,15 @@ double variance(List<double> values, {bool sample = true}) {
 double standardDeviation(List<double> values, {bool sample = true}) =>
     sqrt(variance(values, sample: sample));
 
-/// Retornos logarítmicos da série de preços: `ln(p[i] / p[i-1])`.
+/// Logarithmic returns of the price series: `ln(p[i] / p[i-1])`.
 ///
-/// O modelo trabalha em log-retorno, e não em variação percentual, porque eles
-/// se somam ao longo do tempo (o retorno de 10 dias é a soma dos 10 diários).
-/// É isso que permite projetar vários dias à frente acumulando previsões e
-/// abrir a faixa de confiança por `sigma * sqrt(dias)`.
+/// The model works in log-returns rather than percentage changes because they
+/// add up over time (a 10-day return is the sum of the 10 daily ones). That is
+/// what allows projecting several days ahead by accumulating predictions, and
+/// widening the confidence band by `sigma * sqrt(days)`.
 ///
-/// Preço não positivo interrompe o cálculo naquele ponto: `ln` não existiria e
-/// um par de dias sem preço não representa retorno nenhum.
+/// A non-positive price interrupts the calculation at that point: `ln` would
+/// not exist, and a pair of days without a price is no return at all.
 List<double> logReturns(List<double> prices) {
   final returns = <double>[];
   for (var index = 1; index < prices.length; index++) {
@@ -51,13 +52,13 @@ List<double> logReturns(List<double> prices) {
   return returns;
 }
 
-/// Reta ajustada por mínimos quadrados, com o R² do ajuste.
+/// Least-squares fitted line, with the R² of the fit.
 class LinearFit {
   final double slope;
   final double intercept;
 
-  /// Fração da variação dos dados explicada pela reta, entre 0 e 1. Vale 0
-  /// quando os dados não variam (não há o que explicar).
+  /// Share of the data's variation explained by the line, between 0 and 1. It
+  /// is 0 when the data does not vary (there is nothing to explain).
   final double rSquared;
 
   const LinearFit(
@@ -66,10 +67,10 @@ class LinearFit {
   double predict(double x) => intercept + slope * x;
 }
 
-/// Ajusta `y = intercept + slope * x` por mínimos quadrados.
+/// Fits `y = intercept + slope * x` by least squares.
 LinearFit linearFit(List<double> xs, List<double> ys) {
   if (xs.length != ys.length)
-    throw ArgumentError("linearFit com listas de tamanhos diferentes");
+    throw ArgumentError("linearFit with lists of different lengths");
   if (xs.length < 2)
     return const LinearFit(slope: 0, intercept: 0, rSquared: 0);
 
@@ -101,11 +102,12 @@ LinearFit linearFit(List<double> xs, List<double> ys) {
   return LinearFit(slope: slope, intercept: intercept, rSquared: rSquared);
 }
 
-/// Média móvel exponencial de toda a lista, com peso [alpha] no ponto mais
-/// recente. É a estimativa de deriva usada como linha de base da projeção:
-/// dá mais peso ao passado recente sem descartar o restante da série.
+/// Exponentially weighted mean of the whole list, with weight [alpha] on the
+/// most recent point. This is the drift estimate used as the projection's
+/// baseline: it favours the recent past without discarding the rest of the
+/// series.
 double exponentiallyWeightedMean(List<double> values, {double alpha = 0.15}) {
-  if (values.isEmpty) throw ArgumentError("ewm de uma lista vazia");
+  if (values.isEmpty) throw ArgumentError("ewm of an empty list");
   var estimate = values.first;
   for (var index = 1; index < values.length; index++) {
     estimate = alpha * values[index] + (1 - alpha) * estimate;
@@ -113,10 +115,10 @@ double exponentiallyWeightedMean(List<double> values, {double alpha = 0.15}) {
   return estimate;
 }
 
-/// Erro quadrático médio entre previsões e alvos.
+/// Mean squared error between predictions and targets.
 double meanSquaredError(List<double> predictions, List<double> targets) {
   if (predictions.length != targets.length)
-    throw ArgumentError("meanSquaredError com listas de tamanhos diferentes");
+    throw ArgumentError("meanSquaredError with lists of different lengths");
   if (predictions.isEmpty) return 0;
   var accumulated = 0.0;
   for (var index = 0; index < predictions.length; index++) {
@@ -126,10 +128,10 @@ double meanSquaredError(List<double> predictions, List<double> targets) {
   return accumulated / predictions.length;
 }
 
-// Coeficientes da aproximação racional de Peter Acklam para o inverso da
-// normal padrão, com erro relativo abaixo de 1,15e-9 — folgado para o uso
-// aqui, que é converter um nível de confiança (80%, 95%) no multiplicador do
-// desvio padrão que abre a faixa da projeção.
+// Coefficients of Peter Acklam's rational approximation for the inverse of the
+// standard normal, with relative error below 1.15e-9 — plenty for the use here,
+// which is turning a confidence level (80%, 95%) into the standard deviation
+// multiplier that opens the projection band.
 const List<double> _lowerCoefficientsA = [
   -3.969683028665376e+01,
   2.209460984245205e+02,
@@ -160,10 +162,11 @@ const List<double> _tailCoefficientsD = [
   3.754408661907416e+00
 ];
 
-/// Quantil da normal padrão: o valor `z` tal que `P(Z <= z) = probability`.
+/// Quantile of the standard normal: the value `z` such that
+/// `P(Z <= z) = probability`.
 double normalQuantile(double probability) {
   if (probability <= 0 || probability >= 1)
-    throw ArgumentError("normalQuantile fora do intervalo (0, 1)");
+    throw ArgumentError("normalQuantile outside the (0, 1) range");
 
   const lowerBreak = 0.02425;
   const upperBreak = 1 - lowerBreak;
@@ -208,10 +211,10 @@ double normalQuantile(double probability) {
           1);
 }
 
-/// Multiplicador do desvio padrão que cobre [confidenceLevel] da distribuição
-/// em torno da média: 1,96 para 95%, 1,28 para 80%.
+/// Standard deviation multiplier covering [confidenceLevel] of the
+/// distribution around the mean: 1.96 for 95%, 1.28 for 80%.
 double confidenceMultiplier(double confidenceLevel) {
   if (confidenceLevel <= 0 || confidenceLevel >= 1)
-    throw ArgumentError("confidenceMultiplier fora do intervalo (0, 1)");
+    throw ArgumentError("confidenceMultiplier outside the (0, 1) range");
   return normalQuantile(0.5 + confidenceLevel / 2);
 }

@@ -8,21 +8,22 @@ import 'package:cotacao_direta/repository/currency_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// Por que a análise não pôde ser feita, para a tela escolher a mensagem.
+/// Why the analysis could not be done, so the screen can pick the message.
 enum AiInsightsError {
-  /// Nenhuma cotação voltou: sem rede e sem histórico salvo, ou par não cotado
-  /// pela API.
+  /// No quote came back: no network and no saved history, or a pair the API
+  /// does not quote.
   noData,
 
-  /// Vieram cotações, mas poucas demais para calcular indicadores.
+  /// Quotes did come back, but too few to compute indicators.
   insufficientData,
 
-  /// Qualquer falha inesperada no caminho.
+  /// Any unexpected failure along the way.
   failure,
 }
 
-/// Estado da tela de insights. Um objeto só, em vez de três streams, porque as
-/// três informações mudam sempre juntas e a tela precisa delas em conjunto.
+/// State of the insights screen. A single object instead of three streams,
+/// because the three pieces always change together and the screen needs them
+/// as a set.
 class AiInsightsState {
   final bool loading;
   final FinancialAnalysis? analysis;
@@ -42,11 +43,11 @@ class AiInsightsState {
   bool get hasAnalysis => analysis != null;
 }
 
-/// Liga a tela de insights ao histórico de cotações e ao modelo local.
+/// Connects the insights screen to the quote history and to the local model.
 ///
-/// A análise roda no próprio aparelho: o bloc busca o histórico pelo
-/// repositório que o app já usa, monta a série e chama o [FinancialAiService].
-/// Nada de cotação ou de resultado sai do celular.
+/// The analysis runs on the device itself: the bloc fetches the history
+/// through the repository the app already uses, builds the series and calls
+/// the [FinancialAiService]. No quote and no result leaves the phone.
 class AiInsightsBloc extends BaseBloc {
   final CurrencyRepository _currencyRepository;
   final FinancialAiService _aiService;
@@ -58,12 +59,12 @@ class AiInsightsBloc extends BaseBloc {
 
   final DateFormat _apiDateFormatter = DateFormat("yyyy-MM-dd");
 
-  /// Horizontes oferecidos na tela, em dias.
+  /// Horizons offered on the screen, in days.
   static const List<int> horizonOptions = [7, 15, 30];
 
-  /// Dias corridos de histórico pedidos à API. Cobre uns quatro meses de
-  /// pregão — o bastante para treinar a rede sem esbarrar no teto de 360
-  /// registros por consulta.
+  /// Calendar days of history requested from the API. It covers about four
+  /// months of trading — enough to train the network without hitting the cap
+  /// of 360 records per request.
   static const int historyWindowInDays = 180;
 
   AiInsightsState _state = const AiInsightsState.idle();
@@ -74,13 +75,13 @@ class AiInsightsBloc extends BaseBloc {
 
   Future<String>? _counterCurrencyFuture;
 
-  /// Requisição em andamento, para uma resposta atrasada não sobrescrever o
-  /// resultado de um pedido mais novo (o usuário troca de ativo e toca de novo
-  /// antes de a primeira consulta voltar).
+  /// Request in flight, so a late response does not overwrite the result of a
+  /// newer request (the user switches asset and taps again before the first
+  /// query comes back).
   int _requestId = 0;
 
-  /// Idioma da última análise pedida pela tela, para reaproveitar quando o
-  /// próprio bloc refaz a análise (troca de horizonte).
+  /// Language of the last analysis requested by the screen, to reuse when the
+  /// bloc itself re-runs the analysis (on a horizon change).
   String _languageCode = "pt";
 
   AiInsightsBloc({
@@ -97,8 +98,8 @@ class AiInsightsBloc extends BaseBloc {
 
   Stream<AiInsightsState> get stateStream => _stateController.stream;
 
-  /// Último estado emitido. A stream é broadcast e não repete o último evento,
-  /// então a tela usa isto como `initialData` ao reconstruir.
+  /// Last emitted state. The stream is a broadcast one and does not replay the
+  /// latest event, so the screen uses this as `initialData` when rebuilding.
   AiInsightsState get currentState => _state;
 
   String get selectedAssetCode => _selectedAssetCode;
@@ -109,8 +110,8 @@ class AiInsightsBloc extends BaseBloc {
 
   TextEditingController get amountController => _amountController;
 
-  /// Moeda em que as cotações estão expressas, resolvida uma vez e mantida em
-  /// cache (a tela reconsulta a cada rebuild).
+  /// Currency the quotes are expressed in, resolved once and cached (the
+  /// screen asks for it on every rebuild).
   Future<String> get counterCurrencyCode =>
       _counterCurrencyFuture ??= _currencyRepository.resolveCounterCurrency();
 
@@ -118,22 +119,23 @@ class AiInsightsBloc extends BaseBloc {
     if (_selectedAssetCode == assetCode && _selectedAssetKind == kind) return;
     _selectedAssetCode = assetCode;
     _selectedAssetKind = kind;
-    // O resultado na tela é de outro ativo: mantê-lo visível ao lado do nome
-    // novo faria a análise parecer atualizada.
+    // The result on screen belongs to another asset: keeping it next to the
+    // new name would make the analysis look up to date.
     _emit(const AiInsightsState.idle());
   }
 
   void selectHorizon(int days) {
     if (_horizonInDays == days) return;
     _horizonInDays = days;
-    // O horizonte muda só a projeção; refazer a análise é barato e não precisa
-    // de rede, então a tela responde na hora se já houver um resultado.
+    // The horizon only changes the projection; redoing the analysis is cheap
+    // and needs no network, so the screen answers right away when a result is
+    // already there.
     if (_state.hasAnalysis) analyze(languageCode: _languageCode);
   }
 
-  /// Valor digitado para simulação, ou nulo quando o campo está vazio ou
-  /// inválido. Aceita tanto "1.234,50" quanto "1,234.50": o separador decimal é
-  /// o último que aparecer.
+  /// Amount typed for the simulation, or null when the field is empty or
+  /// invalid. It takes both "1.234,50" and "1,234.50": the decimal separator
+  /// is whichever comes last.
   double? get simulationAmount => parseAmount(_amountController.text);
 
   static double? parseAmount(String text) {
@@ -151,7 +153,8 @@ class AiInsightsBloc extends BaseBloc {
     return value;
   }
 
-  /// Busca o histórico do ativo selecionado e roda o modelo local sobre ele.
+  /// Fetches the history of the selected asset and runs the local model over
+  /// it.
   Future<void> analyze({String languageCode = "pt"}) async {
     final requestId = ++_requestId;
     _languageCode = languageCode;
@@ -183,9 +186,9 @@ class AiInsightsBloc extends BaseBloc {
         return;
       }
 
-      // Devolve o controle ao laço de eventos antes de treinar: o treino é
-      // curto (milissegundos), mas assim o indicador de carregamento chega a
-      // aparecer e a tela não trava em aparelho lento.
+      // Hands control back to the event loop before training: training is
+      // short (milliseconds), but this way the loading indicator does get to
+      // show and the screen does not freeze on a slow device.
       final analysis = await Future(() => _aiService.analyze(
             series,
             horizonInDays: _horizonInDays,

@@ -7,38 +7,38 @@ import 'package:cotacao_direta/ai/math/statistics.dart';
 import 'package:cotacao_direta/model/asset_series.dart';
 import 'package:cotacao_direta/model/financial_analysis.dart';
 
-/// Porta de entrada da análise local: recebe a série de preços, roda os
-/// indicadores, treina e consulta o modelo, e devolve tudo junto com as
-/// observações em texto.
+/// Entry point of the local analysis: it takes the price series, runs the
+/// indicators, trains and queries the model, and returns everything together
+/// with the remarks in text form.
 ///
-/// Tudo acontece no aparelho e sem rede: a única coisa que sai do celular é a
-/// consulta de cotação que o app já fazia antes.
+/// It all happens on the device and offline: the only thing that leaves the
+/// phone is the quote request the app already made before.
 class FinancialAiService {
   final LocalFinancialModel model;
 
   FinancialAiService({LocalFinancialModel? model})
       : model = model ?? LocalFinancialModel();
 
-  /// Abaixo disto não há série a analisar: nem os indicadores mais curtos
-  /// (média de 7 dias, variação semanal) teriam pontos suficientes.
+  /// Below this there is no series to analyse: not even the shortest
+  /// indicators (7-day average, weekly change) would have enough points.
   static const int minimumPoints = 10;
 
-  /// Dias de negociação num ano, para anualizar a volatilidade. Cripto negocia
-  /// todo dia; moeda e ação, só em pregão.
+  /// Trading days in a year, to annualise volatility. Crypto trades every day;
+  /// currencies and stocks, only on trading days.
   static double _periodsPerYear(AssetKind kind) =>
       kind == AssetKind.cryptocurrency ? 365 : 252;
 
-  /// Analisa [series] e projeta [horizonInDays] dias à frente.
+  /// Analyses [series] and projects [horizonInDays] days ahead.
   ///
-  /// [languageCode] só afeta a formatação dos números embutidos nas
-  /// observações ("3,2%" ou "3.2%").
+  /// [languageCode] only affects the formatting of the numbers embedded in the
+  /// remarks ("3,2%" or "3.2%").
   FinancialAnalysis analyze(
     AssetSeries series, {
     int horizonInDays = 15,
     String languageCode = "pt",
   }) {
     if (series.length < minimumPoints)
-      throw ArgumentError("série com menos de $minimumPoints pontos");
+      throw ArgumentError("series with fewer than $minimumPoints points");
 
     final statistics = computeStatistics(series);
     final forecast = model.forecast(series, horizonInDays: horizonInDays);
@@ -56,18 +56,18 @@ class FinancialAiService {
     );
   }
 
-  /// Retrato estatístico da série. É o que alimenta o resumo de mercado da tela
-  /// e os limiares dos insights.
+  /// Statistical portrait of the series. It feeds the market summary on screen
+  /// and the thresholds of the insights.
   MarketStatistics computeStatistics(AssetSeries series) {
     if (series.isEmpty)
-      throw ArgumentError("computeStatistics de uma série vazia");
+      throw ArgumentError("computeStatistics of an empty series");
 
     final prices = series.prices;
     final returns = logReturns(prices);
 
-    // Tendência ajustada sobre o log do preço, e não sobre o preço: em log, um
-    // crescimento percentual constante vira uma reta, que é o que o R² mede
-    // bem.
+    // The trend is fitted over the log of the price rather than the price
+    // itself: in log space, constant percentage growth becomes a straight
+    // line, which is what R² measures well.
     final logPrices = prices.map(log).toList(growable: false);
     final positions = List<double>.generate(
         logPrices.length, (index) => index.toDouble(),

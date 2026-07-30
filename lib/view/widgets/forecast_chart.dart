@@ -5,12 +5,12 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// Histórico recente e projeção do modelo local no mesmo gráfico: a linha cheia
-/// é o que aconteceu, a tracejada é o que o modelo espera, e a faixa em volta
-/// dela é o intervalo de confiança.
+/// Recent history and the local model's projection on the same chart: the
+/// solid line is what happened, the dashed one is what the model expects, and
+/// the band around it is the confidence interval.
 ///
-/// A projeção começa no último ponto observado (e não no dia seguinte) para as
-/// duas linhas se encontrarem, em vez de a tracejada nascer solta no ar.
+/// The projection starts at the last observed point (rather than the next day)
+/// so the two lines meet, instead of the dashed one starting out of thin air.
 class ForecastChart extends StatelessWidget {
   final List<AssetPoint> history;
   final List<ForecastPoint> forecast;
@@ -54,9 +54,9 @@ class ForecastChart extends StatelessWidget {
           (point) => FlSpot(joinIndex + point.step, point.upperBound)),
     ];
 
-    // Mesma lógica de casas decimais do gráfico de histórico: a ordem de
-    // grandeza da série decide a precisão, senão cotação de cripto vira "0,00"
-    // no eixo.
+    // Same decimal-places logic as the history chart: the order of magnitude
+    // of the series decides the precision, otherwise a crypto quote turns into
+    // "0.00" on the axis.
     final peakValue = [...historySpots, ...upperSpots].fold<double>(
         0, (peak, spot) => spot.y.abs() > peak ? spot.y.abs() : peak);
     final axisDigits = quoteDecimalDigits(peakValue);
@@ -89,7 +89,7 @@ class ForecastChart extends StatelessWidget {
             }).toList(),
           ),
         ),
-        // Marca onde o observado termina e a projeção começa.
+        // Marks where the observed data ends and the projection begins.
         extraLinesData: ExtraLinesData(verticalLines: [
           VerticalLine(
             x: joinIndex,
@@ -159,7 +159,7 @@ class ForecastChart extends StatelessWidget {
             dotData: const FlDotData(show: false),
           ),
         ],
-        // Preenche o intervalo de confiança entre as duas linhas da faixa.
+        // Fills the confidence interval between the two band lines.
         betweenBarsData: [
           BetweenBarsData(
             fromIndex: 1,

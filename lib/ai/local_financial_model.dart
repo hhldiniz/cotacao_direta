@@ -6,31 +6,31 @@ import 'package:cotacao_direta/ai/neural/neural_network.dart';
 import 'package:cotacao_direta/model/asset_series.dart';
 import 'package:cotacao_direta/model/financial_analysis.dart';
 
-/// Modelo preditivo que roda inteiramente no aparelho.
+/// Predictive model that runs entirely on the device.
 ///
-/// Ele junta duas peças que se cobrem:
+/// It brings together two pieces that cover for each other:
 ///
-/// 1. uma rede neural pequena ([NeuralNetwork]) treinada na hora, com o próprio
-///    histórico do ativo que o usuário abriu — sem pesos baixados e sem
-///    servidor. Ela recebe uma janela de log-retornos recentes mais alguns
-///    indicadores (momento, IFR, distância da média, aceleração da
-///    volatilidade) e tenta prever o retorno do dia seguinte;
-/// 2. uma deriva estatística, que é a média exponencial dos log-retornos com
-///    amortecimento ao longo do horizonte.
+/// 1. a small neural network ([NeuralNetwork]) trained on the spot with the
+///    history of the very asset the user opened — no downloaded weights and no
+///    server. It receives a window of recent log-returns plus a few indicators
+///    (momentum, RSI, distance from the average, volatility acceleration) and
+///    tries to predict the next day's return;
+/// 2. a statistical drift, which is the exponentially weighted mean of the
+///    log-returns, damped along the horizon.
 ///
-/// A projeção final é a média ponderada das duas, e o peso da rede não é
-/// arbitrário: ele sai do quanto ela superou, num trecho de validação que não
-/// viu no treino, o passeio aleatório ("amanhã é igual a hoje"). Preço de ativo
-/// é quase um passeio aleatório, então esse rival é vencido por pouco quando é
-/// vencido; quando não é, o peso vai a zero e a projeção vira a base
-/// estatística. Isso mantém a tela honesta em vez de vender uma precisão que o
-/// modelo não tem.
+/// The final projection is the weighted average of the two, and the network's
+/// weight is not arbitrary: it comes from how much the network beat the random
+/// walk ("tomorrow equals today") on a validation slice it did not see while
+/// training. Asset prices are nearly a random walk, so that rival is beaten by
+/// a small margin when it is beaten at all; when it is not, the weight goes to
+/// zero and the projection becomes the statistical baseline. That keeps the
+/// screen honest instead of selling a precision the model does not have.
 ///
-/// A faixa de confiança vem do modelo de caminhada aleatória em log-preço: o
-/// desvio padrão acumulado cresce com `sigma * sqrt(dias)`, e o multiplicador
-/// sai do quantil da normal para o nível de confiança pedido.
+/// The confidence band comes from the random walk model in log-price: the
+/// accumulated standard deviation grows with `sigma * sqrt(days)`, and the
+/// multiplier is the normal quantile for the requested confidence level.
 class LocalFinancialModel {
-  /// Quantos log-retornos recentes entram no vetor de características.
+  /// How many recent log-returns go into the feature vector.
   final int window;
 
   final int hiddenUnits;
@@ -38,17 +38,17 @@ class LocalFinancialModel {
   final double learningRate;
   final double weightDecay;
 
-  /// Semente da aleatoriedade do treino. Fixa de propósito: a mesma série tem
-  /// que produzir sempre a mesma projeção, senão a tela mudaria de resposta a
-  /// cada toque no botão.
+  /// Seed of the training randomness. Fixed on purpose: the same series has to
+  /// produce the same projection every time, otherwise the screen would change
+  /// its answer on every tap of the button.
   final int seed;
 
-  /// Nível da faixa mostrada em volta da projeção (0,8 = 80%).
+  /// Level of the band drawn around the projection (0.8 = 80%).
   final double confidenceLevel;
 
-  /// Teto do peso da rede na mistura. Mesmo uma rede que se saia muito bem na
-  /// validação não passa daqui: a validação é curta e o excesso de confiança é
-  /// o erro clássico deste tipo de previsão.
+  /// Cap on the network's weight in the blend. Even a network that does very
+  /// well on validation does not go past this: the validation slice is short,
+  /// and overconfidence is the classic mistake in this kind of forecast.
   final double maximumNeuralWeight;
 
   static const int _rsiPeriod = 14;
@@ -57,16 +57,17 @@ class LocalFinancialModel {
   static const int _momentumPeriod = 5;
   static const int _volatilityPeriod = 5;
 
-  /// Abaixo disto não vale treinar: a rede decoraria as poucas janelas
-  /// existentes e a validação não diria nada.
+  /// Below this it is not worth training: the network would memorise the few
+  /// existing windows and validation would say nothing.
   static const int minimumTrainingSamples = 24;
 
-  /// Amortecimento da deriva a cada dia projetado. Sem ele, uma tendência
-  /// recente de alta seria extrapolada em linha reta até o fim do horizonte.
+  /// Damping applied to the drift on each projected day. Without it, a recent
+  /// uptrend would be extrapolated in a straight line to the end of the
+  /// horizon.
   static const double _driftDamping = 0.92;
 
-  /// Teto do movimento diário projetado, em desvios padrão. Segura a projeção
-  /// dentro do que a série costuma fazer.
+  /// Cap on the projected daily move, in standard deviations. It holds the
+  /// projection within what the series usually does.
   static const double _maximumDailyMove = 2.5;
 
   LocalFinancialModel({
@@ -83,32 +84,31 @@ class LocalFinancialModel {
         assert(confidenceLevel > 0 && confidenceLevel < 1),
         assert(maximumNeuralWeight >= 0 && maximumNeuralWeight <= 1);
 
-  /// Tamanho do vetor de características: a janela de retornos mais os quatro
-  /// indicadores derivados.
+  /// Size of the feature vector: the window of returns plus the four derived
+  /// indicators.
   int get featureCount => window + 4;
 
-  /// Primeiro índice da série que tem passado suficiente para virar amostra.
+  /// First index of the series with enough past behind it to become a sample.
   int get _firstUsableIndex =>
       max(window, max(_rsiPeriod + 1, _movingAveragePeriod));
 
-  /// Menor histórico que permite treinar a rede.
+  /// Shortest history that allows training the network.
   int get minimumHistoryForTraining =>
       _firstUsableIndex + minimumTrainingSamples + 1;
 
-  /// Projeta [horizonInDays] dias à frente do último ponto de [series].
+  /// Projects [horizonInDays] days beyond the last point of [series].
   AssetForecast forecast(AssetSeries series, {int horizonInDays = 15}) {
-    if (series.isEmpty) throw ArgumentError("forecast de uma série vazia");
+    if (series.isEmpty) throw ArgumentError("forecast of an empty series");
     if (horizonInDays <= 0)
-      throw ArgumentError("horizonte precisa ser positivo");
+      throw ArgumentError("horizon must be positive");
 
     final prices = series.prices.toList();
     final returns = logReturns(prices);
 
-    // Escala de referência da série. Todas as características e o alvo são
-    // divididos por ela, o que deixa a rede vendo números da ordem de 1 tanto
-    // para um par de moedas calmo quanto para uma cripto. O piso evita divisão
-    // por zero numa série sem variação (uma moeda cotada contra ela mesma, por
-    // exemplo).
+    // Reference scale of the series. Every feature and the target are divided
+    // by it, which keeps the network seeing numbers of order 1 for both a calm
+    // currency pair and a crypto. The floor avoids a division by zero on a
+    // series with no variation (a currency quoted against itself, say).
     final volatility =
         returns.length >= 2 ? standardDeviation(returns) : 0.0;
     final scale = max(volatility, 1e-6);
@@ -147,7 +147,8 @@ class LocalFinancialModel {
       final price = workingPrices.last * exp(expectedReturn);
       workingPrices.add(price);
 
-      // Incerteza da caminhada aleatória: cresce com a raiz do número de dias.
+      // Random walk uncertainty: it grows with the square root of the number
+      // of days.
       final horizonDeviation = scale * sqrt(step) * multiplier;
       points.add(ForecastPoint(
         step: step,
@@ -166,9 +167,8 @@ class LocalFinancialModel {
     );
   }
 
-  /// Janelas de treino montadas a partir da série: cada amostra são as
-  /// características no dia `index` e, como alvo, o log-retorno do dia
-  /// seguinte.
+  /// Training windows built from the series: each sample is the set of
+  /// features on day `index` and, as the target, the next day's log-return.
   _TrainingData _buildSamples(List<double> prices, double scale) {
     final inputs = <List<double>>[];
     final targets = <double>[];
@@ -184,14 +184,14 @@ class LocalFinancialModel {
     return _TrainingData(inputs, targets);
   }
 
-  /// Características do dia [index], todas em unidades de [scale] e limitadas a
-  /// [-4, 4] para que um dia excepcional não domine o treino.
+  /// Features of day [index], all in units of [scale] and clamped to [-4, 4]
+  /// so that one exceptional day cannot dominate training.
   List<double>? _features(List<double> prices, int index, double scale) {
     if (index < _firstUsableIndex || index >= prices.length) return null;
 
     final features = <double>[];
 
-    // Os log-retornos mais recentes, do dia [index] para trás.
+    // The most recent log-returns, from day [index] backwards.
     for (var lag = 0; lag < window; lag++) {
       final current = prices[index - lag];
       final previous = prices[index - lag - 1];
@@ -199,30 +199,31 @@ class LocalFinancialModel {
       features.add(log(current / previous) / scale);
     }
 
-    // Momento: o retorno acumulado da janela curta, normalizado pela
-    // volatilidade esperada nesse número de dias.
+    // Momentum: the return accumulated over the short window, normalised by
+    // the volatility expected over that number of days.
     final momentumBase = prices[index - _momentumPeriod];
     if (momentumBase <= 0 || prices[index] <= 0) return null;
     features.add(log(prices[index] / momentumBase) /
         (scale * sqrt(_momentumPeriod.toDouble())));
 
-    // IFR centrado em zero. A janela de apuração é fixa para que a
-    // característica signifique o mesmo no começo e no fim da série.
+    // RSI centred on zero. The lookback is fixed so that the feature means the
+    // same thing at the start and at the end of the series.
     final rsiWindow = prices.sublist(
         max(0, index + 1 - _rsiLookback), index + 1);
     final rsi = relativeStrengthIndex(rsiWindow, period: _rsiPeriod) ?? 50;
     features.add((rsi - 50) / 50);
 
-    // Distância da média móvel, em desvios padrão da janela (bandas de
-    // Bollinger), reduzida para a mesma ordem de grandeza das demais.
+    // Distance from the moving average, in standard deviations of the window
+    // (Bollinger bands), scaled down to the same order of magnitude as the
+    // rest.
     final zScore = bollingerZScore(
             prices.sublist(index + 1 - _movingAveragePeriod, index + 1),
             _movingAveragePeriod) ??
         0;
     features.add(zScore / 3);
 
-    // Aceleração da volatilidade: quanto a agitação dos últimos dias difere da
-    // agitação típica da série.
+    // Volatility acceleration: how much the agitation of the last few days
+    // differs from the series' typical agitation.
     final recentReturns =
         logReturns(prices.sublist(index - _volatilityPeriod, index + 1));
     final recentVolatility =
@@ -236,16 +237,16 @@ class LocalFinancialModel {
     return features;
   }
 
-  /// Treina a rede e mede o quanto ela superou o passeio aleatório.
+  /// Trains the network and measures how much it beat the random walk.
   _TrainedModel _train(_TrainingData data) {
     if (data.inputs.length < minimumTrainingSamples) {
       return _TrainedModel(
           null, ModelDiagnostics.untrained(trainingSamples: data.inputs.length));
     }
 
-    // A validação é o trecho final da série, e não uma amostra sorteada: prever
-    // um dia no meio de dias vizinhos já conhecidos é bem mais fácil do que
-    // prever o futuro, e daria uma nota inflada.
+    // Validation is the tail of the series, not a random sample: predicting a
+    // day surrounded by already known neighbours is far easier than predicting
+    // the future, and would hand out an inflated score.
     final validationCount =
         (data.inputs.length * 0.2).round().clamp(4, data.inputs.length - 12);
     final splitIndex = data.inputs.length - validationCount;
@@ -266,7 +267,7 @@ class LocalFinancialModel {
       weightDecay: weightDecay,
     );
 
-    // O passeio aleatório prevê retorno zero para o dia seguinte.
+    // The random walk predicts a zero return for the next day.
     final baselineError = meanSquaredError(
         List<double>.filled(validationTargets.length, 0), validationTargets);
     final validationError = report.validationError;
@@ -297,7 +298,7 @@ class _TrainingData {
 }
 
 class _TrainedModel {
-  /// Nulo quando não houve histórico suficiente para treinar.
+  /// Null when there was not enough history to train.
   final NeuralNetwork? network;
   final ModelDiagnostics diagnostics;
 

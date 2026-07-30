@@ -1,12 +1,12 @@
 import 'package:cotacao_direta/model/asset_series.dart';
 
-/// Um dia projetado pelo modelo local, com a faixa de confiança em volta.
+/// One projected day from the local model, with the confidence band around it.
 class ForecastPoint {
-  /// Quantos dias à frente do último ponto observado, começando em 1.
+  /// How many days ahead of the last observed point, starting at 1.
   final int step;
   final DateTime date;
 
-  /// Preço projetado (o centro da faixa).
+  /// Projected price (the centre of the band).
   final double price;
 
   final double lowerBound;
@@ -20,32 +20,32 @@ class ForecastPoint {
       required this.upperBound});
 }
 
-/// O que o treino da rede revelou sobre a própria confiabilidade. Vai para a
-/// tela porque muda a leitura da projeção: uma rede que não superou o passeio
-/// aleatório está, na prática, repetindo a média.
+/// What training revealed about the network's own reliability. It reaches the
+/// screen because it changes how the projection should be read: a network that
+/// did not beat the random walk is, in practice, repeating the average.
 class ModelDiagnostics {
-  /// Amostras (janelas) montadas a partir do histórico para treinar.
+  /// Samples (windows) built from the history to train on.
   final int trainingSamples;
 
-  /// Erro da rede no trecho de validação.
+  /// The network's error on the validation slice.
   final double? validationError;
 
-  /// Erro, no mesmo trecho, de prever "amanhã igual a hoje" — o passeio
-  /// aleatório, que é o rival honesto de qualquer previsor de preço.
+  /// The error, on that same slice, of predicting "tomorrow equals today" —
+  /// the random walk, which is the fair rival of any price forecaster.
   final double? baselineError;
 
-  /// `1 - erro da rede / erro do passeio aleatório`, limitado a [0, 1]. Zero
-  /// quer dizer que a rede não trouxe informação nenhuma.
+  /// `1 - network error / random walk error`, clamped to [0, 1]. Zero means
+  /// the network added no information at all.
   final double skill;
 
-  /// Peso dado à rede na projeção final; o restante fica com a deriva
-  /// estatística.
+  /// Weight given to the network in the final projection; the remainder goes
+  /// to the statistical drift.
   final double neuralWeight;
 
   final int epochs;
 
-  /// Falso quando o histórico era curto demais para treinar e a projeção saiu
-  /// só da base estatística.
+  /// False when the history was too short to train and the projection came
+  /// from the statistical baseline alone.
   final bool trained;
 
   const ModelDiagnostics(
@@ -68,13 +68,13 @@ class ModelDiagnostics {
           trained: false);
 }
 
-/// Projeção completa de um ativo.
+/// Full projection for an asset.
 class AssetForecast {
   final double lastPrice;
   final List<ForecastPoint> points;
   final ModelDiagnostics diagnostics;
 
-  /// Nível de confiança da faixa (0,8 = 80%).
+  /// Confidence level of the band (0.8 = 80%).
   final double confidenceLevel;
 
   const AssetForecast(
@@ -85,7 +85,7 @@ class AssetForecast {
 
   int get horizonInDays => points.isEmpty ? 0 : points.last.step;
 
-  /// Preço no fim do horizonte projetado.
+  /// Price at the end of the projected horizon.
   double get projectedPrice => points.isEmpty ? lastPrice : points.last.price;
 
   double get projectedLowerBound =>
@@ -94,15 +94,15 @@ class AssetForecast {
   double get projectedUpperBound =>
       points.isEmpty ? lastPrice : points.last.upperBound;
 
-  /// Variação projetada como fração (0,03 = alta de 3%).
+  /// Projected change as a fraction (0.03 = up 3%).
   double get projectedChange =>
       lastPrice <= 0 ? 0 : projectedPrice / lastPrice - 1;
 
-  /// Quanto [amount] investido hoje valeria no fim do horizonte, com a mesma
-  /// faixa de confiança da projeção de preço.
+  /// What [amount] invested today would be worth at the end of the horizon,
+  /// with the same confidence band as the price projection.
   ///
-  /// É uma regra de três sobre a variação projetada — o "manuseio financeiro"
-  /// que a tela oferece por cima do modelo.
+  /// It is a rule of three over the projected change — the "financial
+  /// handling" the screen offers on top of the model.
   AmountProjection projectAmount(double amount) {
     if (lastPrice <= 0 || !amount.isFinite)
       return AmountProjection(
@@ -116,7 +116,8 @@ class AssetForecast {
   }
 }
 
-/// Simulação de um valor aplicado hoje, projetado para o fim do horizonte.
+/// Simulation of an amount invested today, projected to the end of the
+/// horizon.
 class AmountProjection {
   final double initialAmount;
   final double expected;
@@ -132,10 +133,9 @@ class AmountProjection {
   double get expectedProfit => expected - initialAmount;
 }
 
-/// Retrato estatístico da série, mostrado no resumo de mercado e usado pelos
-/// insights. Os campos opcionais ficam nulos quando o histórico é curto demais
-/// para o indicador (o IFR precisa de 15 pontos, a variação de 30 dias precisa
-/// de 31, e assim por diante).
+/// Statistical portrait of the series, shown in the market summary and used by
+/// the insights. Optional fields stay null when the history is too short for
+/// the indicator (RSI needs 15 points, the 30-day change needs 31, and so on).
 class MarketStatistics {
   final double lastPrice;
   final double? weeklyChange;
@@ -147,8 +147,9 @@ class MarketStatistics {
   final double maxDrawdown;
   final double compoundAnnualGrowthRate;
 
-  /// Inclinação da reta ajustada sobre o log dos preços, em log-retorno por
-  /// dia, com o R² do ajuste: quanto da variação a tendência explica.
+  /// Slope of the line fitted over the log of the prices, in log-return per
+  /// day, with the R² of the fit: how much of the variation the trend
+  /// explains.
   final double trendSlopePerDay;
   final double trendRSquared;
 
@@ -168,19 +169,20 @@ class MarketStatistics {
       required this.trendRSquared,
       required this.sampleCount});
 
-  /// Variação do período mais longo disponível, para os insights de tendência.
+  /// Change over the longest period available, for the trend insights.
   double? get referenceChange => monthlyChange ?? weeklyChange;
 
-  /// Média curta acima da longa é o cruzamento clássico de alta.
+  /// A short average above the long one is the classic bullish crossover.
   bool? get shortAboveLong =>
       shortMovingAverage == null || longMovingAverage == null
           ? null
           : shortMovingAverage! > longMovingAverage!;
 }
 
-/// O que a rede acha digno de nota. O texto não vem pronto: o código identifica
-/// o tipo de observação e [arguments] traz os números já formatados no idioma
-/// pedido, que a tela encaixa no modelo de frase traduzido.
+/// What the analysis finds worth pointing out. The text does not come ready
+/// made: the code identifies the kind of remark and [arguments] carries the
+/// numbers already formatted in the requested language, which the screen slots
+/// into the translated sentence template.
 enum InsightCode {
   trendUp,
   trendDown,
@@ -199,7 +201,7 @@ enum InsightCode {
   dataLimited,
 }
 
-/// Tom da observação, para a tela escolher ícone e cor.
+/// Tone of the remark, so the screen can pick an icon and a colour.
 enum InsightSentiment { positive, negative, neutral, caution }
 
 class FinancialInsight {
@@ -216,7 +218,7 @@ class FinancialInsight {
   String toString() => "FinancialInsight($code, $sentiment, $arguments)";
 }
 
-/// Tudo o que a análise local produz para um ativo.
+/// Everything the local analysis produces for one asset.
 class FinancialAnalysis {
   final AssetSeries series;
   final MarketStatistics statistics;

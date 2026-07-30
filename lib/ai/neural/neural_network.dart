@@ -2,17 +2,18 @@ import 'dart:math';
 
 import 'package:cotacao_direta/ai/math/statistics.dart';
 
-/// Resultado de um treino, para o modelo decidir o quanto confiar na rede.
+/// Outcome of a training run, for the model to decide how much to trust the
+/// network.
 class TrainingReport {
-  /// Erro quadrático médio no conjunto de treino, na última época rodada.
+  /// Mean squared error on the training set, on the last epoch run.
   final double trainingError;
 
-  /// Erro quadrático médio no conjunto de validação (o trecho final da série,
-  /// que a rede não viu no treino). É nulo quando não houve validação.
+  /// Mean squared error on the validation set (the tail of the series, which
+  /// the network did not see while training). Null when there was no
+  /// validation.
   final double? validationError;
 
-  /// Épocas efetivamente rodadas — menos que o teto quando a parada antecipada
-  /// entrou em ação.
+  /// Epochs actually run — fewer than the cap when early stopping kicked in.
   final int epochs;
 
   const TrainingReport(
@@ -21,31 +22,31 @@ class TrainingReport {
       required this.epochs});
 }
 
-/// Rede neural densa de uma camada escondida (perceptron multicamada) escrita
-/// em Dart puro, para regressão de uma saída.
+/// Dense neural network with a single hidden layer (multilayer perceptron)
+/// written in pure Dart, for single-output regression.
 ///
-/// É pequena de propósito: com uma dezena de entradas e meia dúzia de neurônios
-/// escondidos, treinar algumas centenas de épocas sobre um ano de cotações
-/// custa poucos milissegundos de CPU e alguns kilobytes de memória. Isso é o
-/// que permite que o "modelo de IA" do app seja treinado e executado no próprio
-/// aparelho, sem baixar pesos, sem plugin nativo e sem enviar dado nenhum para
-/// fora — inclusive na web, onde não há isolate de verdade.
+/// It is small on purpose: with a dozen inputs and half a dozen hidden
+/// neurons, training a few hundred epochs over a year of quotes costs a few
+/// milliseconds of CPU and a few kilobytes of memory. That is what lets the
+/// app's "AI model" be trained and run on the device itself, with no weights
+/// to download, no native plugin and no data leaving the phone — including on
+/// the web, where there is no real isolate.
 ///
-/// Escolhas de arquitetura:
-/// - ativação `tanh` na camada escondida, centrada em zero como os retornos que
-///   a rede recebe;
-/// - saída linear, porque o alvo é um retorno (pode ser negativo e não tem
-///   teto);
-/// - erro quadrático médio como perda, gradiente descendente estocástico com
-///   embaralhamento por época e decaimento de pesos (L2);
-/// - toda a aleatoriedade (pesos iniciais e ordem das amostras) sai de um
-///   [Random] semeado, então a mesma série produz sempre a mesma projeção —
-///   sem isso a tela mudaria de resposta a cada toque no botão.
+/// Architecture choices:
+/// - `tanh` activation on the hidden layer, centred on zero like the returns
+///   the network receives;
+/// - linear output, because the target is a return (it can be negative and has
+///   no ceiling);
+/// - mean squared error as the loss, stochastic gradient descent with
+///   per-epoch shuffling and weight decay (L2);
+/// - all randomness (initial weights and sample order) comes from a seeded
+///   [Random], so the same series always produces the same projection —
+///   without that the screen would change its answer on every tap.
 class NeuralNetwork {
   final int inputSize;
   final int hiddenSize;
 
-  /// Pesos da camada escondida: `[neurônio][entrada]`.
+  /// Hidden layer weights: `[neuron][input]`.
   final List<List<double>> _hiddenWeights;
   final List<double> _hiddenBiases;
   final List<double> _outputWeights;
@@ -66,8 +67,9 @@ class NeuralNetwork {
     _initializeWeights();
   }
 
-  /// Inicialização de Xavier/Glorot: a faixa dos pesos acompanha o número de
-  /// conexões, para o sinal não saturar a `tanh` já na primeira passada.
+  /// Xavier/Glorot initialisation: the weight range follows the number of
+  /// connections, so the signal does not saturate the `tanh` on the very first
+  /// pass.
   void _initializeWeights() {
     final hiddenLimit = sqrt(6 / (inputSize + hiddenSize));
     for (var neuron = 0; neuron < hiddenSize; neuron++) {
@@ -92,8 +94,8 @@ class NeuralNetwork {
       for (var input = 0; input < inputSize; input++) {
         sum += weights[input] * features[input];
       }
-      // tanh(x) = 2 * sigmoide(2x) - 1; dart:math não traz tanh, então usamos
-      // a forma com exponencial, protegida contra estouro para |x| grande.
+      // tanh(x) = 2 * sigmoid(2x) - 1; dart:math does not ship tanh, so we use
+      // the exponential form, guarded against overflow for large |x|.
       activations[neuron] = _hyperbolicTangent(sum);
     }
     return activations;
@@ -107,11 +109,11 @@ class NeuralNetwork {
     return (positive - negative) / (positive + negative);
   }
 
-  /// Saída da rede para um vetor de características.
+  /// The network's output for a feature vector.
   double predict(List<double> features) {
     if (features.length != inputSize)
-      throw ArgumentError("esperadas $inputSize entradas, "
-          "recebidas ${features.length}");
+      throw ArgumentError("expected $inputSize inputs, "
+          "got ${features.length}");
     final activations = _hiddenActivations(features);
     var output = _outputBias;
     for (var neuron = 0; neuron < hiddenSize; neuron++) {
@@ -123,13 +125,14 @@ class NeuralNetwork {
   List<double> predictAll(List<List<double>> inputs) =>
       inputs.map(predict).toList(growable: false);
 
-  /// Treina por gradiente descendente estocástico.
+  /// Trains by stochastic gradient descent.
   ///
-  /// Quando [validationInputs] é informado, o treino guarda os pesos da melhor
-  /// época segundo o erro de validação e os restaura no fim: numa série curta a
-  /// rede decora o treino em poucas dezenas de épocas, e sem isso a projeção
-  /// sairia do ajuste memorizado em vez do que generaliza. [patience] encerra o
-  /// treino quando a validação para de melhorar.
+  /// When [validationInputs] is given, training keeps the weights of the best
+  /// epoch by validation error and restores them at the end: on a short series
+  /// the network memorises the training set within a few dozen epochs, and
+  /// without this the projection would come from the memorised fit rather than
+  /// from what generalises. [patience] stops training once validation stops
+  /// improving.
   TrainingReport train(
     List<List<double>> inputs,
     List<double> targets, {
@@ -141,8 +144,8 @@ class NeuralNetwork {
     int patience = 40,
   }) {
     if (inputs.length != targets.length)
-      throw ArgumentError("entradas e alvos com tamanhos diferentes");
-    if (inputs.isEmpty) throw ArgumentError("treino sem amostras");
+      throw ArgumentError("inputs and targets of different lengths");
+    if (inputs.isEmpty) throw ArgumentError("training with no samples");
 
     final validates = validationInputs != null &&
         validationTargets != null &&
@@ -184,8 +187,8 @@ class NeuralNetwork {
     );
   }
 
-  /// Um passo de retropropagação para uma amostra, com a perda `0,5 * erro²`
-  /// (a constante deixa a derivada valendo exatamente o erro).
+  /// One backpropagation step for a single sample, with loss `0.5 * error²`
+  /// (the constant makes the derivative come out as exactly the error).
   void _applyGradient(List<double> features, double target, double learningRate,
       double weightDecay) {
     final activations = _hiddenActivations(features);
@@ -197,7 +200,7 @@ class NeuralNetwork {
 
     for (var neuron = 0; neuron < hiddenSize; neuron++) {
       final activation = activations[neuron];
-      // Derivada da tanh: 1 - tanh(x)².
+      // Derivative of tanh: 1 - tanh(x)².
       final hiddenDelta =
           outputDelta * _outputWeights[neuron] * (1 - activation * activation);
 

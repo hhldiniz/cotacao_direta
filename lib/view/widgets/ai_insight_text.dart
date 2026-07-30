@@ -3,13 +3,15 @@ import 'package:cotacao_direta/util/localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:sprintf/sprintf.dart';
 
-/// Ponte entre o motor de insights, que é Dart puro, e a tela.
+/// Bridge between the insight engine, which is pure Dart, and the screen.
 ///
-/// O motor decide *o que* dizer ([InsightCode]) e com que tom
-/// ([InsightSentiment]), e já formata os números no idioma pedido; aqui o código
-/// vira a frase traduzida, o ícone e a cor.
+/// The engine decides *what* to say ([InsightCode]) and in what tone
+/// ([InsightSentiment]), and already formats the numbers in the requested
+/// language; here the code becomes the translated sentence, the icon and the
+/// colour.
 
-/// Frase traduzida do insight, com os números encaixados nos marcadores.
+/// Translated sentence for the insight, with the numbers slotted into the
+/// placeholders.
 String insightText(MyAppLocalizations localizations, FinancialInsight insight) {
   final template = switch (insight.code) {
     InsightCode.trendUp => localizations.aiInsightTrendUp,
@@ -40,9 +42,9 @@ IconData insightIcon(InsightSentiment sentiment) => switch (sentiment) {
       InsightSentiment.neutral => Icons.remove,
     };
 
-/// Cor do ícone do insight. Alta e baixa não saem do esquema de cores do tema:
-/// verde e vermelho vêm de tons fixos, ajustados ao brilho do tema para
-/// continuarem legíveis no modo escuro.
+/// Colour of the insight icon. Rises and falls do not come out of the theme's
+/// colour scheme: green and red come from fixed shades, adjusted to the theme
+/// brightness so they stay readable in dark mode.
 Color insightColor(BuildContext context, InsightSentiment sentiment) {
   final colorScheme = Theme.of(context).colorScheme;
   final isDark = Theme.of(context).brightness == Brightness.dark;
