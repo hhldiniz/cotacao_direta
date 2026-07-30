@@ -136,10 +136,16 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   Future<void> _refreshRates(BuildContext context) async {
-    _bloc.getSelectedOverrideCurrency();
+    _loadCounterCurrencyName(context);
     _checkCurrencyAlerts(context);
     UpdateCurrencyValueNotification().dispatch(context);
     await Future.delayed(const Duration(milliseconds: 400));
+  }
+
+  /// Pede ao bloc o nome da moeda em que as cotações estão expressas, no idioma
+  /// da tela, para o texto acima das bolhas.
+  void _loadCounterCurrencyName(BuildContext context) {
+    _bloc.loadCounterCurrencyName(MyAppLocalizations.of(context)!.locale);
   }
 
   /// Confere os alertas de câmbio cadastrados contra a cotação mais recente.
@@ -171,7 +177,7 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
     if (!_initialFetchScheduled) {
       _initialFetchScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _bloc.getSelectedOverrideCurrency(),
+        (_) => _loadCounterCurrencyName(context),
       );
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _checkCurrencyAlerts(context),
@@ -394,6 +400,10 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
             fabVisibility = index == 0;
             _selectedIndex = index;
           });
+          // A moeda de contrapartida pode ter mudado na aba de opções: ao
+          // voltar para as bolhas, o texto do cabeçalho precisa acompanhar a
+          // moeda em que as cotações passam a ser mostradas.
+          if (index == 0) _loadCounterCurrencyName(context);
         },
       ),
       floatingActionButton: Visibility(

@@ -14,7 +14,7 @@ class MyAppLocalizations {
     'en': {
       'conversionButtonLabel': 'Conversions',
       'conversionPageTitle': "Currency Conversion",
-      'homePageHeadsUpText': 'The %s today is worth',
+      'homePageHeadsUpText': 'Exchange rates in %s',
       'convertActionBtnLabel': 'Convert',
       'conversionMultiplierHint': 'Amount',
       'conversionPageExplanationText': 'Insert the amount value of the currency '
@@ -72,7 +72,7 @@ class MyAppLocalizations {
     'pt': {
       'conversionButtonLabel': "Conversões",
       'conversionPageTitle': "Conversão de Moedas",
-      'homePageHeadsUpText': "O %s vale hoje",
+      'homePageHeadsUpText': "Cotações em %s",
       'convertActionBtnLabel': "Converter",
       'conversionMultiplierHint': 'Quantidade',
       'conversionPageExplanationText': 'Insira a quantidade da moeda que será '
