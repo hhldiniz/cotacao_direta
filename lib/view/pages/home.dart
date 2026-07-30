@@ -1,6 +1,7 @@
 import 'package:cotacao_direta/blocs/currency_alerts_bloc.dart';
 import 'package:cotacao_direta/blocs/home_bloc.dart';
 import 'package:cotacao_direta/notifications/update_currency_value_notification.dart';
+import 'package:cotacao_direta/providers/ai_insights_bloc_provider.dart';
 import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_alerts_bloc_provider.dart';
@@ -11,6 +12,7 @@ import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/about_page.dart';
+import 'package:cotacao_direta/view/pages/main_menu_items/ai_insights_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/configurations_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/currency_alerts_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
@@ -364,6 +366,9 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
       ),
       Container(child: CurrencyAlertsPage()),
       Container(
+        child: AiInsightsBlocProvider(child: AiInsightsPage()),
+      ),
+      Container(
         child: ConfigurationsPageBlocProvider(child: ConfigurationsPage()),
       ),
       Container(child: AboutPage()),
@@ -384,6 +389,10 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
             label: _localization.currencyAlertsBottomNavItemLabel,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.auto_awesome),
+            label: _localization.aiInsightsBottomNavItemLabel,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
