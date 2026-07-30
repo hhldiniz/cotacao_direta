@@ -6,6 +6,7 @@ import 'package:cotacao_direta/model/currency.dart';
 import 'package:cotacao_direta/model/currency_alert.dart';
 import 'package:cotacao_direta/repository/configuration_repository.dart';
 import 'package:cotacao_direta/repository/currency_alert_repository.dart';
+import 'package:cotacao_direta/repository/currency_repository.dart';
 import 'package:cotacao_direta/util/network_util.dart';
 import 'package:cotacao_direta/util/notification_service.dart';
 
@@ -52,6 +53,38 @@ class FakeCurrencyDao implements CurrencyDao {
     historicalDataCalls.add([currencyCodeList, initialDate, finalDate]);
     return historicalData;
   }
+}
+
+/// Repositório de cotações em memória, para isolar quem consome o histórico
+/// (a análise local) da API e do banco.
+class FakeCurrencyRepository implements CurrencyRepository {
+  /// Histórico devolvido por [getCurrencyHistoricalData], independentemente do
+  /// período pedido.
+  List<Currency> historicalData = [];
+
+  Currency? latestCurrency;
+  String counterCurrency = "BRL";
+
+  /// Argumentos de cada chamada ao histórico, na ordem em que chegaram.
+  final List<List<dynamic>> historicalDataCalls = [];
+
+  /// Quando definido, é lançado no lugar de devolver o histórico.
+  Object? failure;
+
+  @override
+  Future<List<Currency>> getCurrencyHistoricalData(
+      List<String> currencyCodeList, initialDate, finalDate) async {
+    historicalDataCalls.add([currencyCodeList, initialDate, finalDate]);
+    if (failure != null) throw failure!;
+    return historicalData;
+  }
+
+  @override
+  Future<Currency?> getLatestDataByCurrencyCode(String? currencyCode) async =>
+      latestCurrency;
+
+  @override
+  Future<String> resolveCounterCurrency() async => counterCurrency;
 }
 
 /// DAO de configuração em memória.
