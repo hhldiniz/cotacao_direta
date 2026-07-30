@@ -57,3 +57,22 @@ String currencyName(Currencies currency, Locale locale) {
 
 /// Código ISO 4217 da moeda, que é o próprio nome do valor do enum.
 String currencyCode(Currencies currency) => currency.name;
+
+/// Moeda correspondente a um código ISO 4217, ou nulo para um código que o app
+/// não conhece.
+Currencies? currencyForCode(String? code) {
+  if (code == null || code.isEmpty) return null;
+  var upperCaseCode = code.toUpperCase();
+  for (var currency in Currencies.values) {
+    if (currency.name == upperCaseCode) return currency;
+  }
+  return null;
+}
+
+/// Nome da moeda de [code] no idioma de [locale]. Um código desconhecido fica
+/// com o próprio código como nome: é o que o app tem para mostrar, e ainda
+/// identifica a moeda.
+String currencyNameForCode(String? code, Locale locale) {
+  var currency = currencyForCode(code);
+  return currency == null ? (code ?? "") : currencyName(currency, locale);
+}

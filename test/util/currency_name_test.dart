@@ -25,6 +25,31 @@ void main() {
     });
   });
 
+  group('currencyForCode', () {
+    test('encontra a moeda pelo código', () {
+      expect(currencyForCode("BRL"), Currencies.BRL);
+      expect(currencyForCode("jpy"), Currencies.JPY);
+    });
+
+    test('devolve nulo para um código desconhecido ou vazio', () {
+      expect(currencyForCode("XXX"), isNull);
+      expect(currencyForCode(""), isNull);
+      expect(currencyForCode(null), isNull);
+    });
+  });
+
+  group('currencyNameForCode', () {
+    test('traduz o nome da moeda do código', () {
+      expect(currencyNameForCode("BRL", const Locale("pt")), "Real Brasileiro");
+      expect(currencyNameForCode("BRL", const Locale("en")), "Brazilian Real");
+    });
+
+    test('usa o próprio código quando a moeda é desconhecida', () {
+      expect(currencyNameForCode("XXX", const Locale("pt")), "XXX");
+      expect(currencyNameForCode(null, const Locale("pt")), "");
+    });
+  });
+
   group('currencyCode', () {
     test('usa o próprio nome do valor do enum', () {
       expect(currencyCode(Currencies.BRL), "BRL");
