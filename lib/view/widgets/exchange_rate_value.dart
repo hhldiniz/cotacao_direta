@@ -1,9 +1,9 @@
 import 'package:cotacao_direta/blocs/exchange_value_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
-import 'package:cotacao_direta/notifications/update_currency_value_notification.dart';
 import 'package:cotacao_direta/providers/exchange_value_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
+import 'package:cotacao_direta/view/widgets/currency_refresh_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -43,6 +43,11 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
   @override
   void didChangeDependencies() {
     bloc = ExchangeValueBlocProvider.of(context);
+    // Depender do escopo faz este método rodar de novo — e portanto buscar a
+    // cotação de novo — sempre que a tela pedir uma atualização: pull to
+    // refresh, botão de atualizar, ou a volta para a aba de moedas depois de
+    // trocar a contrapartida nas configurações.
+    CurrencyRefreshScope.of(context);
     if (!identical(_streamBloc, bloc)) {
       _streamBloc = bloc;
       _stream = bloc.getNextStreamController();
@@ -76,24 +81,17 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
   Widget build(BuildContext context) {
     return StreamBuilder<num?>(
       stream: _stream,
-      builder: (context, snapshot) =>
-          NotificationListener<UpdateCurrencyValueNotification>(
-            onNotification: (UpdateCurrencyValueNotification notification) {
-              didChangeDependencies();
-              return true;
-            },
-            child: Semantics(
-              label: _exchangeRateLabel(context, snapshot),
-              child: Text(
-                _exchangeRateLabel(context, snapshot),
-                style: TextStyle(
-                  fontSize: widget.fontSize ?? 18 * Responsive.scaleFactor(context),
-                  color: widget.color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+      builder: (context, snapshot) => Semantics(
+        label: _exchangeRateLabel(context, snapshot),
+        child: Text(
+          _exchangeRateLabel(context, snapshot),
+          style: TextStyle(
+            fontSize: widget.fontSize ?? 18 * Responsive.scaleFactor(context),
+            color: widget.color,
+            fontWeight: FontWeight.w600,
           ),
+        ),
+      ),
     );
   }
 }

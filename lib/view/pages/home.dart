@@ -1,6 +1,5 @@
 import 'package:cotacao_direta/blocs/currency_alerts_bloc.dart';
 import 'package:cotacao_direta/blocs/home_bloc.dart';
-import 'package:cotacao_direta/notifications/update_currency_value_notification.dart';
 import 'package:cotacao_direta/providers/ai_insights_bloc_provider.dart';
 import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
@@ -18,6 +17,7 @@ import 'package:cotacao_direta/view/pages/main_menu_items/configurations_page.da
 import 'package:cotacao_direta/view/pages/main_menu_items/currency_alerts_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/currency_rate_card.dart';
+import 'package:cotacao_direta/view/widgets/currency_refresh_scope.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/euro_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/yen_exchange_rate.dart';
@@ -49,6 +49,12 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   // cartões e o ícone giratório da barra: é feedback de um estado real, não
   // um dado inventado.
   var _isRefreshing = false;
+
+  // Incrementado a cada pedido de atualização das cotações. Chega aos widgets
+  // de valor pelo CurrencyRefreshScope, que os faz buscar de novo: como as
+  // abas ficam sempre montadas no IndexedStack, sem isso as cotações seriam
+  // buscadas uma única vez, no primeiro build de cada widget.
+  var _ratesRevision = 0;
 
   // Garante que a busca inicial de cotação/alertas rode uma única vez: como
   // ela depende do context (localizations), não pode ir para initState, mas
@@ -125,11 +131,13 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   Future<void> _refreshRates(BuildContext context) async {
-    setState(() => _isRefreshing = true);
+    setState(() {
+      _isRefreshing = true;
+      _ratesRevision++;
+    });
     _refreshIconController.repeat();
     _loadCounterCurrencyName(context);
     _checkCurrencyAlerts(context);
-    UpdateCurrencyValueNotification().dispatch(context);
     await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
     _refreshIconController
@@ -196,7 +204,6 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
 
     final pageHeader = StreamBuilder(
       builder: (BuildContext context, snapshot) {
-        UpdateCurrencyValueNotification().dispatch(context);
         if (snapshot.data == null)
           return Container();
         else {
@@ -343,19 +350,24 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     );
 
     final List<Widget> _widgetOptions = <Widget>[
-      RefreshIndicator(
-        onRefresh: () => _refreshRates(context),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 16 * _scale),
-                child: pageHeader,
-              ),
-              bentoGrid,
-              SizedBox(height: 16 * _scale),
-            ],
+      // O escopo avisa os widgets de cotação abaixo dele quando os valores
+      // precisam ser buscados de novo.
+      CurrencyRefreshScope(
+        revision: _ratesRevision,
+        child: RefreshIndicator(
+          onRefresh: () => _refreshRates(context),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16 * _scale),
+                  child: pageHeader,
+                ),
+                bentoGrid,
+                SizedBox(height: 16 * _scale),
+              ],
+            ),
           ),
         ),
       ),
@@ -417,10 +429,17 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
           setState(() {
             fabVisibility = index == 0;
             _selectedIndex = index;
+            // A moeda de contrapartida pode ter mudado na aba de opções: ao
+            // voltar para os cartões, tanto o texto do cabeçalho quanto os
+            // valores precisam acompanhar a moeda em que as cotações passam a
+            // ser mostradas. Sem isto só o cabeçalho mudava, e os números
+            // continuavam os da contrapartida anterior.
+            //
+            // A cotação de cada par fica guardada por uma hora
+            // (CurrencyRepository), então voltar para esta aba não significa ir
+            // à rede de novo: quando nada mudou, a busca para no banco.
+            if (index == 0) _ratesRevision++;
           });
-          // A moeda de contrapartida pode ter mudado na aba de opções: ao
-          // voltar para as bolhas, o texto do cabeçalho precisa acompanhar a
-          // moeda em que as cotações passam a ser mostradas.
           if (index == 0) _loadCounterCurrencyName(context);
         },
       ),
