@@ -4,12 +4,14 @@ import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/providers/selected_currency_details_bloc_provider.dart';
 import 'package:cotacao_direta/util/cryptocurrency_info.dart';
+import 'package:cotacao_direta/util/currency_colors.dart';
 import 'package:cotacao_direta/util/currency_flag.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:cotacao_direta/view/pages/selected_currency_details.dart';
 import 'package:cotacao_direta/view/widgets/animated_list_entry.dart';
+import 'package:cotacao_direta/view/widgets/bento_card.dart';
 import 'package:flag/flag.dart';
 import 'package:flutter/material.dart';
 
@@ -69,101 +71,117 @@ class CurrencyHistory extends StatelessWidget {
           _SectionEntry(localizations.currencyHistoryCurrenciesSectionLabel!),
           ..._currencies.map((currency) => _CurrencyEntry(currency)),
           _SectionEntry(
-              localizations.currencyHistoryCryptocurrenciesSectionLabel!),
-          ...Cryptocurrencies.values
-              .map((cryptocurrency) => _CryptocurrencyEntry(cryptocurrency)),
+            localizations.currencyHistoryCryptocurrenciesSectionLabel!,
+          ),
+          ...Cryptocurrencies.values.map(
+            (cryptocurrency) => _CryptocurrencyEntry(cryptocurrency),
+          ),
         ];
 
-        return ListView.separated(
-          separatorBuilder: (BuildContext context, index) {
-            // O título de seção já se separa do que vem antes pelo próprio
-            // espaçamento; um divisor aí faria a seção parecer parte da lista
-            // anterior.
-            if (_entries[index + 1] is _SectionEntry)
-              return const SizedBox.shrink();
-            return const Divider(height: 1, thickness: 1);
-          },
-          itemBuilder: (BuildContext context, index) {
-            final entry = _entries[index];
-            return AnimatedListEntry(
-              index: index,
-              child: switch (entry) {
-                _SectionEntry() => _sectionTitle(context, entry.label, _scale),
-                _CurrencyEntry() =>
-                  _currencyTile(context, bloc, entry.currency, _scale),
-                _CryptocurrencyEntry() =>
-                  _cryptocurrencyTile(context, entry.cryptocurrency, _scale),
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: Responsive.contentMaxWidth(context),
+            ),
+            child: ListView.builder(
+              padding: EdgeInsets.fromLTRB(
+                16 * _scale,
+                0,
+                16 * _scale,
+                24 * _scale,
+              ),
+              itemBuilder: (BuildContext context, index) {
+                final entry = _entries[index];
+                return AnimatedListEntry(
+                  index: index,
+                  child: switch (entry) {
+                    _SectionEntry() => BentoSectionTitle(entry.label),
+                    _CurrencyEntry() => Padding(
+                      padding: EdgeInsets.only(bottom: 10 * _scale),
+                      child: _currencyTile(context, bloc, entry.currency, _scale),
+                    ),
+                    _CryptocurrencyEntry() => Padding(
+                      padding: EdgeInsets.only(bottom: 10 * _scale),
+                      child: _cryptocurrencyTile(
+                        context,
+                        entry.cryptocurrency,
+                        _scale,
+                      ),
+                    ),
+                  },
+                );
               },
-            );
-          },
-          itemCount: _entries.length,
+              itemCount: _entries.length,
+            ),
+          ),
         );
       },
     );
   }
 
-  Widget _sectionTitle(BuildContext context, String label, double scale) {
-    return Padding(
-      padding:
-          EdgeInsets.fromLTRB(16 * scale, 20 * scale, 16 * scale, 8 * scale),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 14 * scale,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
-    );
-  }
-
-  Widget _currencyTile(BuildContext context, CurrencyHistoryMenuBloc bloc,
-      Currencies currency, double scale) {
+  Widget _currencyTile(
+    BuildContext context,
+    CurrencyHistoryMenuBloc bloc,
+    Currencies currency,
+    double scale,
+  ) {
     final currencyCode = _codeOf(currency);
     return _quoteTile(
       context,
       currencyCode: currencyCode,
       scale: scale,
-      badge: Flag.fromCode(
-        flagCodeForCurrency(currency),
-        height: 24 * scale,
-        width: 32 * scale,
+      accent: CurrencyColors.eur,
+      badge: ClipRRect(
+        borderRadius: BorderRadius.circular(6 * scale),
+        child: Flag.fromCode(
+          flagCodeForCurrency(currency),
+          height: 24 * scale,
+          width: 32 * scale,
+        ),
       ),
       subtitle: StreamBuilder<String?>(
         initialData: bloc.cachedCountryName(currencyCode),
         stream: bloc.getCountryNameController(currencyCode),
         builder: (context, snapshot) {
           bloc.getCountryNameByCurrencyCode(currencyCode);
-          return Text(
-            snapshot.data ?? "",
-            style: TextStyle(fontSize: 14 * scale),
-          );
+          return _subtitleText(context, snapshot.data ?? "", scale);
         },
       ),
     );
   }
 
   Widget _cryptocurrencyTile(
-      BuildContext context, Cryptocurrencies cryptocurrency, double scale) {
+    BuildContext context,
+    Cryptocurrencies cryptocurrency,
+    double scale,
+  ) {
     return _quoteTile(
       context,
       currencyCode: _codeOf(cryptocurrency),
       scale: scale,
-      // Mesmas dimensões da bandeira das moedas fiduciárias, para os códigos
-      // ficarem alinhados entre as duas seções.
-      badge: SizedBox(
-        height: 24 * scale,
-        width: 32 * scale,
-        child: Icon(
-          iconForCryptocurrency(cryptocurrency),
-          size: 22 * scale,
-          color: Theme.of(context).colorScheme.primary,
-        ),
+      accent: CurrencyColors.usd,
+      badge: Icon(
+        iconForCryptocurrency(cryptocurrency),
+        size: 22 * scale,
+        color: CurrencyColors.usd,
       ),
-      subtitle: Text(
+      subtitle: _subtitleText(
+        context,
         cryptocurrencyName(cryptocurrency),
-        style: TextStyle(fontSize: 14 * scale),
+        scale,
       ),
+    );
+  }
+
+  Widget _subtitleText(BuildContext context, String text, double scale) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 13 * scale,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+      overflow: TextOverflow.ellipsis,
+      maxLines: 1,
     );
   }
 
@@ -172,28 +190,11 @@ class CurrencyHistory extends StatelessWidget {
     required String currencyCode,
     required Widget badge,
     required Widget subtitle,
+    required Color accent,
     required double scale,
   }) {
-    return GestureDetector(
-      child: ListTile(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              currencyCode,
-              style: TextStyle(fontSize: 16 * scale),
-            ),
-            badge,
-          ],
-        ),
-        subtitle: subtitle,
-        trailing: Icon(
-          Icons.chevron_right,
-          size: 20 * scale,
-          color: Theme.of(context).colorScheme.outline,
-        ),
-      ),
+    return BentoCard(
+      padding: EdgeInsets.all(12 * scale),
       onTap: () {
         Navigator.push(
           context,
@@ -206,6 +207,43 @@ class CurrencyHistory extends StatelessWidget {
           ),
         );
       },
+      child: Row(
+        children: [
+          // Bandeira e ícone ganham a mesma moldura colorida, para os dois
+          // tipos de ativo ficarem alinhados e com o mesmo peso visual.
+          Container(
+            width: 46 * scale,
+            height: 40 * scale,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(12 * scale),
+            ),
+            child: badge,
+          ),
+          SizedBox(width: 14 * scale),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  currencyCode,
+                  style: TextStyle(
+                    fontSize: 16 * scale,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle,
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            size: 20 * scale,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+        ],
+      ),
     );
   }
 }

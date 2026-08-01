@@ -427,6 +427,10 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
       floatingActionButton: Visibility(
         visible: fabVisibility,
         child: FloatingActionButton.extended(
+          // As abas ficam todas montadas dentro do IndexedStack, então o FAB
+          // desta tela convive com o da tela de alertas na mesma rota. Sem uma
+          // tag própria, os dois disputariam a tag padrão do Hero.
+          heroTag: "homeConversionFab",
           onPressed: () => _openConversionPage(context),
           label: Text(_localization.conversionButtonLabel!),
           icon: Icon(Icons.compare_arrows),
