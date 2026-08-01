@@ -36,6 +36,10 @@ class MyAppLocalizations {
       'aboutVersionLabel': 'Version',
       'aboutDeveloperLabel': 'Developed by',
       'aboutSourceCodeLabel': 'Source code',
+      'usdCurrencyName': 'US Dollar',
+      'eurCurrencyName': 'Euro',
+      'cadCurrencyName': 'Canadian Dollar',
+      'jpyCurrencyName': 'Japanese Yen',
     },
     'pt': {
       'conversionButtonLabel': "Conversões",
@@ -62,6 +66,10 @@ class MyAppLocalizations {
       'aboutVersionLabel': 'Versão',
       'aboutDeveloperLabel': 'Desenvolvido por',
       'aboutSourceCodeLabel': 'Código fonte',
+      'usdCurrencyName': 'Dólar americano',
+      'eurCurrencyName': 'Euro',
+      'cadCurrencyName': 'Dólar canadense',
+      'jpyCurrencyName': 'Iene',
     }
   };
 
@@ -154,6 +162,22 @@ class MyAppLocalizations {
 
   String? get aboutSourceCodeLabel {
     return _localizedValues[locale.languageCode]!['aboutSourceCodeLabel'];
+  }
+
+  String? get usdCurrencyName {
+    return _localizedValues[locale.languageCode]!['usdCurrencyName'];
+  }
+
+  String? get eurCurrencyName {
+    return _localizedValues[locale.languageCode]!['eurCurrencyName'];
+  }
+
+  String? get cadCurrencyName {
+    return _localizedValues[locale.languageCode]!['cadCurrencyName'];
+  }
+
+  String? get jpyCurrencyName {
+    return _localizedValues[locale.languageCode]!['jpyCurrencyName'];
   }
 }
 

@@ -5,12 +5,14 @@ import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:cotacao_direta/util/color_utils.dart';
+import 'package:cotacao_direta/util/currency_colors.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/about_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/configurations_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
+import 'package:cotacao_direta/view/widgets/currency_rate_card.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/euro_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/yen_exchange_rate.dart';
@@ -28,7 +30,7 @@ class Home extends StatefulWidget {
   State<StatefulWidget> createState() => HomeState(_pageTitle);
 }
 
-class HomeState extends State<Home> with SingleTickerProviderStateMixin {
+class HomeState extends State<Home> with TickerProviderStateMixin {
   var _selectedIndex = 0;
   late HomeBloc _bloc;
 
@@ -36,100 +38,106 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   var fabVisibility = true;
 
-  late final AnimationController _circlesAnimationController;
-  late final List<Animation<double>> _circleScaleAnimations;
-  late final List<Animation<double>> _circleFadeAnimations;
+  // true enquanto a tela busca cotações novas (pull-to-refresh ou o botão de
+  // atualizar da barra superior). Alimenta o indicador de atualização dos
+  // cartões e o ícone giratório da barra: é feedback de um estado real, não
+  // um dado inventado.
+  var _isRefreshing = false;
+
+  late final AnimationController _entranceAnimationController;
+  late final List<Animation<double>> _tileScaleAnimations;
+  late final List<Animation<double>> _tileFadeAnimations;
+  late final AnimationController _refreshIconController;
 
   HomeState(this._pageTitle);
 
   @override
   void initState() {
     super.initState();
-    _circlesAnimationController = AnimationController(
+    _entranceAnimationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 900),
     );
-    final ranges = List.generate(4, (index) {
-      final start = index * 0.15;
-      final end = (start + 0.6).clamp(0.0, 1.0);
+    // 5 cartões no bento (destaque + 4), com entrada escalonada.
+    final ranges = List.generate(5, (index) {
+      final start = index * 0.12;
+      final end = (start + 0.55).clamp(0.0, 1.0);
       return (start: start, end: end);
     });
-    _circleScaleAnimations = ranges
+    _tileScaleAnimations = ranges
         .map(
           (range) => CurvedAnimation(
-            parent: _circlesAnimationController,
+            parent: _entranceAnimationController,
             curve: Interval(range.start, range.end, curve: Curves.easeOutBack),
           ),
         )
         .toList();
-    _circleFadeAnimations = ranges
+    _tileFadeAnimations = ranges
         .map(
           (range) => CurvedAnimation(
-            parent: _circlesAnimationController,
+            parent: _entranceAnimationController,
             curve: Interval(range.start, range.end, curve: Curves.easeOut),
           ),
         )
         .toList();
-    _circlesAnimationController.forward();
+    _entranceAnimationController.forward();
+
+    _refreshIconController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
   }
 
   @override
   void dispose() {
-    _circlesAnimationController.dispose();
+    _entranceAnimationController.dispose();
+    _refreshIconController.dispose();
     super.dispose();
   }
 
-  Widget _animatedCircle(int index, Widget circle) {
+  Widget _animatedTile(int index, Widget tile) {
     return ScaleTransition(
-      scale: _circleScaleAnimations[index],
+      scale: _tileScaleAnimations[index],
       child: FadeTransition(
-        opacity: _circleFadeAnimations[index],
-        child: circle,
-      ),
-    );
-  }
-
-  /// Círculo de cotação com sombra (para dar profundidade) e cor de fundo
-  /// já ajustada ao tema claro/escuro.
-  Widget _currencyCircle(
-    BuildContext context, {
-    required int index,
-    required Color baseColor,
-    required double padding,
-    required Widget child,
-  }) {
-    return _animatedCircle(
-      index,
-      Container(
-        padding: EdgeInsets.all(padding),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: circleBackgroundColor(context, baseColor),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: child,
+        opacity: _tileFadeAnimations[index],
+        child: tile,
       ),
     );
   }
 
   Future<void> _refreshRates(BuildContext context) async {
+    setState(() => _isRefreshing = true);
+    _refreshIconController.repeat();
     _bloc.getSelectedOverrideCurrency();
     UpdateCurrencyValueNotification().dispatch(context);
     await Future.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
+    _refreshIconController
+      ..stop()
+      ..reset();
+    setState(() => _isRefreshing = false);
+  }
+
+  void _openConversionPage(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) {
+          return ConversionPageBlocProvider(
+            child: ConversionPage(
+              MyAppLocalizations.of(context)!.conversionPageTitle,
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final orientation = MediaQuery.of(context).orientation;
     final _localization = MyAppLocalizations.of(context)!;
     final _screenDimensions = MediaQuery.of(context);
     final _scale = Responsive.scaleFactor(context);
+    final _colorScheme = Theme.of(context).colorScheme;
     _bloc = HomeBlocProvider.of(context);
 
     WidgetsBinding.instance.addPostFrameCallback(
@@ -146,7 +154,7 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
             width: _screenDimensions.size.width,
             child: Text(
               sprintf(_localization.homePageHeadsUpText!, [snapshot.data]),
-              style: TextStyle(fontSize: 28 * _scale),
+              style: TextStyle(fontSize: 22 * _scale),
               textAlign: TextAlign.center,
             ),
           );
@@ -155,21 +163,123 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
       stream: _bloc.getNextStreamController(),
     );
 
-    final dollarExchangeRate = DollarExchangeRate(
-      color: contrastingTextColor(circleBackgroundColor(context, Colors.amber)),
-    );
-    final euroExchangeRate = EuroExchangeRate(
-      color: contrastingTextColor(
-        circleBackgroundColor(context, Colors.blueAccent),
+    final usdCard = CurrencyRateCard(
+      hero: true,
+      color: CurrencyColors.usd,
+      icon: Icons.attach_money,
+      code: "USD",
+      label: _localization.usdCurrencyName!,
+      isRefreshing: _isRefreshing,
+      valueWidget: DollarExchangeRate(
+        color: contrastingTextColor(circleBackgroundColor(context, CurrencyColors.usd)),
+        fontSize: 32 * _scale,
+        showLabel: false,
       ),
     );
-    final canadianDollarExchangeRate = CanadianDollarExchangeRate(
-      color: contrastingTextColor(
-        circleBackgroundColor(context, Colors.deepOrange),
+
+    final eurCard = CurrencyRateCard(
+      color: CurrencyColors.eur,
+      icon: Icons.euro,
+      code: "EUR",
+      label: _localization.eurCurrencyName!,
+      isRefreshing: _isRefreshing,
+      valueWidget: EuroExchangeRate(
+        color: contrastingTextColor(circleBackgroundColor(context, CurrencyColors.eur)),
+        fontSize: 20 * _scale,
+        showLabel: false,
       ),
     );
-    final yenExchangeRate = YenExchangeRate(
-      color: contrastingTextColor(circleBackgroundColor(context, Colors.pink)),
+
+    final cadCard = CurrencyRateCard(
+      color: CurrencyColors.cad,
+      icon: Icons.monetization_on,
+      code: "CAD",
+      label: _localization.cadCurrencyName!,
+      isRefreshing: _isRefreshing,
+      valueWidget: CanadianDollarExchangeRate(
+        color: contrastingTextColor(circleBackgroundColor(context, CurrencyColors.cad)),
+        fontSize: 20 * _scale,
+        showLabel: false,
+      ),
+    );
+
+    final jpyCard = CurrencyRateCard(
+      color: CurrencyColors.jpy,
+      icon: Icons.currency_yen,
+      code: "JPY",
+      label: _localization.jpyCurrencyName!,
+      isRefreshing: _isRefreshing,
+      valueWidget: YenExchangeRate(
+        color: contrastingTextColor(circleBackgroundColor(context, CurrencyColors.jpy)),
+        fontSize: 20 * _scale,
+        showLabel: false,
+      ),
+    );
+
+    // Quinto "tile" do bento: não é uma cotação, é um atalho para a
+    // conversão. O InkWell/Material dá o mesmo tipo de feedback tátil ao
+    // toque que os cartões de cotação têm, sem duplicar a lógica deles.
+    final convertShortcutTile = Material(
+      color: _colorScheme.secondaryContainer,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _openConversionPage(context),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: 16 * _scale,
+            vertical: 14 * _scale,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.compare_arrows,
+                color: _colorScheme.onSecondaryContainer,
+                size: 20 * _scale,
+              ),
+              SizedBox(height: 10 * _scale),
+              Text(
+                _localization.convertActionBtnLabel!,
+                style: TextStyle(
+                  color: _colorScheme.onSecondaryContainer,
+                  fontSize: 16 * _scale,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final bentoGrid = Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16 * _scale),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _animatedTile(0, usdCard),
+          SizedBox(height: 12 * _scale),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _animatedTile(1, eurCard)),
+              SizedBox(width: 12 * _scale),
+              Expanded(child: _animatedTile(2, cadCard)),
+            ],
+          ),
+          SizedBox(height: 12 * _scale),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _animatedTile(3, jpyCard)),
+              SizedBox(width: 12 * _scale),
+              Expanded(child: _animatedTile(4, convertShortcutTile)),
+            ],
+          ),
+        ],
+      ),
     );
 
     final List<Widget> _widgetOptions = <Widget>[
@@ -177,138 +287,16 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
         onRefresh: () => _refreshRates(context),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: orientation == Orientation.portrait
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Column(children: <Widget>[pageHeader]),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        Column(
-                          children: <Widget>[
-                            _currencyCircle(
-                              context,
-                              index: 0,
-                              baseColor: Colors.amber,
-                              padding: 40.0 * _scale,
-                              child: dollarExchangeRate,
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: <Widget>[
-                            _currencyCircle(
-                              context,
-                              index: 1,
-                              baseColor: Colors.blueAccent,
-                              padding: 40.0 * _scale,
-                              child: euroExchangeRate,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Column(
-                          children: <Widget>[
-                            _currencyCircle(
-                              context,
-                              index: 2,
-                              baseColor: Colors.deepOrange,
-                              padding: 60.0 * _scale,
-                              child: canadianDollarExchangeRate,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        _currencyCircle(
-                          context,
-                          index: 3,
-                          baseColor: Colors.pink,
-                          padding: 33.0 * _scale,
-                          child: yenExchangeRate,
-                        ),
-                      ],
-                    ),
-                  ],
-                )
-              : Column(
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        Column(children: <Widget>[pageHeader]),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        Column(
-                          children: <Widget>[
-                            _currencyCircle(
-                              context,
-                              index: 0,
-                              baseColor: Colors.amber,
-                              padding: 40.0 * _scale,
-                              child: dollarExchangeRate,
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: <Widget>[
-                            Padding(
-                              padding: EdgeInsets.only(top: 100.0 * _scale),
-                              child: _currencyCircle(
-                                context,
-                                index: 1,
-                                baseColor: Colors.blueAccent,
-                                padding: 40.0 * _scale,
-                                child: euroExchangeRate,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: <Widget>[
-                            _currencyCircle(
-                              context,
-                              index: 2,
-                              baseColor: Colors.deepOrange,
-                              padding: 40.0 * _scale,
-                              child: canadianDollarExchangeRate,
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: <Widget>[
-                            Padding(
-                              padding: EdgeInsets.only(top: 100 * _scale),
-                              child: _currencyCircle(
-                                context,
-                                index: 3,
-                                baseColor: Colors.pink,
-                                padding: 35.0 * _scale,
-                                child: yenExchangeRate,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+          child: Column(
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 16 * _scale),
+                child: pageHeader,
+              ),
+              bentoGrid,
+              SizedBox(height: 16 * _scale),
+            ],
+          ),
         ),
       ),
       Container(
@@ -320,7 +308,18 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
       Container(child: AboutPage()),
     ];
     return Scaffold(
-      appBar: AppBar(title: Text(_pageTitle)),
+      appBar: AppBar(
+        title: Text(_pageTitle),
+        actions: [
+          RotationTransition(
+            turns: _refreshIconController,
+            child: IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => _refreshRates(context),
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: [
@@ -352,17 +351,7 @@ class HomeState extends State<Home> with SingleTickerProviderStateMixin {
       floatingActionButton: Visibility(
         visible: fabVisibility,
         child: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) {
-                  return ConversionPageBlocProvider(
-                    child: ConversionPage(_localization.conversionPageTitle),
-                  );
-                },
-              ),
-            );
-          },
+          onPressed: () => _openConversionPage(context),
           label: Text(_localization.conversionButtonLabel!),
           icon: Icon(Icons.compare_arrows),
         ),
