@@ -6,6 +6,8 @@ import 'package:cotacao_direta/providers/currency_alerts_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
+import 'package:cotacao_direta/view/widgets/animated_list_entry.dart';
+import 'package:cotacao_direta/view/widgets/bento_card.dart';
 import 'package:flutter/material.dart';
 
 class CurrencyAlertsPage extends StatefulWidget {
@@ -32,6 +34,8 @@ class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
+        // Ver a nota no FAB da home: as duas telas coexistem no IndexedStack.
+        heroTag: "addCurrencyAlertFab",
         onPressed: () =>
             _showAddAlertDialog(context, _bloc, _localization, _currencyList),
         label: Text(_localization.addCurrencyAlertBtnLabel!),
@@ -46,52 +50,82 @@ class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
             builder: (context, snapshot) {
               var alerts = snapshot.data ?? [];
               if (alerts.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24 * _scale),
-                    child: Text(
-                      _localization.currencyAlertEmptyListLabel!,
-                      style: TextStyle(fontSize: 16 * _scale),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                );
+                return _emptyState(context, _localization, _scale);
               }
-              return ListView(
-                padding: EdgeInsets.symmetric(vertical: 16 * _scale),
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24 * _scale),
-                    child: Text(
+              return ListView.builder(
+                padding: EdgeInsets.fromLTRB(
+                  16 * _scale,
+                  0,
+                  16 * _scale,
+                  // Espaço para o FAB não cobrir o último alerta.
+                  96 * _scale,
+                ),
+                itemCount: alerts.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return BentoSectionTitle(
                       _localization.currencyAlertsSectionLabel!,
-                      style: TextStyle(
-                        fontSize: 14 * _scale,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
+                    );
+                  }
+                  final alert = alerts[index - 1];
+                  return AnimatedListEntry(
+                    index: index,
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 10 * _scale),
+                      child: _AlertCard(
+                        alert: alert,
+                        localization: _localization,
+                        scale: _scale,
+                        onDelete: () => _bloc.deleteAlert(alert.id!),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 8 * _scale),
-                  Card(
-                    margin: EdgeInsets.symmetric(horizontal: 12 * _scale),
-                    child: Column(
-                      children: [
-                        for (var index = 0; index < alerts.length; index++) ...[
-                          if (index > 0) const Divider(height: 1),
-                          _AlertListTile(
-                            alert: alerts[index],
-                            localization: _localization,
-                            scale: _scale,
-                            onDelete: () => _bloc.deleteAlert(alerts[index].id!),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
+                  );
+                },
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyState(
+    BuildContext context,
+    MyAppLocalizations localization,
+    double scale,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24 * scale),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72 * scale,
+              height: 72 * scale,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(24 * scale),
+              ),
+              child: Icon(
+                Icons.notifications_none,
+                size: 36 * scale,
+                color: colorScheme.primary,
+              ),
+            ),
+            SizedBox(height: 16 * scale),
+            Text(
+              localization.currencyAlertEmptyListLabel!,
+              style: TextStyle(
+                fontSize: 16 * scale,
+                color: colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -109,6 +143,9 @@ class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
       builder: (dialogContext) {
         return StatefulBuilder(builder: (dialogContext, setState) {
           return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(BentoRadius.hero),
+            ),
             title: Text(localization.addCurrencyAlertDialogTitle!),
             content: SingleChildScrollView(
               child: Column(
@@ -157,6 +194,10 @@ class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
                     decoration: InputDecoration(
                       labelText: localization.currencyAlertTargetValueLabel,
                       errorText: errorText,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(BentoRadius.standard),
+                      ),
                     ),
                   ),
                 ],
@@ -190,13 +231,13 @@ class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
   }
 }
 
-class _AlertListTile extends StatelessWidget {
+class _AlertCard extends StatelessWidget {
   final CurrencyAlert alert;
   final MyAppLocalizations localization;
   final double scale;
   final VoidCallback onDelete;
 
-  const _AlertListTile({
+  const _AlertCard({
     required this.alert,
     required this.localization,
     required this.scale,
@@ -205,27 +246,80 @@ class _AlertListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     var conditionLabel = alert.condition == CurrencyAlertCondition.above
         ? localization.currencyAlertConditionAbove!
         : localization.currencyAlertConditionBelow!;
     var statusLabel = alert.triggered
         ? localization.currencyAlertTriggeredLabel!
         : localization.currencyAlertActiveLabel!;
+    // Disparado ganha destaque em verde; aguardando fica na cor neutra do
+    // tema, para o olho ir direto no que já aconteceu.
+    final statusColor =
+        alert.triggered ? const Color(0xFF2E9E5B) : colorScheme.outline;
 
-    return ListTile(
-      leading: Icon(
-        alert.triggered ? Icons.notifications_active : Icons.notifications_none,
-        color: alert.triggered ? Colors.green : null,
-      ),
-      title: Text(
-        "${alert.currencyCode} $conditionLabel ${alert.targetValue.toStringAsFixed(4)}",
-        style: TextStyle(fontSize: 16 * scale),
-      ),
-      subtitle: Text(statusLabel, style: TextStyle(fontSize: 12 * scale)),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete_outline),
-        tooltip: localization.currencyAlertDeleteTooltip,
-        onPressed: onDelete,
+    return BentoCard(
+      padding: EdgeInsets.all(12 * scale),
+      child: Row(
+        children: [
+          Container(
+            width: 42 * scale,
+            height: 42 * scale,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(14 * scale),
+            ),
+            child: Icon(
+              alert.triggered
+                  ? Icons.notifications_active
+                  : Icons.notifications_none,
+              color: statusColor,
+              size: 22 * scale,
+            ),
+          ),
+          SizedBox(width: 14 * scale),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${alert.currencyCode} $conditionLabel "
+                  "${alert.targetValue.toStringAsFixed(4)}",
+                  style: TextStyle(
+                    fontSize: 15 * scale,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 4 * scale),
+                // Pílula de status, no lugar do subtítulo solto.
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 8 * scale,
+                    vertical: 2 * scale,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    statusLabel,
+                    style: TextStyle(
+                      fontSize: 11 * scale,
+                      color: statusColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: localization.currencyAlertDeleteTooltip,
+            onPressed: onDelete,
+          ),
+        ],
       ),
     );
   }
