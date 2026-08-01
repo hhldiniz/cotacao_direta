@@ -8,7 +8,12 @@ class Currency extends BaseModel
   String? timestamp;
   String? friendlyName;
 
-  Currency({this.id, this.value, this.historicalDate, this.timestamp, this.friendlyName});
+  /// Moeda contra a qual esta cotação foi obtida (a contrapartida do par).
+  /// Faz parte da identidade do registro: "USD a 0,18" só quer dizer alguma
+  /// coisa quando se sabe se é frente ao real ou ao euro.
+  String? counterCurrency;
+
+  Currency({this.id, this.value, this.historicalDate, this.timestamp, this.friendlyName, this.counterCurrency});
 
   Map<String, dynamic> toMap(){
     return {
@@ -16,7 +21,8 @@ class Currency extends BaseModel
       'value': value,
       'historicalDate': historicalDate,
       'timestamp': timestamp,
-      'friendlyName': friendlyName
+      'friendlyName': friendlyName,
+      'counterCurrency': counterCurrency
     };
   }
 
@@ -28,6 +34,7 @@ class Currency extends BaseModel
         "historicalDate: $historicalDate, \n"
         "timestamp: $timestamp \n"
         "friendlyName: $friendlyName \n"
+        "counterCurrency: $counterCurrency \n"
         "}";
   }
 }

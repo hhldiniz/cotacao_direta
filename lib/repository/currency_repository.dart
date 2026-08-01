@@ -133,8 +133,12 @@ class CurrencyRepository {
 
   Future<Currency?> getLatestDataByCurrencyCode(String? currencyCode) async {
     var networkAvailable = await _networkUtils.isNetworkAvailable();
-    var savedCurrency =
-        await _currencyDao.getLatestDataByCurrencyCode(currencyCode);
+    var counterCurrency = await resolveCounterCurrency();
+    // A busca é pelo par, e não só pela moeda cotada: trocar a contrapartida
+    // nas configurações precisa provocar uma consulta nova, mesmo que exista
+    // uma cotação recente da mesma moeda frente à contrapartida anterior.
+    var savedCurrency = await _currencyDao.getLatestDataByCurrencyCode(
+        currencyCode, counterCurrency);
     if (networkAvailable &&
         (savedCurrency == null ||
             !_isCurrencyTimestampValid(savedCurrency.timestamp))) {
@@ -169,12 +173,15 @@ class CurrencyRepository {
           id: currencyCode,
           value: 1,
           historicalDate: now.toIso8601String(),
-          timestamp: now.toIso8601String());
+          timestamp: now.toIso8601String(),
+          counterCurrency: counterCurrency);
     }
     var response =
         await _httpClient.get(_lastQuoteUri(currencyCode, counterCurrency));
     var quote = _parseLastQuote(response.body, currencyCode, counterCurrency);
-    return quote == null ? null : _currencyFromQuote(quote, currencyCode);
+    return quote == null
+        ? null
+        : _currencyFromQuote(quote, currencyCode, counterCurrency);
   }
 
   Future<List<Currency>> getCurrencyHistoricalData(
@@ -189,7 +196,8 @@ class CurrencyRepository {
         if (currencyCode == counterCurrency) continue;
         var response = await _httpClient
             .get(_historyUri(currencyCode, counterCurrency, start, end));
-        currencyListToSave.addAll(_parseHistory(response.body, currencyCode));
+        currencyListToSave.addAll(
+            _parseHistory(response.body, currencyCode, counterCurrency));
       }
 
       // Cada registro carrega sua data já convertida uma única vez, em vez de
@@ -208,8 +216,8 @@ class CurrencyRepository {
       dated.sort((a, b) => a.date.compareTo(b.date));
       return dated.map((entry) => entry.currency).toList();
     } else
-      return await _currencyDao.getHistoricalData(
-          currencyCodeList, initialDate, finalDate);
+      return await _currencyDao.getHistoricalData(currencyCodeList, initialDate,
+          finalDate, await resolveCounterCurrency());
   }
 
   /// A resposta de `/json/last` é um objeto com o par sem o hífen como chave:
@@ -229,19 +237,21 @@ class CurrencyRepository {
 
   /// A resposta de `/json/daily` é uma lista de itens no mesmo formato do
   /// `/json/last`, um por dia.
-  List<Currency> _parseHistory(String responseBody, String currencyCode) {
+  List<Currency> _parseHistory(
+      String responseBody, String currencyCode, String counterCurrency) {
     var decoded = _tryDecode(responseBody);
     if (decoded is! List) return [];
     return decoded
         .whereType<Map>()
-        .map((item) => _currencyFromQuote(item, currencyCode))
+        .map((item) => _currencyFromQuote(item, currencyCode, counterCurrency))
         .whereType<Currency>()
         .toList();
   }
 
   /// Converte um item da API no [Currency] que o app guarda, invertendo o
   /// `bid` para a convenção descrita na documentação da classe.
-  Currency? _currencyFromQuote(Map item, String currencyCode) {
+  Currency? _currencyFromQuote(
+      Map item, String currencyCode, String counterCurrency) {
     var bid = _asDouble(item["bid"]) ?? _asDouble(item["ask"]);
     if (bid == null || bid == 0) return null;
     var quoteDate = _quoteDate(item) ?? DateTime.now();
@@ -250,7 +260,8 @@ class CurrencyRepository {
         value: 1 / bid,
         historicalDate: quoteDate.toIso8601String(),
         timestamp: DateTime.now().toIso8601String(),
-        friendlyName: _quotedCurrencyName(item["name"]));
+        friendlyName: _quotedCurrencyName(item["name"]),
+        counterCurrency: counterCurrency);
   }
 
   /// O `timestamp` vem em segundos desde a época; o `create_date`, como

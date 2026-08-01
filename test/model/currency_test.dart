@@ -14,13 +14,15 @@ void main() {
           value: 5.42,
           historicalDate: "2024-01-31T00:00:00.000",
           timestamp: "2024-01-31T10:15:00.000",
-          friendlyName: "Dólar dos Estados Unidos");
+          friendlyName: "Dólar dos Estados Unidos",
+          counterCurrency: "BRL");
 
       expect(currency.id, "USD");
       expect(currency.value, 5.42);
       expect(currency.historicalDate, "2024-01-31T00:00:00.000");
       expect(currency.timestamp, "2024-01-31T10:15:00.000");
       expect(currency.friendlyName, "Dólar dos Estados Unidos");
+      expect(currency.counterCurrency, "BRL");
     });
 
     test('todos os campos são opcionais e começam nulos', () {
@@ -31,6 +33,7 @@ void main() {
       expect(currency.historicalDate, isNull);
       expect(currency.timestamp, isNull);
       expect(currency.friendlyName, isNull);
+      expect(currency.counterCurrency, isNull);
     });
 
     test('toMap gera as colunas esperadas pela tabela Currency', () {
@@ -39,14 +42,16 @@ void main() {
           value: 6.1,
           historicalDate: "2024-02-01T00:00:00.000",
           timestamp: "2024-02-01T09:00:00.000",
-          friendlyName: "Euro");
+          friendlyName: "Euro",
+          counterCurrency: "BRL");
 
       expect(currency.toMap(), {
         'id': "EUR",
         'value': 6.1,
         'historicalDate': "2024-02-01T00:00:00.000",
         'timestamp': "2024-02-01T09:00:00.000",
-        'friendlyName': "Euro"
+        'friendlyName': "Euro",
+        'counterCurrency': "BRL"
       });
     });
 
@@ -56,7 +61,8 @@ void main() {
         'value': null,
         'historicalDate': null,
         'timestamp': null,
-        'friendlyName': null
+        'friendlyName': null,
+        'counterCurrency': null
       });
     });
 
@@ -66,7 +72,8 @@ void main() {
               value: 4.0,
               historicalDate: "2024-03-01",
               timestamp: "2024-03-01T12:00:00.000",
-              friendlyName: "Dólar canadense")
+              friendlyName: "Dólar canadense",
+              counterCurrency: "BRL")
           .toString();
 
       expect(text, contains("id: CAD"));
@@ -74,6 +81,7 @@ void main() {
       expect(text, contains("historicalDate: 2024-03-01"));
       expect(text, contains("timestamp: 2024-03-01T12:00:00.000"));
       expect(text, contains("friendlyName: Dólar canadense"));
+      expect(text, contains("counterCurrency: BRL"));
     });
   });
 }

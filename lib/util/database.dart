@@ -54,6 +54,23 @@ class AppDatabase {
     "CREATE TABLE CurrencyAlerts(id INTEGER PRIMARY KEY AUTOINCREMENT, currencyCode TEXT NOT NULL, targetValue REAL NOT NULL, condition TEXT NOT NULL, triggered INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1)"
   ];
 
+  // Uma cotação é sempre de um par (USD-BRL), mas a tabela só guardava a moeda
+  // cotada. Um registro de USD frente ao real era indistinguível de um de USD
+  // frente ao euro, então trocar a moeda de contrapartida nas configurações
+  // devolvia a cotação salva do par antigo enquanto ela ainda estivesse
+  // "fresca". A contrapartida passa a fazer parte da chave.
+  //
+  // Os registros antigos são migrados como BRL: era a contrapartida padrão e a
+  // única disponível na maior parte da vida do app. Quem já usava a opção de
+  // sobrescrever a moeda pode ter registros rotulados errado, que serão
+  // substituídos na primeira atualização de cada par.
+  var migrationsScripts6_7 = [
+    "ALTER TABLE Currency RENAME TO old_Currency",
+    "CREATE TABLE Currency(id TEXT, historicalDate TEXT, value REAL, timestamp TEXT, friendlyName TEXT NOT NULL DEFAULT '', counterCurrency TEXT NOT NULL DEFAULT 'BRL', PRIMARY KEY(id, historicalDate, counterCurrency))",
+    "INSERT INTO Currency(id, historicalDate, value, timestamp, friendlyName, counterCurrency) SELECT id, historicalDate, value, timestamp, friendlyName, 'BRL' FROM old_Currency",
+    "DROP TABLE old_Currency"
+  ];
+
   /// Scripts a aplicar para chegar em cada versão, na ordem.
   Map<int, List<String>> get _migrationsByVersion => {
         2: migrationsScripts1_2,
@@ -61,6 +78,7 @@ class AppDatabase {
         4: migrationsScripts3_4,
         5: migrationsScripts4_5,
         6: migrationsScripts5_6,
+        7: migrationsScripts6_7,
       };
 
   Future<Database?> openAppDatabase() async {
@@ -69,7 +87,7 @@ class AppDatabase {
     if (_database == null)
       _database = await openDatabase(path, onCreate: (db, version) async {
         await db.execute(
-            "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, friendlyName TEXT NOT NULL DEFAULT '', PRIMARY KEY(id, historicalDate))");
+            "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, friendlyName TEXT NOT NULL DEFAULT '', counterCurrency TEXT NOT NULL DEFAULT 'BRL', PRIMARY KEY(id, historicalDate, counterCurrency))");
         await db.execute(
             "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT)");
         await db.execute(
@@ -82,7 +100,7 @@ class AppDatabase {
             await database.execute(script);
           }
         }
-      }, version: 6);
+      }, version: 7);
     return _database;
   }
 }

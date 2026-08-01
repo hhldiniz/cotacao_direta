@@ -293,6 +293,55 @@ void main() {
       expect(requestedUris, isEmpty);
     });
 
+    // Uma cotação recente do dólar frente ao real não responde "quanto vale o
+    // dólar frente ao euro". Antes de a contrapartida virar parte da chave, a
+    // cotação antiga era devolvida e a tela inicial continuava mostrando os
+    // números da moeda anterior por até uma hora depois da troca.
+    test('cotação recente de outra contrapartida não vale: busca de novo',
+        () async {
+      currencyDao.latestCurrency = Currency(
+          id: "USD",
+          value: 0.2,
+          timestamp:
+              DateTime.now().subtract(Duration(minutes: 30)).toIso8601String(),
+          historicalDate: "2026-07-24T00:00:00.000",
+          friendlyName: "Dólar Americano",
+          counterCurrency: "BRL");
+      configurationRepository.configuration = Configuration(1,
+          overrideDefaultCurrency: true, selectedOverrideCurrencyCode: "EUR");
+
+      var currency = await buildRepository(
+              lastResponse: _lastResponse({"USDEUR": _quote(bid: "0.90")}))
+          .getLatestDataByCurrencyCode("USD");
+
+      expect(1 / currency!.value!, closeTo(0.90, 1e-9),
+          reason: "o valor precisa vir do par novo");
+      expect(requestedUris.map((uri) => uri.path),
+          contains("/json/last/USD-EUR"));
+    });
+
+    test('a consulta ao banco usa a contrapartida em vigor', () async {
+      configurationRepository.configuration = Configuration(1,
+          overrideDefaultCurrency: true, selectedOverrideCurrencyCode: "EUR");
+
+      await buildRepository().getLatestDataByCurrencyCode("USD");
+
+      expect(currencyDao.latestDataCounterCurrencies, contains("EUR"),
+          reason: "procurar por USD sem dizer o par traria a cotação errada");
+    });
+
+    test('a cotação gravada registra a contrapartida que a originou', () async {
+      currencyDao.latestCurrency = null;
+      configurationRepository.configuration = Configuration(1,
+          overrideDefaultCurrency: true, selectedOverrideCurrencyCode: "EUR");
+
+      await buildRepository(
+              lastResponse: _lastResponse({"USDEUR": _quote(bid: "0.90")}))
+          .getLatestDataByCurrencyCode("USD");
+
+      expect(currencyDao.inserted.single.counterCurrency, "EUR");
+    });
+
     test('com rede e cotação vencida, busca de novo', () async {
       currencyDao.latestCurrency = Currency(
           id: "USD",
@@ -497,12 +546,26 @@ void main() {
           .getCurrencyHistoricalData(["USD"], "2026-07-01", "2026-07-05");
 
       expect(result, currencyDao.historicalData);
+      // A contrapartida em vigor vai junto: offline, o histórico salvo do par
+      // antigo não serve para a moeda escolhida agora.
       expect(currencyDao.historicalDataCalls.single, [
         ["USD"],
         "2026-07-01",
-        "2026-07-05"
+        "2026-07-05",
+        "BRL"
       ]);
       expect(requestedUris, isEmpty);
+    });
+
+    test('sem rede, consulta o DAO pela contrapartida escolhida', () async {
+      networkUtils.available = false;
+      configurationRepository.configuration = Configuration(1,
+          overrideDefaultCurrency: true, selectedOverrideCurrencyCode: "EUR");
+
+      await buildRepository()
+          .getCurrencyHistoricalData(["USD"], "2026-07-01", "2026-07-05");
+
+      expect(currencyDao.historicalDataCalls.single.last, "EUR");
     });
   });
 }

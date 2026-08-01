@@ -6,13 +6,17 @@ import 'package:flutter_test/flutter_test.dart';
 import '../helpers/database_test_helper.dart';
 
 Currency _currency(String id, String historicalDate,
-        {double value = 5.0, String? friendlyName, String? timestamp}) =>
+        {double value = 5.0,
+        String? friendlyName,
+        String? timestamp,
+        String counterCurrency = "BRL"}) =>
     Currency(
         id: id,
         value: value,
         historicalDate: historicalDate,
         timestamp: timestamp ?? historicalDate,
-        friendlyName: friendlyName ?? "Nome de $id");
+        friendlyName: friendlyName ?? "Nome de $id",
+        counterCurrency: counterCurrency);
 
 void main() {
   useInMemoryDatabase();
@@ -59,6 +63,18 @@ void main() {
 
       expect((await db.query("Currency")).length, 2);
     });
+
+    test('mantém linhas separadas para contrapartidas diferentes', () async {
+      await dao.insert(_currency("USD", "2024-01-01T00:00:00.000",
+          value: 4.0, counterCurrency: "BRL"));
+      await dao.insert(_currency("USD", "2024-01-01T00:00:00.000",
+          value: 0.9, counterCurrency: "EUR"));
+
+      var db = (await AppDatabase().openAppDatabase())!;
+
+      expect((await db.query("Currency")).length, 2,
+          reason: "a contrapartida faz parte da chave do registro");
+    });
   });
 
   group('CurrencyDao.insertMany', () {
@@ -98,7 +114,7 @@ void main() {
 
   group('CurrencyDao.getLatestDataByCurrencyCode', () {
     test('devolve null quando a moeda não existe', () async {
-      expect(await dao.getLatestDataByCurrencyCode("USD"), isNull);
+      expect(await dao.getLatestDataByCurrencyCode("USD", "BRL"), isNull);
     });
 
     test('devolve a linha mais recente da moeda', () async {
@@ -108,7 +124,7 @@ void main() {
         _currency("USD", "2024-02-01T00:00:00.000", value: 5.0),
       ]);
 
-      var currency = await dao.getLatestDataByCurrencyCode("USD");
+      var currency = await dao.getLatestDataByCurrencyCode("USD", "BRL");
 
       expect(currency!.historicalDate, "2024-03-01T00:00:00.000");
       expect(currency.value, 6.0);
@@ -120,7 +136,7 @@ void main() {
         _currency("EUR", "2024-05-01T00:00:00.000", value: 6.0),
       ]);
 
-      var currency = await dao.getLatestDataByCurrencyCode("USD");
+      var currency = await dao.getLatestDataByCurrencyCode("USD", "BRL");
 
       expect(currency!.id, "USD");
       expect(currency.value, 4.0);
@@ -131,22 +147,46 @@ void main() {
     test('devolve null quando o código é nulo', () async {
       await dao.insert(_currency("USD", "2024-01-01T00:00:00.000"));
 
-      expect(await dao.getLatestDataByCurrencyCode(null), isNull);
+      expect(await dao.getLatestDataByCurrencyCode(null, "BRL"), isNull);
     });
 
     test('preenche o friendlyName do resultado', () async {
       await dao.insert(_currency("USD", "2024-01-01T00:00:00.000",
           friendlyName: "Dólar dos Estados Unidos"));
 
-      var currency = await dao.getLatestDataByCurrencyCode("USD");
+      var currency = await dao.getLatestDataByCurrencyCode("USD", "BRL");
 
       expect(currency!.friendlyName, "Dólar dos Estados Unidos");
+    });
+
+    // A cotação salva do dólar frente ao real não diz nada sobre o dólar
+    // frente ao euro. Devolvê-la fazia a tela inicial continuar mostrando os
+    // valores antigos depois de trocar a moeda nas configurações.
+    test('não devolve a cotação de outra contrapartida', () async {
+      await dao.insert(_currency("USD", "2024-01-01T00:00:00.000",
+          value: 4.0, counterCurrency: "BRL"));
+
+      expect(await dao.getLatestDataByCurrencyCode("USD", "EUR"), isNull);
+    });
+
+    test('devolve a cotação da contrapartida pedida', () async {
+      await dao.insertMany([
+        _currency("USD", "2024-01-01T00:00:00.000",
+            value: 4.0, counterCurrency: "BRL"),
+        _currency("USD", "2024-01-01T00:00:00.000",
+            value: 0.9, counterCurrency: "EUR"),
+      ]);
+
+      var currency = await dao.getLatestDataByCurrencyCode("USD", "EUR");
+
+      expect(currency!.value, 0.9);
+      expect(currency.counterCurrency, "EUR");
     });
   });
 
   group('CurrencyDao.getCurrencyByCode', () {
     test('devolve null quando a moeda não existe', () async {
-      expect(await dao.getCurrencyByCode("USD"), isNull);
+      expect(await dao.getCurrencyByCode("USD", "BRL"), isNull);
     });
 
     test('devolve a moeda com todos os campos preenchidos', () async {
@@ -155,7 +195,7 @@ void main() {
           friendlyName: "Euro",
           timestamp: "2024-01-01T10:00:00.000"));
 
-      var currency = await dao.getCurrencyByCode("EUR");
+      var currency = await dao.getCurrencyByCode("EUR", "BRL");
 
       expect(currency!.id, "EUR");
       expect(currency.value, 6.2);
@@ -177,7 +217,7 @@ void main() {
 
     test('devolve as cotações da moeda dentro do intervalo', () async {
       var result = await dao.getHistoricalData(
-          ["USD"], "2024-01-15T00:00:00.000", "2024-03-15T00:00:00.000");
+          ["USD"], "2024-01-15T00:00:00.000", "2024-03-15T00:00:00.000", "BRL");
 
       expect(result.map((currency) => currency.historicalDate),
           ["2024-02-01T00:00:00.000", "2024-03-01T00:00:00.000"]);
@@ -186,21 +226,21 @@ void main() {
 
     test('inclui os limites do intervalo', () async {
       var result = await dao.getHistoricalData(
-          ["USD"], "2024-01-01T00:00:00.000", "2024-03-01T00:00:00.000");
+          ["USD"], "2024-01-01T00:00:00.000", "2024-03-01T00:00:00.000", "BRL");
 
       expect(result.length, 3);
     });
 
     test('devolve lista vazia quando nada cai no intervalo', () async {
       var result = await dao.getHistoricalData(
-          ["USD"], "2025-01-01T00:00:00.000", "2025-12-31T00:00:00.000");
+          ["USD"], "2025-01-01T00:00:00.000", "2025-12-31T00:00:00.000", "BRL");
 
       expect(result, isEmpty);
     });
 
     test('preenche todos os campos, inclusive o friendlyName', () async {
       var result = await dao.getHistoricalData(
-          ["EUR"], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000");
+          ["EUR"], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000", "BRL");
 
       var currency = result.single;
       expect(currency.id, "EUR");
@@ -211,7 +251,7 @@ void main() {
 
     test('devolve as cotações de várias moedas de uma vez', () async {
       var result = await dao.getHistoricalData(
-          ["USD", "EUR"], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000");
+          ["USD", "EUR"], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000", "BRL");
 
       expect(result, hasLength(4));
       expect(result.map((currency) => currency.id).toSet(), {"USD", "EUR"});
@@ -219,14 +259,14 @@ void main() {
 
     test('traz só as moedas pedidas', () async {
       var result = await dao.getHistoricalData(
-          ["EUR"], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000");
+          ["EUR"], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000", "BRL");
 
       expect(result.map((currency) => currency.id), ["EUR"]);
     });
 
     test('devolve lista vazia quando nenhuma moeda é pedida', () async {
       var result = await dao.getHistoricalData(
-          [], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000");
+          [], "2024-01-01T00:00:00.000", "2024-12-31T00:00:00.000", "BRL");
 
       expect(result, isEmpty);
     });

@@ -26,6 +26,10 @@ class FakeCurrencyDao implements CurrencyDao {
   final List<List<Currency>> insertedBatches = [];
   final List<List<dynamic>> historicalDataCalls = [];
 
+  /// Contrapartida pedida em cada consulta da última cotação, para os testes
+  /// conferirem que o par certo foi procurado.
+  final List<String> latestDataCounterCurrencies = [];
+
   Currency? latestCurrency;
   Currency? currencyByCode;
   List<Currency> historicalData = [];
@@ -40,17 +44,28 @@ class FakeCurrencyDao implements CurrencyDao {
   }
 
   @override
-  Future<Currency?> getLatestDataByCurrencyCode(String? currencyCode) async =>
-      latestCurrency;
+  Future<Currency?> getLatestDataByCurrencyCode(
+      String? currencyCode, String counterCurrency) async {
+    latestDataCounterCurrencies.add(counterCurrency);
+    // Uma cotação salva só serve para o par que a originou: devolvê-la para
+    // outra contrapartida é justamente o bug que o registro do par evita.
+    if (latestCurrency?.counterCurrency != null &&
+        latestCurrency!.counterCurrency != counterCurrency) {
+      return null;
+    }
+    return latestCurrency;
+  }
 
   @override
-  Future<Currency?> getCurrencyByCode(String currencyCode) async =>
+  Future<Currency?> getCurrencyByCode(
+          String currencyCode, String counterCurrency) async =>
       currencyByCode;
 
   @override
   Future<List<Currency>> getHistoricalData(List<String> currencyCodeList,
-      String initialDate, String finalDate) async {
-    historicalDataCalls.add([currencyCodeList, initialDate, finalDate]);
+      String initialDate, String finalDate, String counterCurrency) async {
+    historicalDataCalls
+        .add([currencyCodeList, initialDate, finalDate, counterCurrency]);
     return historicalData;
   }
 }
