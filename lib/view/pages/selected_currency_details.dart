@@ -94,14 +94,9 @@ class SelectedCurrencyDetails extends StatelessWidget {
                 ],
               ),
               Expanded(
-                child: StreamBuilder<bool>(
-                  stream: bloc.isLoadingStream,
-                  initialData: false,
-                  builder: (context, loadingSnapshot) {
-                    if (loadingSnapshot.data == true) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    return StreamBuilder<List<Currency>>(
+                child: Stack(
+                  children: [
+                    StreamBuilder<List<Currency>>(
                       stream: bloc.currencyHistoryStream,
                       builder: (context, snapshot) {
                         final currencyList = snapshot.data;
@@ -139,8 +134,20 @@ class SelectedCurrencyDetails extends StatelessWidget {
                           child: SimpleLineChart(currencyList: currencyList),
                         );
                       },
-                    );
-                  },
+                    ),
+                    StreamBuilder<bool>(
+                      stream: bloc.isLoadingStream,
+                      initialData: false,
+                      builder: (context, loadingSnapshot) {
+                        if (loadingSnapshot.data == true) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ],
                 ),
               ),
             ],

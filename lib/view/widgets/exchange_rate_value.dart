@@ -30,11 +30,23 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
   final _formatter = NumberFormat("#.###");
   final Currencies _currency;
 
+  // A stream só pode ser obtida uma vez por bloc: getNextStreamController()
+  // fecha e recria o StreamController se já houver um listener, então
+  // chamá-la de novo a cada build (o que acontece ao trocar de aba e voltar,
+  // já que o Home reconstrói a árvore) descartaria o stream em uso e
+  // deixaria a tela sem receber novos valores.
+  Stream<num?>? _stream;
+  ExchangeValueBloc? _streamBloc;
+
   ExchangeRateValueState(this._currency);
 
   @override
   void didChangeDependencies() {
     bloc = ExchangeValueBlocProvider.of(context);
+    if (!identical(_streamBloc, bloc)) {
+      _streamBloc = bloc;
+      _stream = bloc.getNextStreamController();
+    }
     bloc
         .retrieveCurrencyValue(_currency)
         .then((value) {
@@ -63,7 +75,7 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<num?>(
-      stream: bloc.getNextStreamController(),
+      stream: _stream,
       builder: (context, snapshot) =>
           NotificationListener<UpdateCurrencyValueNotification>(
             onNotification: (UpdateCurrencyValueNotification notification) {

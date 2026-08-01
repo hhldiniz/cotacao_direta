@@ -1,15 +1,18 @@
+import 'package:cotacao_direta/providers/currency_alerts_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:cotacao_direta/util/currency_colors.dart';
 import 'package:cotacao_direta/util/localizations.dart';
+import 'package:cotacao_direta/util/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 // import 'package:flutter_stetho/flutter_stetho.dart';
 
 import 'view/pages/home.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Stetho.initialize();
+  await NotificationService().initialize();
   return runApp(MyApp());
 }
 
@@ -44,7 +47,9 @@ class MyApp extends StatelessWidget {
       supportedLocales: [const Locale("en"), const Locale("pt")],
       title: appName,
       home: HomeBlocProvider(
-        child: Home(appName),
+        child: CurrencyAlertsBlocProvider(
+          child: Home(appName),
+        ),
       ),
     );
   }

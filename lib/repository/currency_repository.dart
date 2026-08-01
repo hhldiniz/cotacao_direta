@@ -74,7 +74,12 @@ class CurrencyRepository {
   String get _defaultCounterCurrency =>
       _enumValueAsStringUtil.getEnumValue(Currencies.BRL.toString());
 
-  Future<String> _resolveCounterCurrency() async {
+  /// Moeda usada hoje como contrapartida das cotações: a escolhida nas
+  /// configurações, ou BRL por padrão. Exposta publicamente porque a tela de
+  /// histórico precisa saber qual moeda excluir da lista — uma moeda cotada
+  /// contra ela mesma não tem série para desenhar (ver
+  /// [getCurrencyHistoricalData]).
+  Future<String> resolveCounterCurrency() async {
     final configuration = await _configurationRepository.getConfiguration();
     final selected = configuration.selectedOverrideCurrencyCode;
     if (configuration.overrideDefaultCurrency &&
@@ -155,7 +160,7 @@ class CurrencyRepository {
 
   Future<Currency?> _fetchLatestQuote(String? currencyCode) async {
     if (currencyCode == null || currencyCode.isEmpty) return null;
-    var counterCurrency = await _resolveCounterCurrency();
+    var counterCurrency = await resolveCounterCurrency();
     // Uma moeda cotada contra ela mesma vale exatamente uma unidade; a API não
     // tem esse par.
     if (currencyCode == counterCurrency) {
@@ -175,7 +180,7 @@ class CurrencyRepository {
   Future<List<Currency>> getCurrencyHistoricalData(
       List<String> currencyCodeList, initialDate, finalDate) async {
     if (await _networkUtils.isNetworkAvailable()) {
-      var counterCurrency = await _resolveCounterCurrency();
+      var counterCurrency = await resolveCounterCurrency();
       var start = _parseAppDate(initialDate);
       var end = _parseAppDate(finalDate);
       var currencyListToSave = <Currency>[];
@@ -186,24 +191,22 @@ class CurrencyRepository {
             .get(_historyUri(currencyCode, counterCurrency, start, end));
         currencyListToSave.addAll(_parseHistory(response.body, currencyCode));
       }
-      await _currencyDao.insertMany(currencyListToSave
-          .where((currency) =>
-              (DateTime.now().year -
-                  DateTime.parse(currency.historicalDate!).year) <
-              10)
+
+      // Cada registro carrega sua data já convertida uma única vez, em vez de
+      // reparsear a mesma string repetidamente no filtro e no comparador do
+      // sort.
+      var dated = currencyListToSave
+          .map((currency) =>
+              (currency: currency, date: DateTime.parse(currency.historicalDate!)))
+          .toList();
+
+      await _currencyDao.insertMany(dated
+          .where((entry) => (DateTime.now().year - entry.date.year) < 10)
+          .map((entry) => entry.currency)
           .toList());
-      currencyListToSave.sort((a, b) {
-        DateTime dateCurrencyA = DateTime.parse(a.historicalDate!);
-        DateTime dateCurrencyB = DateTime.parse(b.historicalDate!);
-        if (dateCurrencyA.isBefore(dateCurrencyB)) {
-          return -1;
-        } else if (dateCurrencyA.isAfter(dateCurrencyB)) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
-      return currencyListToSave;
+
+      dated.sort((a, b) => a.date.compareTo(b.date));
+      return dated.map((entry) => entry.currency).toList();
     } else
       return await _currencyDao.getHistoricalData(
           currencyCodeList, initialDate, finalDate);

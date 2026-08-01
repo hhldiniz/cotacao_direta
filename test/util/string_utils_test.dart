@@ -3,6 +3,19 @@ import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('withoutAccents', () {
+    test('tira o acento e baixa a caixa', () {
+      expect(withoutAccents("Franco Suíço"), "franco suico");
+      expect(withoutAccents("Iene Japonês"), "iene japones");
+      expect(withoutAccents("Coroa Islandesa"), "coroa islandesa");
+    });
+
+    test('deixa passar o que não tem acento', () {
+      expect(withoutAccents("USD"), "usd");
+      expect(withoutAccents(""), "");
+    });
+  });
+
   group('EnumValueAsString', () {
     test('é um singleton', () {
       expect(identical(EnumValueAsString(), EnumValueAsString()), isTrue);

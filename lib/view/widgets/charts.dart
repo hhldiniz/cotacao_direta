@@ -1,4 +1,5 @@
 import 'package:cotacao_direta/model/currency.dart';
+import 'package:cotacao_direta/util/quote_format.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -23,6 +24,20 @@ class SimpleLineChart extends StatelessWidget {
     );
     final color = Theme.of(context).colorScheme.primary;
 
+    // A precisão sai da ordem de grandeza da série, e não de um número fixo de
+    // casas: cotação de criptomoeda fica na casa dos milionésimos (ver
+    // [quoteDecimalDigits]) e apareceria como "0,00" no eixo. Como todos os
+    // rótulos usam a mesma quantidade de casas, a largura reservada à esquerda
+    // é calculada a partir do maior rótulo possível.
+    final peakValue = spots.fold<double>(
+        0, (peak, spot) => spot.y.abs() > peak ? spot.y.abs() : peak);
+    final axisDigits = quoteDecimalDigits(peakValue);
+    final tooltipDigits = quoteDecimalDigits(peakValue,
+        minimumDigits: 4, significantDigits: 4);
+    final leftAxisWidth =
+        (peakValue.toStringAsFixed(axisDigits).length * 6.5 + 12)
+            .clamp(48.0, 110.0);
+
     return LineChart(
       LineChartData(
         lineTouchData: LineTouchData(
@@ -30,7 +45,7 @@ class SimpleLineChart extends StatelessWidget {
             getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
               final date = dates[spot.x.toInt()];
               return LineTooltipItem(
-                "${_axisDateFormatter.format(date)}\n${spot.y.toStringAsFixed(4)}",
+                "${_axisDateFormatter.format(date)}\n${spot.y.toStringAsFixed(tooltipDigits)}",
                 TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
               );
             }).toList(),
@@ -66,9 +81,9 @@ class SimpleLineChart extends StatelessWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 48,
+              reservedSize: leftAxisWidth,
               getTitlesWidget: (value, meta) => Text(
-                value.toStringAsFixed(2),
+                value.toStringAsFixed(axisDigits),
                 style: const TextStyle(fontSize: 10),
               ),
             ),

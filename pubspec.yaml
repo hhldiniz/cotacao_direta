@@ -22,10 +22,18 @@ dependencies:
   # sqflite não tem implementação para desktop; no Linux o databaseFactory é
   # trocado para o sqflite_common_ffi (SQLite nativo) em tempo de execução.
   sqflite_common_ffi: ^2.3.3
+  # sqflite também não tem implementação para web; lá o databaseFactory é
+  # trocado para o sqflite_common_ffi_web (SQLite via WASM, persistido no
+  # IndexedDB do navegador). Requer rodar
+  # `dart run sqflite_common_ffi_web:setup` para gerar os binários em web/.
+  sqflite_common_ffi_web: ^1.1.2
   flag: ^7.0.2
   package_info_plus: ^8.1.2
   url_launcher: ^6.3.1
   fl_chart: ^1.1.1
+  # Notificações locais para os alertas de câmbio (Android e Linux; a web não
+  # tem uma implementação neste app, ver lib/util/notification_service_web.dart).
+  flutter_local_notifications: ^19.0.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4

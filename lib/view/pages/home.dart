@@ -1,7 +1,10 @@
+import 'package:cotacao_direta/blocs/currency_alerts_bloc.dart';
 import 'package:cotacao_direta/blocs/home_bloc.dart';
 import 'package:cotacao_direta/notifications/update_currency_value_notification.dart';
+import 'package:cotacao_direta/providers/ai_insights_bloc_provider.dart';
 import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
+import 'package:cotacao_direta/providers/currency_alerts_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:cotacao_direta/util/color_utils.dart';
@@ -10,7 +13,9 @@ import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/about_page.dart';
+import 'package:cotacao_direta/view/pages/main_menu_items/ai_insights_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/configurations_page.dart';
+import 'package:cotacao_direta/view/pages/main_menu_items/currency_alerts_page.dart';
 import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/currency_rate_card.dart';
 import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
@@ -33,6 +38,7 @@ class Home extends StatefulWidget {
 class HomeState extends State<Home> with TickerProviderStateMixin {
   var _selectedIndex = 0;
   late HomeBloc _bloc;
+  late CurrencyAlertsBloc _alertsBloc;
 
   final String _pageTitle;
 
@@ -44,10 +50,23 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   // um dado inventado.
   var _isRefreshing = false;
 
+  // Garante que a busca inicial de cotação/alertas rode uma única vez: como
+  // ela depende do context (localizations), não pode ir para initState, mas
+  // build() roda de novo a cada troca de aba e não deve refazer a busca.
+  var _initialFetchScheduled = false;
+
   late final AnimationController _entranceAnimationController;
   late final List<Animation<double>> _tileScaleAnimations;
   late final List<Animation<double>> _tileFadeAnimations;
   late final AnimationController _refreshIconController;
+
+  // getNextStreamController() fecha e recria o StreamController se já houver
+  // um listener; chamá-la a cada build (o que acontece ao trocar de aba, já
+  // que dispara setState) descartaria o stream em uso e o cabeçalho pararia
+  // de receber atualizações. Por isso a stream é obtida uma única vez por
+  // bloc, aqui em cache.
+  Stream<String?>? _headerStream;
+  HomeBloc? _headerStreamBloc;
 
   HomeState(this._pageTitle);
 
@@ -108,7 +127,8 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   Future<void> _refreshRates(BuildContext context) async {
     setState(() => _isRefreshing = true);
     _refreshIconController.repeat();
-    _bloc.getSelectedOverrideCurrency();
+    _loadCounterCurrencyName(context);
+    _checkCurrencyAlerts(context);
     UpdateCurrencyValueNotification().dispatch(context);
     await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
@@ -132,6 +152,25 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
+  /// Pede ao bloc o nome da moeda em que as cotações estão expressas, no idioma
+  /// da tela, para o texto acima das bolhas.
+  void _loadCounterCurrencyName(BuildContext context) {
+    _bloc.loadCounterCurrencyName(MyAppLocalizations.of(context)!.locale);
+  }
+
+  /// Confere os alertas de câmbio cadastrados contra a cotação mais recente.
+  /// O app não roda em segundo plano, então esta é a checagem possível: toda
+  /// vez que a tela busca cotações novas.
+  void _checkCurrencyAlerts(BuildContext context) {
+    final _localization = MyAppLocalizations.of(context)!;
+    _alertsBloc.checkAlerts(
+      notificationTitle: _localization.currencyAlertNotificationTitle!,
+      notificationBody: (alert, value) => sprintf(
+          _localization.currencyAlertNotificationBody!,
+          [alert.currencyCode, value.toStringAsFixed(4)]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final _localization = MyAppLocalizations.of(context)!;
@@ -139,10 +178,21 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     final _scale = Responsive.scaleFactor(context);
     final _colorScheme = Theme.of(context).colorScheme;
     _bloc = HomeBlocProvider.of(context);
+    _alertsBloc = CurrencyAlertsBlocProvider.of(context);
+    if (!identical(_headerStreamBloc, _bloc)) {
+      _headerStreamBloc = _bloc;
+      _headerStream = _bloc.getNextStreamController();
+    }
 
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _bloc.getSelectedOverrideCurrency(),
-    );
+    if (!_initialFetchScheduled) {
+      _initialFetchScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _loadCounterCurrencyName(context),
+      );
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _checkCurrencyAlerts(context),
+      );
+    }
 
     final pageHeader = StreamBuilder(
       builder: (BuildContext context, snapshot) {
@@ -160,7 +210,7 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
           );
         }
       },
-      stream: _bloc.getNextStreamController(),
+      stream: _headerStream,
     );
 
     final usdCard = CurrencyRateCard(
@@ -302,6 +352,10 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
       Container(
         child: CurrencyHistoryMenuBlocProvider(child: CurrencyHistory()),
       ),
+      Container(child: CurrencyAlertsPage()),
+      Container(
+        child: AiInsightsBlocProvider(child: AiInsightsPage()),
+      ),
       Container(
         child: ConfigurationsPageBlocProvider(child: ConfigurationsPage()),
       ),
@@ -332,6 +386,14 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
             label: _localization.currencyHistoryBottomNavItemLabel,
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.notifications),
+            label: _localization.currencyAlertsBottomNavItemLabel,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.auto_awesome),
+            label: _localization.aiInsightsBottomNavItemLabel,
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: _localization.getConfigBottomNavItemLabel,
           ),
@@ -346,6 +408,10 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
             fabVisibility = index == 0;
             _selectedIndex = index;
           });
+          // A moeda de contrapartida pode ter mudado na aba de opções: ao
+          // voltar para as bolhas, o texto do cabeçalho precisa acompanhar a
+          // moeda em que as cotações passam a ser mostradas.
+          if (index == 0) _loadCounterCurrencyName(context);
         },
       ),
       floatingActionButton: Visibility(
@@ -356,7 +422,12 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
           icon: Icon(Icons.compare_arrows),
         ),
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
+      // IndexedStack mantém as 6 abas montadas o tempo todo, só alternando
+      // qual fica visível. Isso evita que trocar de aba destrua e recrie o
+      // estado da anterior (cotações já buscadas, animações etc.), o que
+      // forçaria buscas repetidas de rede/banco toda vez que o usuário volta
+      // para uma aba já visitada.
+      body: IndexedStack(index: _selectedIndex, children: _widgetOptions),
     );
   }
 }

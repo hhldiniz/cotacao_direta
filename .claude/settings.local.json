@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/home/hhldiniz/flutter/bin/flutter --version)",
+      "Bash(rpm-ostree status *)",
+      "Read(//usr/bin/**)",
+      "Bash(pkg-config --modversion gtk+-3.0)",
+      "Bash(pkg-config --modversion glib-2.0)",
+      "Read(//usr/**)",
+      "Bash(flatpak list *)",
+      "Bash(sudo -n true)",
+      "Bash(echo \"sudo_exit=$?\")",
+      "Bash(curl -sI https://github.com)",
+      "Bash(curl -s https://api.github.com/repos/llvm/llvm-project/releases/latest)",
+      "Bash(python3 -c ' *)",
+      "Bash(pkg-config --libs --cflags sqlite3)",
+      "Bash(ldconfig -p)",
+      "Bash(ldd /home/hhldiniz/cotacao_direta/build/linux/x64/debug/bundle/cotacao_direta)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(find / -xdev -iname \"gtk+-3.0.pc\")",
+      "Bash(pkg-config --cflags gtk+-3.0)",
+      "Bash(find / -xdev -iname \"*.pc\")",
+      "Bash(pkg-config --exists glycin-2)",
+      "Bash(pkg-config --cflags glycin-2)",
+      "WebSearch"
+    ]
+  }
+}
