@@ -23,8 +23,12 @@ class AppDatabase {
 
   /// Fecha e descarta o singleton, para que cada teste comece de um banco novo.
   static Future<void> reset() async {
+    // Espera uma abertura em andamento antes de fechar: descartar o singleton
+    // no meio dela deixaria a conexão aberta sem ninguém para fechá-la.
+    await _instance?._opening;
     await _instance?._database?.close();
     _instance?._database = null;
+    _instance?._opening = null;
     _instance = null;
   }
 
@@ -81,7 +85,17 @@ class AppDatabase {
         7: migrationsScripts6_7,
       };
 
-  Future<Database?> openAppDatabase() async {
+  /// A abertura em andamento. Guardar o Future (e não só o Database pronto) é o
+  /// que impede aberturas concorrentes: na partida do app várias chamadas
+  /// chegam aqui ao mesmo tempo — uma por moeda da tela inicial, mais a
+  /// configuração e os alertas — e todas passariam pela verificação de nulo
+  /// antes de qualquer uma terminar de abrir, disparando a migração em
+  /// paralelo.
+  Future<Database?>? _opening;
+
+  Future<Database?> openAppDatabase() => _opening ??= _openAppDatabase();
+
+  Future<Database?> _openAppDatabase() async {
     var path = databasePathOverride ??
         join(await getDatabasesPath(), 'doggie_database.db');
     if (_database == null)

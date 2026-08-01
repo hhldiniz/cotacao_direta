@@ -58,7 +58,10 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
           bloc.updateValue(value);
         })
         .onError((error, stackTrace) {
-          print(error.toString());
+          // Falhar aqui deixa o último valor na tela; sem rede e sem nada
+          // salvo é o esperado.
+          debugPrint("Falha ao atualizar a cotação de $_currency: $error");
+          return null;
         });
     super.didChangeDependencies();
   }

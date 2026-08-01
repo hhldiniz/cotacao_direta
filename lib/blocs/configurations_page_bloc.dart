@@ -52,13 +52,30 @@ class ConfigurationsPageBloc extends BaseBloc {
     });
   }
 
-  updateOverrideCurrencySwitch(bool enabled) {
+  /// Liga ou desliga a moeda de contrapartida escolhida pelo usuário.
+  ///
+  /// [fallbackCurrencyCode] é a moeda que a tela já mostra no seletor quando
+  /// ainda não há nenhuma escolhida. Sem gravá-la, ligar a opção não mudava
+  /// nada: a tela exibia uma moeda, mas a configuração continuava com o código
+  /// vazio e as cotações seguiam saindo frente ao real.
+  updateOverrideCurrencySwitch(bool enabled, {String? fallbackCurrencyCode}) {
     _overrideCurrencyStateHelper.enableCurrencyOverride = enabled;
+    var selected = _overrideCurrencyStateHelper.selectedCurrencyOverride;
+    if (enabled &&
+        (selected == null || selected.isEmpty) &&
+        fallbackCurrencyCode != null) {
+      _overrideCurrencyStateHelper.selectedCurrencyOverride =
+          fallbackCurrencyCode;
+    }
     overrideDefaultCurrencyValueSink.add(_overrideCurrencyStateHelper);
     _configurationRepository
         .getConfiguration()
         .then((Configuration configuration) {
       configuration.overrideDefaultCurrency = enabled;
+      // Os dois campos vão na mesma gravação: em escritas separadas, a leitura
+      // da segunda poderia acontecer antes da primeira ser gravada e desfazê-la.
+      configuration.selectedOverrideCurrencyCode =
+          _overrideCurrencyStateHelper.selectedCurrencyOverride;
       _configurationRepository.insert(configuration);
     });
   }

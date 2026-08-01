@@ -57,7 +57,8 @@ class ConfigurationsPage extends StatelessWidget {
                     padding: EdgeInsets.all(12 * _scale),
                     // Tocar o cartão inteiro alterna a opção, como fazia o
                     // SwitchListTile que estava aqui antes.
-                    onTap: () => _bloc.updateOverrideCurrencySwitch(!enabled),
+                    onTap: () => _bloc.updateOverrideCurrencySwitch(!enabled,
+                        fallbackCurrencyCode: _currencyList.first),
                     child: Row(
                       children: [
                         _SettingBadge(
@@ -75,7 +76,11 @@ class ConfigurationsPage extends StatelessWidget {
                         Switch(
                           value: enabled,
                           onChanged: (bool checked) {
-                            _bloc.updateOverrideCurrencySwitch(checked);
+                            // O código da moeda que o seletor abaixo já mostra
+                            // por padrão precisa ser gravado junto, senão ligar
+                            // a opção não muda cotação nenhuma.
+                            _bloc.updateOverrideCurrencySwitch(checked,
+                                fallbackCurrencyCode: _currencyList.first);
                           },
                         ),
                       ],
