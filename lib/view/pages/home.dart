@@ -166,6 +166,25 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     _bloc.loadCounterCurrencyName(MyAppLocalizations.of(context)!.locale);
   }
 
+  /// Primeira carga da tela.
+  ///
+  /// Os cartões já buscam sua cotação assim que são montados, mas nesse momento
+  /// a leitura da configuração ainda está em curso. Ao terminar de resolver a
+  /// contrapartida — que pode ser a moeda escolhida nas configurações, e não o
+  /// real — pedimos uma releitura, para que o app abra mostrando os valores da
+  /// moeda que o usuário escolheu, e não os da contrapartida padrão.
+  ///
+  /// A cotação de cada par vale por uma hora (CurrencyRepository), então esta
+  /// segunda passada normalmente para no banco, sem ida à rede.
+  Future<void> _loadInitialRates() async {
+    if (!mounted) return;
+    await _bloc.loadCounterCurrencyName(
+      MyAppLocalizations.of(context)!.locale,
+    );
+    if (!mounted) return;
+    setState(() => _ratesRevision++);
+  }
+
   /// Confere os alertas de câmbio cadastrados contra a cotação mais recente.
   /// O app não roda em segundo plano, então esta é a checagem possível: toda
   /// vez que a tela busca cotações novas.
@@ -194,9 +213,7 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
 
     if (!_initialFetchScheduled) {
       _initialFetchScheduled = true;
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _loadCounterCurrencyName(context),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitialRates());
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _checkCurrencyAlerts(context),
       );

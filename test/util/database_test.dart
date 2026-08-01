@@ -61,6 +61,18 @@ void main() {
       expect(identical(first, second), isTrue);
     });
 
+    // Na partida do app várias chamadas chegam juntas (uma por moeda da tela
+    // inicial, mais a configuração e os alertas). Se cada uma abrisse o banco
+    // por conta própria, a migração rodaria em paralelo.
+    test('chamadas simultâneas abrem o banco uma vez só', () async {
+      var connections = await Future.wait(
+          List.generate(8, (_) => AppDatabase().openAppDatabase()));
+
+      expect(connections.first, isNotNull);
+      expect(connections.every((db) => identical(db, connections.first)), isTrue,
+          reason: "todas as chamadas precisam receber a mesma conexão");
+    });
+
     test('cria a tabela Currency com as colunas usadas pelo DAO', () async {
       var db = (await AppDatabase().openAppDatabase())!;
 
