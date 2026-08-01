@@ -311,22 +311,32 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
         children: [
           _animatedTile(0, usdCard),
           SizedBox(height: 12 * _scale),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: _animatedTile(1, eurCard)),
-              SizedBox(width: 12 * _scale),
-              Expanded(child: _animatedTile(2, cadCard)),
-            ],
+          // O IntrinsicHeight é obrigatório aqui: a Row usa
+          // CrossAxisAlignment.stretch para os dois cartões terminarem com a
+          // mesma altura, mas o eixo transversal de uma Row é o vertical, que
+          // dentro do SingleChildScrollView é ilimitado. Sem uma altura
+          // definida, o stretch não tem o que esticar e o layout falha
+          // (RenderFlex sem size, erro a cada frame).
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _animatedTile(1, eurCard)),
+                SizedBox(width: 12 * _scale),
+                Expanded(child: _animatedTile(2, cadCard)),
+              ],
+            ),
           ),
           SizedBox(height: 12 * _scale),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: _animatedTile(3, jpyCard)),
-              SizedBox(width: 12 * _scale),
-              Expanded(child: _animatedTile(4, convertShortcutTile)),
-            ],
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _animatedTile(3, jpyCard)),
+                SizedBox(width: 12 * _scale),
+                Expanded(child: _animatedTile(4, convertShortcutTile)),
+              ],
+            ),
           ),
         ],
       ),

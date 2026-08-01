@@ -51,7 +51,24 @@ class _CurrencyRateCardState extends State<CurrencyRateCard>
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
+    );
+    // Só anima enquanto isRefreshing for true. Como o IndexedStack da tela
+    // inicial mantém as abas sempre montadas, deixar isto sempre repetindo
+    // significa 4 tickers girando para sempre, o que sobrecarrega o
+    // agendamento de frames em alguns embedders desktop (reproduzido no
+    // Linux como falhas repetidas de "debugFrameWasSentToEngine").
+    if (widget.isRefreshing) _pulseController.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(CurrencyRateCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isRefreshing == oldWidget.isRefreshing) return;
+    if (widget.isRefreshing) {
+      _pulseController.repeat(reverse: true);
+    } else {
+      _pulseController.stop();
+    }
   }
 
   @override
