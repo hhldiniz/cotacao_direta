@@ -1,5 +1,6 @@
 import 'package:cotacao_direta/providers/currency_alerts_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
+import 'package:cotacao_direta/util/currency_colors.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/notification_service.dart';
 import 'package:flutter/material.dart';
@@ -31,13 +32,13 @@ class MyApp extends StatelessWidget {
       ],
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: CurrencyColors.seed),
         fontFamily: "Roboto",
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: CurrencyColors.seed,
           brightness: Brightness.dark,
         ),
         fontFamily: "Roboto",

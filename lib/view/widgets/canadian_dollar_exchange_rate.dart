@@ -6,28 +6,34 @@ import 'exchange_rate_value.dart';
 
 class CanadianDollarExchangeRate extends StatelessWidget {
   final Color color;
+  final double? fontSize;
+  final bool showLabel;
 
-  CanadianDollarExchangeRate({this.color = Colors.white});
+  CanadianDollarExchangeRate({
+    this.color = Colors.white,
+    this.fontSize,
+    this.showLabel = true,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final size = fontSize ?? 18 * Responsive.scaleFactor(context);
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Column(
-          children: <Widget>[
-            Text(
-              "CAD ",
-              style: TextStyle(
-                fontSize: 18 * Responsive.scaleFactor(context),
-                color: color,
+        if (showLabel)
+          Column(
+            children: <Widget>[
+              Text(
+                "CAD ",
+                style: TextStyle(fontSize: size, color: color),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         Column(
           children: <Widget>[
             ExchangeValueBlocProvider(
-              child: ExchangeRateValue(Currencies.CAD, color: color),
+              child: ExchangeRateValue(Currencies.CAD, color: color, fontSize: size),
             ),
           ],
         ),

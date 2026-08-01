@@ -10,8 +10,12 @@ import 'package:intl/intl.dart';
 class ExchangeRateValue extends StatefulWidget {
   final Currencies currency;
   final Color color;
+  // Permite que quem exibe o valor (ex.: os cartões da tela inicial) peça um
+  // tamanho maior para o destaque, sem mudar o padrão de quem já usa este
+  // widget hoje.
+  final double? fontSize;
 
-  ExchangeRateValue(this.currency, {this.color = Colors.white});
+  ExchangeRateValue(this.currency, {this.color = Colors.white, this.fontSize});
 
   @override
   State<StatefulWidget> createState() {
@@ -83,8 +87,9 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
               child: Text(
                 _exchangeRateLabel(context, snapshot),
                 style: TextStyle(
-                  fontSize: 18 * Responsive.scaleFactor(context),
+                  fontSize: widget.fontSize ?? 18 * Responsive.scaleFactor(context),
                   color: widget.color,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

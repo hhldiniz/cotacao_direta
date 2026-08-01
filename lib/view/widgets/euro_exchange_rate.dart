@@ -6,28 +6,34 @@ import 'package:flutter/material.dart';
 
 class EuroExchangeRate extends StatelessWidget {
   final Color color;
+  final double? fontSize;
+  final bool showLabel;
 
-  EuroExchangeRate({this.color = Colors.white});
+  EuroExchangeRate({
+    this.color = Colors.white,
+    this.fontSize,
+    this.showLabel = true,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final size = fontSize ?? 18 * Responsive.scaleFactor(context);
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Column(
-          children: <Widget>[
-            Text(
-              "EUR ",
-              style: TextStyle(
-                fontSize: 18 * Responsive.scaleFactor(context),
-                color: color,
+        if (showLabel)
+          Column(
+            children: <Widget>[
+              Text(
+                "EUR ",
+                style: TextStyle(fontSize: size, color: color),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         Column(
           children: <Widget>[
             ExchangeValueBlocProvider(
-              child: ExchangeRateValue(Currencies.EUR, color: color),
+              child: ExchangeRateValue(Currencies.EUR, color: color, fontSize: size),
             ),
           ],
         ),
