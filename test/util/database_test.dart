@@ -46,12 +46,12 @@ void main() {
       expect(identical(AppDatabase(), AppDatabase()), isTrue);
     });
 
-    test('abre o banco na versão 7', () async {
+    test('abre o banco na versão 8', () async {
       var db = await AppDatabase().openAppDatabase();
 
       expect(db, isNotNull);
       expect(db!.isOpen, isTrue);
-      expect(await db.getVersion(), 7);
+      expect(await db.getVersion(), 8);
     });
 
     test('reaproveita a mesma conexão em chamadas seguintes', () async {
@@ -123,7 +123,8 @@ void main() {
           containsAll([
             "id",
             "overrideDefaultCurrency",
-            "selectedOverrideCurrencyCode"
+            "selectedOverrideCurrencyCode",
+            "homeCurrencyCodes"
           ]));
     });
 
@@ -161,7 +162,7 @@ void main() {
       expect(await reopened.query("Currency"), isEmpty);
     });
 
-    test('migra um banco da versão 1 até a 7, passando por todas as etapas',
+    test('migra um banco da versão 1 até a 8, passando por todas as etapas',
         () async {
       var path = await _createLegacyDatabase(version: 1, tables: [
         "CREATE TABLE Currency(id TEXT PRIMARY KEY, value REAL, timestamp TEXT)"
@@ -176,7 +177,7 @@ void main() {
 
       var db = (await AppDatabase().openAppDatabase())!;
 
-      expect(await db.getVersion(), 7);
+      expect(await db.getVersion(), 8);
       expect(await _columnsOf(db, "Currency"),
           containsAll(["historicalDate", "friendlyName"]));
       expect(await _columnsOf(db, "Configurations"),
@@ -185,12 +186,15 @@ void main() {
       expect(await _columnsOf(db, "CurrencyAlerts"),
           containsAll(["currencyCode", "targetValue", "condition"]),
           reason: "a etapa 5→6 não pode ser pulada");
+      expect(await _columnsOf(db, "Configurations"),
+          containsAll(["homeCurrencyCodes"]),
+          reason: "a etapa 7→8 não pode ser pulada");
       var row = (await db.query("Currency")).single;
       expect(row["id"], "USD");
       expect(row["value"], 5.0);
     });
 
-    test('migra um banco da versão 4 para a 7 acrescentando o friendlyName e '
+    test('migra um banco da versão 4 para a 8 acrescentando o friendlyName e '
         'os alertas', () async {
       var path = await _createLegacyDatabase(version: 4, tables: [
         "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, PRIMARY KEY(id, historicalDate))",
@@ -207,7 +211,7 @@ void main() {
 
       var db = (await AppDatabase().openAppDatabase())!;
 
-      expect(await db.getVersion(), 7);
+      expect(await db.getVersion(), 8);
       var row = (await db.query("Currency")).single;
       expect(row["historicalDate"], "2024-01-01T00:00:00.000");
       expect(row["friendlyName"], "",
@@ -293,6 +297,30 @@ void main() {
       expect((await db.query("Currency")).length, 2);
     });
 
+    test('a migração 7→8 deixa as moedas da tela inicial em branco', () async {
+      var path = await _createLegacyDatabase(version: 7, tables: [
+        "CREATE TABLE Currency(id TEXT, historicalDate TEXT, value REAL, timestamp TEXT, friendlyName TEXT NOT NULL DEFAULT '', counterCurrency TEXT NOT NULL DEFAULT 'BRL', PRIMARY KEY(id, historicalDate, counterCurrency))",
+        "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT)",
+        "CREATE TABLE CurrencyAlerts(id INTEGER PRIMARY KEY AUTOINCREMENT, currencyCode TEXT NOT NULL, targetValue REAL NOT NULL, condition TEXT NOT NULL, triggered INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1)"
+      ], rows: {
+        "Configurations": {
+          "id": 1,
+          "overrideDefaultCurrency": 1,
+          "selectedOverrideCurrencyCode": "EUR"
+        }
+      });
+      AppDatabase.databasePathOverride = path;
+
+      var db = (await AppDatabase().openAppDatabase())!;
+
+      var row = (await db.query("Configurations")).single;
+      expect(row["homeCurrencyCodes"], "",
+          reason: "coluna vazia é lida como 'nunca escolheu', "
+              "o que devolve as moedas padrão");
+      expect(row["selectedOverrideCurrencyCode"], "EUR",
+          reason: "a configuração que já existia não pode se perder");
+    });
+
     test('os dados sobrevivem à reabertura quando o banco é um arquivo',
         () async {
       var directory =
@@ -310,7 +338,7 @@ void main() {
       await AppDatabase.reset();
 
       var reopened = (await AppDatabase().openAppDatabase())!;
-      expect(await reopened.getVersion(), 7,
+      expect(await reopened.getVersion(), 8,
           reason: "reabrir não deve disparar onCreate/onUpgrade de novo");
       expect((await reopened.query("Currency")).single["id"], "USD");
     });

@@ -34,6 +34,13 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.getCurrencyHistoryBtnLabel,
       localizations.getConfigBottomNavItemLabel,
       localizations.overrideDefaultCurrencySwitchLabel,
+      localizations.selectedOverrideCurrencyLabel,
+      localizations.homeCurrenciesSettingLabel,
+      localizations.homeCurrenciesPickerTitle,
+      localizations.homeCurrenciesPickerDescription,
+      localizations.homeCurrenciesSelectedCountLabel,
+      localizations.homeCurrenciesEmptySelectionLabel,
+      localizations.homeCurrenciesSaveBtnLabel,
       localizations.appConfigurationsSectionLabel,
       localizations.aboutAppDescription,
       localizations.aboutVersionLabel,
@@ -187,6 +194,17 @@ void main() {
               reason: "$key em ${locale.languageCode}");
         });
       }
+    });
+
+    test('homeCurrenciesSelectedCountLabel traz o marcador da quantidade', () {
+      expect(
+          MyAppLocalizations(const Locale("pt"))
+              .homeCurrenciesSelectedCountLabel,
+          contains("%s"));
+      expect(
+          MyAppLocalizations(const Locale("en"))
+              .homeCurrenciesSelectedCountLabel,
+          contains("%s"));
     });
 
     test('homePageHeadsUpText traz o marcador de moeda', () {

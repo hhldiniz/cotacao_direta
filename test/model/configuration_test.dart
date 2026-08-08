@@ -14,6 +14,9 @@ void main() {
       expect(configuration.id, 1);
       expect(configuration.overrideDefaultCurrency, isFalse);
       expect(configuration.selectedOverrideCurrencyCode, "");
+      expect(configuration.homeCurrencyCodes,
+          Configuration.defaultHomeCurrencyCodes,
+          reason: "quem nunca escolheu vê as moedas que a tela já mostrava");
     });
 
     test('aceita os valores informados', () {
@@ -33,7 +36,8 @@ void main() {
       expect(map, {
         'id': 1,
         'overrideDefaultCurrency': 1,
-        'selectedOverrideCurrencyCode': "JPY"
+        'selectedOverrideCurrencyCode': "JPY",
+        'homeCurrencyCodes': "USD,EUR,CAD,JPY"
       });
     });
 
@@ -49,6 +53,38 @@ void main() {
       expect(map['selectedOverrideCurrencyCode'], isNull);
     });
 
+    test('aceita as moedas escolhidas para a tela inicial', () {
+      var configuration =
+          Configuration(1, homeCurrencyCodes: ["GBP", "CHF"]);
+
+      expect(configuration.homeCurrencyCodes, ["GBP", "CHF"]);
+    });
+
+    test('toMap guarda as moedas da tela inicial separadas por vírgula', () {
+      var map = Configuration(1, homeCurrencyCodes: ["GBP", "CHF"]).toMap();
+
+      expect(map['homeCurrencyCodes'], "GBP,CHF");
+    });
+
+    test('parseHomeCurrencyCodes lê a lista gravada', () {
+      expect(Configuration.parseHomeCurrencyCodes("GBP,CHF"), ["GBP", "CHF"]);
+    });
+
+    test('parseHomeCurrencyCodes normaliza espaços e caixa', () {
+      expect(Configuration.parseHomeCurrencyCodes(" gbp , chf ,"),
+          ["GBP", "CHF"]);
+    });
+
+    // Coluna vazia é o que a migração deixa para quem já usava o app, e o
+    // padrão da coluna para quem nunca abriu a opção.
+    test('parseHomeCurrencyCodes devolve o padrão para texto vazio ou nulo',
+        () {
+      expect(Configuration.parseHomeCurrencyCodes(""),
+          Configuration.defaultHomeCurrencyCodes);
+      expect(Configuration.parseHomeCurrencyCodes(null),
+          Configuration.defaultHomeCurrencyCodes);
+    });
+
     test('toString expõe todos os campos', () {
       var text = Configuration(1,
               overrideDefaultCurrency: true,
@@ -58,6 +94,7 @@ void main() {
       expect(text, contains("id: 1"));
       expect(text, contains("overrideDefaultCurrency: true"));
       expect(text, contains("selectedOverrideCurrencyCode: GBP"));
+      expect(text, contains("homeCurrencyCodes: USD,EUR,CAD,JPY"));
     });
   });
 }

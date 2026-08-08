@@ -1,4 +1,5 @@
 import 'package:cotacao_direta/blocs/home_bloc.dart';
+import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/model/configuration.dart';
 import 'package:cotacao_direta/repository/currency_repository.dart';
 import 'package:flutter/widgets.dart';
@@ -53,6 +54,45 @@ void main() {
 
       await expectLater(
           bloc.loadCounterCurrencyName(const Locale("pt")), completes);
+    });
+  });
+
+  group('HomeBloc.loadHomeCurrencies', () {
+    HomeBloc buildBlocWithConfiguration(Configuration configuration) => HomeBloc(
+        currencyRepository: CurrencyRepository.withDependencies(
+            configurationRepository:
+                FakeConfigurationRepository(configuration: configuration)),
+        configurationRepository:
+            FakeConfigurationRepository(configuration: configuration));
+
+    test('devolve as moedas escolhidas, na ordem gravada', () async {
+      var bloc = buildBlocWithConfiguration(
+          Configuration(1, homeCurrencyCodes: ["CHF", "GBP"]));
+
+      expect(await bloc.loadHomeCurrencies(),
+          [Currencies.CHF, Currencies.GBP]);
+    });
+
+    test('devolve as moedas padrão para quem nunca escolheu', () async {
+      var bloc = buildBlocWithConfiguration(Configuration(1));
+
+      expect(await bloc.loadHomeCurrencies(),
+          [Currencies.USD, Currencies.EUR, Currencies.CAD, Currencies.JPY]);
+    });
+
+    test('descarta código que o app não conhece', () async {
+      var bloc = buildBlocWithConfiguration(
+          Configuration(1, homeCurrencyCodes: ["GBP", "XYZ"]));
+
+      expect(await bloc.loadHomeCurrencies(), [Currencies.GBP]);
+    });
+
+    // A tela sem bolha nenhuma não diria ao usuário o que aconteceu.
+    test('cai nas moedas padrão quando nenhum código é conhecido', () async {
+      var bloc = buildBlocWithConfiguration(
+          Configuration(1, homeCurrencyCodes: ["XYZ"]));
+
+      expect(await bloc.loadHomeCurrencies(), HomeBloc.defaultHomeCurrencies);
     });
   });
 }

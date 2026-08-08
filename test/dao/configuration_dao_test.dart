@@ -22,6 +22,8 @@ void main() {
       expect(configuration.id, ConfigurationDao.configurationId);
       expect(configuration.overrideDefaultCurrency, isFalse);
       expect(configuration.selectedOverrideCurrencyCode, "");
+      expect(configuration.homeCurrencyCodes,
+          Configuration.defaultHomeCurrencyCodes);
     });
 
     test('lê a configuração gravada', () async {
@@ -53,6 +55,27 @@ void main() {
       expect(configuration.id, ConfigurationDao.configurationId);
       expect(configuration.overrideDefaultCurrency, isFalse,
           reason: "só a linha de id 1 é usada pelo app");
+    });
+  });
+
+  group('ConfigurationDao e as moedas da tela inicial', () {
+    test('grava e lê de volta as moedas escolhidas', () async {
+      await dao.insert(Configuration(ConfigurationDao.configurationId,
+          homeCurrencyCodes: ["GBP", "CHF", "USD"]));
+
+      var configuration = await dao.getConfiguration();
+
+      expect(configuration.homeCurrencyCodes, ["GBP", "CHF", "USD"]);
+    });
+
+    test('uma lista vazia é lida como as moedas padrão', () async {
+      await dao.insert(Configuration(ConfigurationDao.configurationId,
+          homeCurrencyCodes: []));
+
+      var configuration = await dao.getConfiguration();
+
+      expect(configuration.homeCurrencyCodes,
+          Configuration.defaultHomeCurrencyCodes);
     });
   });
 

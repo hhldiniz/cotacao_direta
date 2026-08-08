@@ -18,9 +18,7 @@ class ExchangeRateValue extends StatefulWidget {
   ExchangeRateValue(this.currency, {this.color = Colors.white, this.fontSize});
 
   @override
-  State<StatefulWidget> createState() {
-    return ExchangeRateValueState(currency);
-  }
+  State<StatefulWidget> createState() => ExchangeRateValueState();
 }
 
 class ExchangeRateValueState extends State<ExchangeRateValue> {
@@ -28,7 +26,6 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
   // próprio State: este widget apenas o consome.
   late ExchangeValueBloc bloc;
   final _formatter = NumberFormat("#.###");
-  final Currencies _currency;
 
   // A stream só pode ser obtida uma vez por bloc: getNextStreamController()
   // fecha e recria o StreamController se já houver um listener, então
@@ -37,8 +34,6 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
   // deixaria a tela sem receber novos valores.
   Stream<num?>? _stream;
   ExchangeValueBloc? _streamBloc;
-
-  ExchangeRateValueState(this._currency);
 
   @override
   void didChangeDependencies() {
@@ -52,18 +47,32 @@ class ExchangeRateValueState extends State<ExchangeRateValue> {
       _streamBloc = bloc;
       _stream = bloc.getNextStreamController();
     }
+    _fetchValue();
+    super.didChangeDependencies();
+  }
+
+  @override
+  void didUpdateWidget(ExchangeRateValue oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A tela inicial monta um destes por moeda escolhida nas configurações:
+    // se a escolha muda, o mesmo State pode acabar reaproveitado para outra
+    // moeda, e o valor em tela seria o da moeda anterior.
+    if (oldWidget.currency != widget.currency) _fetchValue();
+  }
+
+  void _fetchValue() {
     bloc
-        .retrieveCurrencyValue(_currency)
+        .retrieveCurrencyValue(widget.currency)
         .then((value) {
           bloc.updateValue(value);
         })
         .onError((error, stackTrace) {
           // Falhar aqui deixa o último valor na tela; sem rede e sem nada
           // salvo é o esperado.
-          debugPrint("Falha ao atualizar a cotação de $_currency: $error");
+          debugPrint(
+              "Falha ao atualizar a cotação de ${widget.currency}: $error");
           return null;
         });
-    super.didChangeDependencies();
   }
 
   /// Enquanto a cotação não chega, o texto fica vazio; se ela não existir,

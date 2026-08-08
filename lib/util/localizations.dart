@@ -43,16 +43,19 @@ class MyAppLocalizations {
       'getCurrencyHistoryBtnLabel': 'Get history',
       'overrideDefaultCurrencySwitchLabel': 'Override default currency',
       'selectedOverrideCurrencyLabel': 'Currency',
+      'homeCurrenciesSettingLabel': 'Quotes on the home screen',
+      'homeCurrenciesPickerTitle': 'Quotes shown as bubbles',
+      'homeCurrenciesPickerDescription':
+          'The first currency chosen gets the big bubble.',
+      'homeCurrenciesSelectedCountLabel': '%s selected',
+      'homeCurrenciesEmptySelectionLabel': 'Choose at least one currency',
+      'homeCurrenciesSaveBtnLabel': 'Save',
       'appConfigurationsSectionLabel': 'App Configurations',
       'aboutAppDescription': 'A simple app that shows the exchange rate of '
           'the main currencies against the Brazilian real.',
       'aboutVersionLabel': 'Version',
       'aboutDeveloperLabel': 'Developed by',
       'aboutSourceCodeLabel': 'Source code',
-      'usdCurrencyName': 'US Dollar',
-      'eurCurrencyName': 'Euro',
-      'cadCurrencyName': 'Canadian Dollar',
-      'jpyCurrencyName': 'Japanese Yen',
       'currencyAlertsBottomNavItemLabel': 'Alerts',
       'currencyAlertsSectionLabel': 'Exchange rate alerts',
       'currencyAlertEmptyListLabel':
@@ -172,16 +175,19 @@ class MyAppLocalizations {
       'getCurrencyHistoryBtnLabel': 'Obter histórico',
       'overrideDefaultCurrencySwitchLabel': 'Sobrescrever moeda padrão',
       'selectedOverrideCurrencyLabel': 'Moeda',
+      'homeCurrenciesSettingLabel': 'Cotações na tela inicial',
+      'homeCurrenciesPickerTitle': 'Cotações mostradas em bolhas',
+      'homeCurrenciesPickerDescription':
+          'A primeira moeda escolhida fica na bolha de destaque.',
+      'homeCurrenciesSelectedCountLabel': '%s escolhidas',
+      'homeCurrenciesEmptySelectionLabel': 'Escolha pelo menos uma moeda',
+      'homeCurrenciesSaveBtnLabel': 'Salvar',
       'appConfigurationsSectionLabel': 'Configurações do Aplicativo',
       'aboutAppDescription': 'Um aplicativo simples que mostra a cotação das '
           'principais moedas frente ao real.',
       'aboutVersionLabel': 'Versão',
       'aboutDeveloperLabel': 'Desenvolvido por',
       'aboutSourceCodeLabel': 'Código fonte',
-      'usdCurrencyName': 'Dólar americano',
-      'eurCurrencyName': 'Euro',
-      'cadCurrencyName': 'Dólar canadense',
-      'jpyCurrencyName': 'Iene',
       'currencyAlertsBottomNavItemLabel': 'Alertas',
       'currencyAlertsSectionLabel': 'Alertas de câmbio',
       'currencyAlertEmptyListLabel':
@@ -403,6 +409,34 @@ class MyAppLocalizations {
         ['selectedOverrideCurrencyLabel'];
   }
 
+  String? get homeCurrenciesSettingLabel {
+    return _localizedValues[locale.languageCode]!['homeCurrenciesSettingLabel'];
+  }
+
+  String? get homeCurrenciesPickerTitle {
+    return _localizedValues[locale.languageCode]!['homeCurrenciesPickerTitle'];
+  }
+
+  String? get homeCurrenciesPickerDescription {
+    return _localizedValues[locale.languageCode]!
+        ['homeCurrenciesPickerDescription'];
+  }
+
+  String? get homeCurrenciesSelectedCountLabel {
+    return _localizedValues[locale.languageCode]!
+        ['homeCurrenciesSelectedCountLabel'];
+  }
+
+  String? get homeCurrenciesEmptySelectionLabel {
+    return _localizedValues[locale.languageCode]!
+        ['homeCurrenciesEmptySelectionLabel'];
+  }
+
+  String? get homeCurrenciesSaveBtnLabel {
+    return _localizedValues[locale.languageCode]!
+        ['homeCurrenciesSaveBtnLabel'];
+  }
+
   String? get appConfigurationsSectionLabel {
     return _localizedValues[locale.languageCode]!
         ['appConfigurationsSectionLabel'];
@@ -422,22 +456,6 @@ class MyAppLocalizations {
 
   String? get aboutSourceCodeLabel {
     return _localizedValues[locale.languageCode]!['aboutSourceCodeLabel'];
-  }
-
-  String? get usdCurrencyName {
-    return _localizedValues[locale.languageCode]!['usdCurrencyName'];
-  }
-
-  String? get eurCurrencyName {
-    return _localizedValues[locale.languageCode]!['eurCurrencyName'];
-  }
-
-  String? get cadCurrencyName {
-    return _localizedValues[locale.languageCode]!['cadCurrencyName'];
-  }
-
-  String? get jpyCurrencyName {
-    return _localizedValues[locale.languageCode]!['jpyCurrencyName'];
   }
 
   String? get currencyAlertsBottomNavItemLabel {
