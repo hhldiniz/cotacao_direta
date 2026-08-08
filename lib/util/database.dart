@@ -75,6 +75,15 @@ class AppDatabase {
     "DROP TABLE old_Currency"
   ];
 
+  // As moedas da tela inicial deixaram de ser fixas: passam a ser escolhidas
+  // nas configurações. A coluna guarda os códigos separados por vírgula, na
+  // ordem em que as bolhas aparecem. Quem já usava o app migra com a coluna
+  // vazia, que o modelo lê como "nunca escolheu" e resolve para as quatro
+  // moedas que a tela mostrava antes — ninguém vê a tela mudar sozinha.
+  var migrationsScripts7_8 = [
+    "ALTER TABLE Configurations ADD homeCurrencyCodes TEXT NOT NULL DEFAULT ''"
+  ];
+
   /// Scripts a aplicar para chegar em cada versão, na ordem.
   Map<int, List<String>> get _migrationsByVersion => {
         2: migrationsScripts1_2,
@@ -83,6 +92,7 @@ class AppDatabase {
         5: migrationsScripts4_5,
         6: migrationsScripts5_6,
         7: migrationsScripts6_7,
+        8: migrationsScripts7_8,
       };
 
   /// A abertura em andamento. Guardar o Future (e não só o Database pronto) é o
@@ -103,7 +113,7 @@ class AppDatabase {
         await db.execute(
             "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, friendlyName TEXT NOT NULL DEFAULT '', counterCurrency TEXT NOT NULL DEFAULT 'BRL', PRIMARY KEY(id, historicalDate, counterCurrency))");
         await db.execute(
-            "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT)");
+            "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT, homeCurrencyCodes TEXT NOT NULL DEFAULT '')");
         await db.execute(
             "CREATE TABLE CurrencyAlerts(id INTEGER PRIMARY KEY AUTOINCREMENT, currencyCode TEXT NOT NULL, targetValue REAL NOT NULL, condition TEXT NOT NULL, triggered INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1)");
       }, onUpgrade: (database, oldVersion, newVersion) async {
@@ -114,7 +124,7 @@ class AppDatabase {
             await database.execute(script);
           }
         }
-      }, version: 7);
+      }, version: 8);
     return _database;
   }
 }

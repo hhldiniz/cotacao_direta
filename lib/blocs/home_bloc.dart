@@ -1,16 +1,44 @@
 import 'dart:async';
 
 import 'package:cotacao_direta/blocs/base_bloc.dart';
+import 'package:cotacao_direta/enums/currency_enum.dart';
+import 'package:cotacao_direta/model/configuration.dart';
+import 'package:cotacao_direta/repository/configuration_repository.dart';
 import 'package:cotacao_direta/repository/currency_repository.dart';
 import 'package:cotacao_direta/util/currency_name.dart';
 import 'package:flutter/widgets.dart';
 
 class HomeBloc extends BaseBloc {
   final CurrencyRepository _currencyRepository;
+  final ConfigurationRepository _configurationRepository;
   StreamController<String?>? _headsUpTextStreamController;
 
-  HomeBloc({CurrencyRepository? currencyRepository})
-      : _currencyRepository = currencyRepository ?? CurrencyRepository();
+  HomeBloc(
+      {CurrencyRepository? currencyRepository,
+      ConfigurationRepository? configurationRepository})
+      : _currencyRepository = currencyRepository ?? CurrencyRepository(),
+        _configurationRepository =
+            configurationRepository ?? ConfigurationRepository();
+
+  /// Moedas mostradas em bolha enquanto o usuário não escolhe as suas.
+  static List<Currencies> get defaultHomeCurrencies =>
+      _currenciesForCodes(Configuration.defaultHomeCurrencyCodes);
+
+  /// Códigos que o app não conhece são descartados: a lista vem do banco e
+  /// pode ter sobrado de uma versão que cotava uma moeda a mais.
+  static List<Currencies> _currenciesForCodes(List<String> codes) =>
+      codes.map(currencyForCode).whereType<Currencies>().toList();
+
+  /// Moedas escolhidas nas configurações para aparecer em bolha na tela
+  /// inicial, na ordem em que devem aparecer.
+  ///
+  /// Uma escolha que não sobrou nenhuma moeda conhecida vira as moedas padrão:
+  /// a tela sem bolha nenhuma não diria ao usuário o que aconteceu.
+  Future<List<Currencies>> loadHomeCurrencies() async {
+    var configuration = await _configurationRepository.getConfiguration();
+    var currencies = _currenciesForCodes(configuration.homeCurrencyCodes);
+    return currencies.isEmpty ? defaultHomeCurrencies : currencies;
+  }
 
   Stream<String?> getNextStreamController() {
     if (_headsUpTextStreamController == null) {

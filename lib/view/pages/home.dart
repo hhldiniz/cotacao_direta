@@ -1,5 +1,6 @@
 import 'package:cotacao_direta/blocs/currency_alerts_bloc.dart';
 import 'package:cotacao_direta/blocs/home_bloc.dart';
+import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/providers/ai_insights_bloc_provider.dart';
 import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
@@ -7,7 +8,8 @@ import 'package:cotacao_direta/providers/currency_alerts_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:cotacao_direta/util/color_utils.dart';
-import 'package:cotacao_direta/util/currency_colors.dart';
+import 'package:cotacao_direta/util/currency_name.dart';
+import 'package:cotacao_direta/util/currency_visuals.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
@@ -15,12 +17,11 @@ import 'package:cotacao_direta/view/pages/main_menu_items/about_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/ai_insights_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/configurations_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/currency_alerts_page.dart';
-import 'package:cotacao_direta/view/widgets/canadian_dollar_exchange_rate.dart';
+import 'package:cotacao_direta/view/widgets/currency_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/currency_rate_card.dart';
 import 'package:cotacao_direta/view/widgets/currency_refresh_scope.dart';
-import 'package:cotacao_direta/view/widgets/dollar_exchange_rate.dart';
-import 'package:cotacao_direta/view/widgets/euro_exchange_rate.dart';
-import 'package:cotacao_direta/view/widgets/yen_exchange_rate.dart';
+// listEquals: o material.dart não reexporta tudo do foundation.
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sprintf/sprintf.dart';
 
@@ -61,10 +62,20 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   // build() roda de novo a cada troca de aba e não deve refazer a busca.
   var _initialFetchScheduled = false;
 
+  // Moedas mostradas em bolha, escolhidas nas configurações. Começa nas moedas
+  // padrão para a tela ter o que mostrar enquanto a leitura do banco não
+  // termina — é a mesma lista que o app abria antes de a opção existir.
+  var _homeCurrencies = HomeBloc.defaultHomeCurrencies;
+
   late final AnimationController _entranceAnimationController;
-  late final List<Animation<double>> _tileScaleAnimations;
-  late final List<Animation<double>> _tileFadeAnimations;
   late final AnimationController _refreshIconController;
+
+  // Uma animação de entrada por posição da grade, criada sob demanda: o número
+  // de bolhas depende da escolha do usuário, então não dá para montar a lista
+  // toda de antemão. Ficam guardadas para não recriar (e não vazar ouvintes do
+  // controlador) a cada build.
+  final Map<int, CurvedAnimation> _tileScaleAnimations = {};
+  final Map<int, CurvedAnimation> _tileFadeAnimations = {};
 
   // getNextStreamController() fecha e recria o StreamController se já houver
   // um listener; chamá-la a cada build (o que acontece ao trocar de aba, já
@@ -83,28 +94,6 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
       vsync: this,
       duration: Duration(milliseconds: 900),
     );
-    // 5 cartões no bento (destaque + 4), com entrada escalonada.
-    final ranges = List.generate(5, (index) {
-      final start = index * 0.12;
-      final end = (start + 0.55).clamp(0.0, 1.0);
-      return (start: start, end: end);
-    });
-    _tileScaleAnimations = ranges
-        .map(
-          (range) => CurvedAnimation(
-            parent: _entranceAnimationController,
-            curve: Interval(range.start, range.end, curve: Curves.easeOutBack),
-          ),
-        )
-        .toList();
-    _tileFadeAnimations = ranges
-        .map(
-          (range) => CurvedAnimation(
-            parent: _entranceAnimationController,
-            curve: Interval(range.start, range.end, curve: Curves.easeOut),
-          ),
-        )
-        .toList();
     _entranceAnimationController.forward();
 
     _refreshIconController = AnimationController(
@@ -115,16 +104,38 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    for (var animation in [
+      ..._tileScaleAnimations.values,
+      ..._tileFadeAnimations.values
+    ]) {
+      animation.dispose();
+    }
     _entranceAnimationController.dispose();
     _refreshIconController.dispose();
     super.dispose();
   }
 
+  /// Entrada escalonada: cada posição da grade começa a animar um pouco depois
+  /// da anterior. O atraso para de crescer na sexta posição, senão as últimas
+  /// bolhas de uma lista longa só apareceriam no fim da animação.
+  Animation<double> _entranceAnimation(
+      Map<int, CurvedAnimation> cache, int index, Curve curve) {
+    return cache.putIfAbsent(index, () {
+      final start = (index * 0.12).clamp(0.0, 0.45);
+      final end = (start + 0.55).clamp(0.0, 1.0);
+      return CurvedAnimation(
+        parent: _entranceAnimationController,
+        curve: Interval(start, end, curve: curve),
+      );
+    });
+  }
+
   Widget _animatedTile(int index, Widget tile) {
     return ScaleTransition(
-      scale: _tileScaleAnimations[index],
+      scale: _entranceAnimation(
+          _tileScaleAnimations, index, Curves.easeOutBack),
       child: FadeTransition(
-        opacity: _tileFadeAnimations[index],
+        opacity: _entranceAnimation(_tileFadeAnimations, index, Curves.easeOut),
         child: tile,
       ),
     );
@@ -137,6 +148,7 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     });
     _refreshIconController.repeat();
     _loadCounterCurrencyName(context);
+    _loadHomeCurrencies();
     _checkCurrencyAlerts(context);
     await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
@@ -178,11 +190,24 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   /// segunda passada normalmente para no banco, sem ida à rede.
   Future<void> _loadInitialRates() async {
     if (!mounted) return;
+    await _loadHomeCurrencies();
+    if (!mounted) return;
     await _bloc.loadCounterCurrencyName(
       MyAppLocalizations.of(context)!.locale,
     );
     if (!mounted) return;
     setState(() => _ratesRevision++);
+  }
+
+  /// Lê as moedas escolhidas nas configurações para a grade de bolhas.
+  ///
+  /// É relida ao voltar para esta aba porque a escolha pode ter mudado na aba
+  /// de opções, que fica montada ao lado desta no IndexedStack.
+  Future<void> _loadHomeCurrencies() async {
+    var currencies = await _bloc.loadHomeCurrencies();
+    if (!mounted) return;
+    if (listEquals(currencies, _homeCurrencies)) return;
+    setState(() => _homeCurrencies = currencies);
   }
 
   /// Confere os alertas de câmbio cadastrados contra a cotação mais recente.
@@ -198,12 +223,133 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
+  /// Bolha de cotação de uma moeda. A cor e o ícone vêm da própria moeda, e
+  /// não de uma lista fixa na tela: qualquer moeda pode virar bolha agora.
+  Widget _currencyCard(BuildContext context, Currencies currency,
+      {required bool hero, required double scale}) {
+    final color = currencyAccentColor(currency);
+    return CurrencyRateCard(
+      // A chave é a moeda, e não a posição: ao mudar a escolha nas opções, é
+      // ela que impede o cartão de uma moeda de reaproveitar o estado (e a
+      // cotação já buscada) do cartão de outra.
+      key: ValueKey(currency),
+      hero: hero,
+      color: color,
+      icon: currencyIcon(currency),
+      code: currencyCode(currency),
+      label: currencyName(currency, Localizations.localeOf(context)),
+      isRefreshing: _isRefreshing,
+      valueWidget: CurrencyExchangeRate(
+        currency,
+        color: contrastingTextColor(circleBackgroundColor(context, color)),
+        fontSize: (hero ? 32 : 20) * scale,
+        showLabel: false,
+      ),
+    );
+  }
+
+  /// Último "tile" do bento: não é uma cotação, é um atalho para a conversão.
+  /// O InkWell/Material dá o mesmo tipo de feedback tátil ao toque que os
+  /// cartões de cotação têm, sem duplicar a lógica deles.
+  Widget _convertShortcutTile(BuildContext context, double scale) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.secondaryContainer,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _openConversionPage(context),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: 16 * scale,
+            vertical: 14 * scale,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.compare_arrows,
+                color: colorScheme.onSecondaryContainer,
+                size: 20 * scale,
+              ),
+              SizedBox(height: 10 * scale),
+              Text(
+                MyAppLocalizations.of(context)!.convertActionBtnLabel!,
+                style: TextStyle(
+                  color: colorScheme.onSecondaryContainer,
+                  fontSize: 16 * scale,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A grade de bolhas: a primeira moeda escolhida em destaque, ocupando a
+  /// largura toda, e as demais em pares, com o atalho da conversão no fim.
+  Widget _buildBentoGrid(BuildContext context, double scale) {
+    final rows = <Widget>[];
+    var tileIndex = 0;
+
+    if (_homeCurrencies.isNotEmpty) {
+      rows.add(_animatedTile(
+        tileIndex++,
+        _currencyCard(context, _homeCurrencies.first,
+            hero: true, scale: scale),
+      ));
+    }
+
+    final pairedTiles = <Widget>[
+      for (var currency in _homeCurrencies.skip(1))
+        _currencyCard(context, currency, hero: false, scale: scale),
+      _convertShortcutTile(context, scale),
+    ];
+
+    for (var first = 0; first < pairedTiles.length; first += 2) {
+      final hasSecond = first + 1 < pairedTiles.length;
+      rows.add(SizedBox(height: 12 * scale));
+      // O IntrinsicHeight é obrigatório aqui: a Row usa
+      // CrossAxisAlignment.stretch para os dois cartões terminarem com a
+      // mesma altura, mas o eixo transversal de uma Row é o vertical, que
+      // dentro do SingleChildScrollView é ilimitado. Sem uma altura
+      // definida, o stretch não tem o que esticar e o layout falha
+      // (RenderFlex sem size, erro a cada frame).
+      rows.add(IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: _animatedTile(tileIndex++, pairedTiles[first])),
+            SizedBox(width: 12 * scale),
+            // Numa linha ímpar o espaço vazio à direita fica reservado, para o
+            // cartão sozinho ter a mesma largura dos das outras linhas.
+            Expanded(
+              child: hasSecond
+                  ? _animatedTile(tileIndex++, pairedTiles[first + 1])
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ));
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: rows,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final _localization = MyAppLocalizations.of(context)!;
     final _screenDimensions = MediaQuery.of(context);
     final _scale = Responsive.scaleFactor(context);
-    final _colorScheme = Theme.of(context).colorScheme;
     _bloc = HomeBlocProvider.of(context);
     _alertsBloc = CurrencyAlertsBlocProvider.of(context);
     if (!identical(_headerStreamBloc, _bloc)) {
@@ -237,134 +383,9 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
       stream: _headerStream,
     );
 
-    final usdCard = CurrencyRateCard(
-      hero: true,
-      color: CurrencyColors.usd,
-      icon: Icons.attach_money,
-      code: "USD",
-      label: _localization.usdCurrencyName!,
-      isRefreshing: _isRefreshing,
-      valueWidget: DollarExchangeRate(
-        color: contrastingTextColor(circleBackgroundColor(context, CurrencyColors.usd)),
-        fontSize: 32 * _scale,
-        showLabel: false,
-      ),
-    );
-
-    final eurCard = CurrencyRateCard(
-      color: CurrencyColors.eur,
-      icon: Icons.euro,
-      code: "EUR",
-      label: _localization.eurCurrencyName!,
-      isRefreshing: _isRefreshing,
-      valueWidget: EuroExchangeRate(
-        color: contrastingTextColor(circleBackgroundColor(context, CurrencyColors.eur)),
-        fontSize: 20 * _scale,
-        showLabel: false,
-      ),
-    );
-
-    final cadCard = CurrencyRateCard(
-      color: CurrencyColors.cad,
-      icon: Icons.monetization_on,
-      code: "CAD",
-      label: _localization.cadCurrencyName!,
-      isRefreshing: _isRefreshing,
-      valueWidget: CanadianDollarExchangeRate(
-        color: contrastingTextColor(circleBackgroundColor(context, CurrencyColors.cad)),
-        fontSize: 20 * _scale,
-        showLabel: false,
-      ),
-    );
-
-    final jpyCard = CurrencyRateCard(
-      color: CurrencyColors.jpy,
-      icon: Icons.currency_yen,
-      code: "JPY",
-      label: _localization.jpyCurrencyName!,
-      isRefreshing: _isRefreshing,
-      valueWidget: YenExchangeRate(
-        color: contrastingTextColor(circleBackgroundColor(context, CurrencyColors.jpy)),
-        fontSize: 20 * _scale,
-        showLabel: false,
-      ),
-    );
-
-    // Quinto "tile" do bento: não é uma cotação, é um atalho para a
-    // conversão. O InkWell/Material dá o mesmo tipo de feedback tátil ao
-    // toque que os cartões de cotação têm, sem duplicar a lógica deles.
-    final convertShortcutTile = Material(
-      color: _colorScheme.secondaryContainer,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () => _openConversionPage(context),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: 16 * _scale,
-            vertical: 14 * _scale,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.compare_arrows,
-                color: _colorScheme.onSecondaryContainer,
-                size: 20 * _scale,
-              ),
-              SizedBox(height: 10 * _scale),
-              Text(
-                _localization.convertActionBtnLabel!,
-                style: TextStyle(
-                  color: _colorScheme.onSecondaryContainer,
-                  fontSize: 16 * _scale,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    final bentoGrid = Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * _scale),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _animatedTile(0, usdCard),
-          SizedBox(height: 12 * _scale),
-          // O IntrinsicHeight é obrigatório aqui: a Row usa
-          // CrossAxisAlignment.stretch para os dois cartões terminarem com a
-          // mesma altura, mas o eixo transversal de uma Row é o vertical, que
-          // dentro do SingleChildScrollView é ilimitado. Sem uma altura
-          // definida, o stretch não tem o que esticar e o layout falha
-          // (RenderFlex sem size, erro a cada frame).
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _animatedTile(1, eurCard)),
-                SizedBox(width: 12 * _scale),
-                Expanded(child: _animatedTile(2, cadCard)),
-              ],
-            ),
-          ),
-          SizedBox(height: 12 * _scale),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _animatedTile(3, jpyCard)),
-                SizedBox(width: 12 * _scale),
-                Expanded(child: _animatedTile(4, convertShortcutTile)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    // Uma bolha por moeda escolhida nas configurações, com o atalho para a
+    // conversão fechando a grade.
+    final bentoGrid = _buildBentoGrid(context, _scale);
 
     final List<Widget> _widgetOptions = <Widget>[
       // O escopo avisa os widgets de cotação abaixo dele quando os valores
@@ -457,7 +478,11 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
             // à rede de novo: quando nada mudou, a busca para no banco.
             if (index == 0) _ratesRevision++;
           });
-          if (index == 0) _loadCounterCurrencyName(context);
+          if (index == 0) {
+            _loadCounterCurrencyName(context);
+            // As moedas em bolha podem ter mudado na aba de opções.
+            _loadHomeCurrencies();
+          }
         },
       ),
       floatingActionButton: Visibility(
