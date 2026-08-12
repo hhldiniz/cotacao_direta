@@ -1,3 +1,4 @@
+import 'package:cotacao_direta/enums/cryptocurrency_enum.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/util/currency_colors.dart';
 import 'package:flutter/material.dart';
@@ -54,3 +55,15 @@ Color currencyAccentColor(Currencies currency) {
 /// Ícone da bolha de [currency] na tela inicial.
 IconData currencyIcon(Currencies currency) =>
     _iconByCurrency[currency] ?? Icons.payments;
+
+/// Cor de destaque de [cryptocurrency], usada no selo do ativo nas listas.
+///
+/// O bitcoin fica com o âmbar que já usava na listagem de histórico; as demais
+/// pegam uma cor da mesma paleta das moedas, pela posição no enum, para que
+/// uma lista com os dois tipos de ativo continue colorida sem repetir cor a
+/// esmo.
+Color cryptocurrencyAccentColor(Cryptocurrencies cryptocurrency) {
+  return cryptocurrency == Cryptocurrencies.BTC
+      ? CurrencyColors.usd
+      : _palette[cryptocurrency.index % _palette.length];
+}
