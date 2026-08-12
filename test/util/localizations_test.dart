@@ -9,7 +9,6 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.conversionButtonLabel,
       localizations.conversionPageTitle,
       localizations.homePageHeadsUpText,
-      localizations.convertActionBtnLabel,
       localizations.conversionMultiplierHint,
       localizations.conversionPageExplanationText,
       localizations.conversionFromLabel,
