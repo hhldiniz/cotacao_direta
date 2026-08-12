@@ -15,7 +15,6 @@ class MyAppLocalizations {
       'conversionButtonLabel': 'Conversions',
       'conversionPageTitle': "Currency Conversion",
       'homePageHeadsUpText': 'Exchange rates in %s',
-      'convertActionBtnLabel': 'Convert',
       'conversionMultiplierHint': 'Amount',
       'conversionPageExplanationText': 'Insert the amount value of the currency '
           'that will be converted, selected a currency to be converted and the '
@@ -147,7 +146,6 @@ class MyAppLocalizations {
       'conversionButtonLabel': "Conversões",
       'conversionPageTitle': "Conversão de Moedas",
       'homePageHeadsUpText': "Cotações em %s",
-      'convertActionBtnLabel': "Converter",
       'conversionMultiplierHint': 'Quantidade',
       'conversionPageExplanationText': 'Insira a quantidade da moeda que será '
           'convertida, selecionada a moeda que será convertida e a moeda para '
@@ -287,10 +285,6 @@ class MyAppLocalizations {
 
   String? get homePageHeadsUpText {
     return _localizedValues[locale.languageCode]!['homePageHeadsUpText'];
-  }
-
-  String? get convertActionBtnLabel {
-    return _localizedValues[locale.languageCode]!['convertActionBtnLabel'];
   }
 
   String? get conversionMultiplierHint {

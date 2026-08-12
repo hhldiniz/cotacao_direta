@@ -248,49 +248,12 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
-  /// Último "tile" do bento: não é uma cotação, é um atalho para a conversão.
-  /// O InkWell/Material dá o mesmo tipo de feedback tátil ao toque que os
-  /// cartões de cotação têm, sem duplicar a lógica deles.
-  Widget _convertShortcutTile(BuildContext context, double scale) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      color: colorScheme.secondaryContainer,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () => _openConversionPage(context),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: 16 * scale,
-            vertical: 14 * scale,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.compare_arrows,
-                color: colorScheme.onSecondaryContainer,
-                size: 20 * scale,
-              ),
-              SizedBox(height: 10 * scale),
-              Text(
-                MyAppLocalizations.of(context)!.convertActionBtnLabel!,
-                style: TextStyle(
-                  color: colorScheme.onSecondaryContainer,
-                  fontSize: 16 * scale,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   /// A grade de bolhas: a primeira moeda escolhida em destaque, ocupando a
-  /// largura toda, e as demais em pares, com o atalho da conversão no fim.
+  /// largura toda, e as demais em pares.
+  ///
+  /// A grade mostra só cotações. O caminho para a conversão é o botão
+  /// flutuante da tela — a ação principal fica num lugar só, sempre visível,
+  /// em vez de repetida num tile que rola junto com o conteúdo.
   Widget _buildBentoGrid(BuildContext context, double scale) {
     final rows = <Widget>[];
     var tileIndex = 0;
@@ -306,7 +269,6 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     final pairedTiles = <Widget>[
       for (var currency in _homeCurrencies.skip(1))
         _currencyCard(context, currency, hero: false, scale: scale),
-      _convertShortcutTile(context, scale),
     ];
 
     for (var first = 0; first < pairedTiles.length; first += 2) {
@@ -403,7 +365,10 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
                   child: pageHeader,
                 ),
                 bentoGrid,
-                SizedBox(height: 16 * _scale),
+                // Espaço para o botão flutuante: ele paira sobre o fim da
+                // lista, e sem esta folga cobriria o último cartão de cotação
+                // quando a grade cabe inteira na tela.
+                SizedBox(height: 96 * _scale),
               ],
             ),
           ),
