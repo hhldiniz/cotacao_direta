@@ -80,6 +80,8 @@ class MyAppLocalizations {
           'device, over the quotes the app already downloaded, to summarise the '
           'market and project the coming days. No data leaves your phone.',
       'aiInsightsAssetLabel': 'Asset',
+      'aiInsightsAssetPickerTitle': 'Choose an asset',
+      'aiInsightsAssetNotFoundLabel': 'No asset found',
       'aiInsightsHorizonLabel': 'Projection horizon',
       'aiInsightsHorizonOptionLabel': '%s days',
       'aiInsightsAmountLabel': 'Amount to simulate (optional)',
@@ -211,6 +213,8 @@ class MyAppLocalizations {
           'aparelho, sobre as cotações que o app já baixou, para resumir o '
           'mercado e projetar os próximos dias. Nenhum dado sai do seu celular.',
       'aiInsightsAssetLabel': 'Ativo',
+      'aiInsightsAssetPickerTitle': 'Escolha o ativo',
+      'aiInsightsAssetNotFoundLabel': 'Nenhum ativo encontrado',
       'aiInsightsHorizonLabel': 'Horizonte da projeção',
       'aiInsightsHorizonOptionLabel': '%s dias',
       'aiInsightsAmountLabel': 'Valor para simular (opcional)',
@@ -549,6 +553,15 @@ class MyAppLocalizations {
 
   String? get aiInsightsAssetLabel {
     return _localizedValues[locale.languageCode]!['aiInsightsAssetLabel'];
+  }
+
+  String? get aiInsightsAssetPickerTitle {
+    return _localizedValues[locale.languageCode]!['aiInsightsAssetPickerTitle'];
+  }
+
+  String? get aiInsightsAssetNotFoundLabel {
+    return _localizedValues[locale.languageCode]!
+        ['aiInsightsAssetNotFoundLabel'];
   }
 
   String? get aiInsightsHorizonLabel {

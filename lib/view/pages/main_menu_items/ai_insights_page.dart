@@ -1,37 +1,17 @@
 import 'package:cotacao_direta/blocs/ai_insights_bloc.dart';
 import 'package:cotacao_direta/enums/cryptocurrency_enum.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
-import 'package:cotacao_direta/model/asset_series.dart';
 import 'package:cotacao_direta/model/financial_analysis.dart';
 import 'package:cotacao_direta/providers/ai_insights_bloc_provider.dart';
-import 'package:cotacao_direta/util/cryptocurrency_info.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/quote_format.dart';
 import 'package:cotacao_direta/util/responsive.dart';
-import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:cotacao_direta/view/widgets/ai_insight_text.dart';
+import 'package:cotacao_direta/view/widgets/asset_picker_sheet.dart';
 import 'package:cotacao_direta/view/widgets/forecast_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sprintf/sprintf.dart';
-
-/// An asset offered in the screen's list.
-class _AssetOption {
-  final String code;
-  final AssetKind kind;
-  final String name;
-
-  const _AssetOption({required this.code, required this.kind, required this.name});
-
-  // DropdownButtonFormField compares the selected value against the list items
-  // by equality, and the list is rebuilt on every build.
-  @override
-  bool operator ==(Object other) =>
-      other is _AssetOption && other.code == code && other.kind == kind;
-
-  @override
-  int get hashCode => Object.hash(code, kind);
-}
 
 /// Screen for the insights produced by the AI model that runs on the device
 /// itself.
@@ -48,23 +28,23 @@ class AiInsightsPage extends StatefulWidget {
 }
 
 class _AiInsightsPageState extends State<AiInsightsPage> {
-  static String _codeOf(Object enumValue) =>
-      EnumValueAsString().getEnumValue(enumValue.toString());
-
-  List<_AssetOption> _assetOptions(String counterCurrency) => [
+  List<AssetOption> _assetOptions(String counterCurrency) => [
         // The counter currency has no series of its own: quoted against
         // itself it would always be 1, and the repository skips the query.
         ...Currencies.values
-            .where((currency) => _codeOf(currency) != counterCurrency)
-            .map((currency) => _AssetOption(
-                code: _codeOf(currency),
-                kind: AssetKind.currency,
-                name: _codeOf(currency))),
-        ...Cryptocurrencies.values.map((cryptocurrency) => _AssetOption(
-            code: _codeOf(cryptocurrency),
-            kind: AssetKind.cryptocurrency,
-            name: cryptocurrencyName(cryptocurrency))),
+            .where((currency) => currency.name != counterCurrency)
+            .map(AssetOption.currency),
+        ...Cryptocurrencies.values.map(AssetOption.cryptocurrency),
       ];
+
+  Future<void> _pickAsset(
+      BuildContext context, AiInsightsBloc bloc, List<AssetOption> options,
+      AssetOption selected) async {
+    final picked = await showAssetPicker(context,
+        assets: options, selectedAsset: selected);
+    if (picked == null || !mounted) return;
+    setState(() => bloc.selectAsset(picked.code, picked.kind));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +79,8 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
               children: [
                 _header(context, localizations, scale),
                 SizedBox(height: 16 * scale),
-                _assetField(context, bloc, localizations, options, selected),
+                _assetField(
+                    context, bloc, localizations, options, selected, scale),
                 SizedBox(height: 16 * scale),
                 _horizonField(context, bloc, localizations, scale),
                 SizedBox(height: 16 * scale),
@@ -168,32 +149,86 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
     );
   }
 
+  /// The selected asset, in the same shape the other asset lists of the app
+  /// use — badge, code and name — and tapping it opens the picker sheet. The
+  /// dropdown this replaced turned forty-odd assets into a column of
+  /// three-letter codes.
   Widget _assetField(
     BuildContext context,
     AiInsightsBloc bloc,
     MyAppLocalizations localizations,
-    List<_AssetOption> options,
-    _AssetOption selected,
+    List<AssetOption> options,
+    AssetOption selected,
+    double scale,
   ) {
-    return DropdownButtonFormField<_AssetOption>(
-      initialValue: selected,
-      isExpanded: true,
-      decoration: InputDecoration(
-        border: const OutlineInputBorder(),
-        labelText: localizations.aiInsightsAssetLabel,
+    final colorScheme = Theme.of(context).colorScheme;
+    final locale = Localizations.localeOf(context);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      color: colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16 * scale),
+        side: BorderSide(color: colorScheme.outlineVariant),
       ),
-      items: options
-          .map((option) => DropdownMenuItem<_AssetOption>(
-                value: option,
-                child: Text(option.code == option.name
-                    ? option.code
-                    : "${option.code} — ${option.name}"),
-              ))
-          .toList(),
-      onChanged: (option) {
-        if (option == null) return;
-        setState(() => bloc.selectAsset(option.code, option.kind));
-      },
+      child: InkWell(
+        onTap: () => _pickAsset(context, bloc, options, selected),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+              16 * scale, 12 * scale, 12 * scale, 12 * scale),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                localizations.aiInsightsAssetLabel!,
+                style: TextStyle(
+                  fontSize: 12 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              SizedBox(height: 8 * scale),
+              Row(
+                children: [
+                  AssetBadge(asset: selected, scale: scale),
+                  SizedBox(width: 12 * scale),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          selected.code,
+                          style: TextStyle(
+                            fontSize: 16 * scale,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          selected.name(locale),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12 * scale,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.unfold_more,
+                    size: 20 * scale,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

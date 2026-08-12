@@ -67,6 +67,8 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.aiInsightsSectionLabel,
       localizations.aiInsightsDescription,
       localizations.aiInsightsAssetLabel,
+      localizations.aiInsightsAssetPickerTitle,
+      localizations.aiInsightsAssetNotFoundLabel,
       localizations.aiInsightsHorizonLabel,
       localizations.aiInsightsHorizonOptionLabel,
       localizations.aiInsightsAmountLabel,

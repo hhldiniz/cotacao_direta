@@ -1,4 +1,5 @@
 import 'package:cotacao_direta/blocs/ai_insights_bloc.dart';
+import 'package:cotacao_direta/model/asset_series.dart';
 import 'package:cotacao_direta/providers/ai_insights_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/ai_insights_page.dart';
@@ -9,6 +10,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/fakes.dart';
 import '../helpers/series_test_helper.dart';
+
+/// A busca da folha de escolha de ativo. A tela por baixo dela também tem um
+/// campo de texto (o valor a simular), então o find vai pela lupa.
+final _assetSearchField = find.widgetWithIcon(TextField, Icons.search);
 
 void main() {
   late FakeCurrencyRepository repository;
@@ -161,6 +166,82 @@ void main() {
       // BRL é a contrapartida das cotações: não há série de BRL contra BRL.
       expect(find.text("BRL"), findsNothing);
       expect(find.text("EUR"), findsWidgets);
+    });
+
+    testWidgets('o campo mostra o código e o nome do ativo escolhido',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+
+      expect(find.text("USD"), findsOneWidget);
+      expect(find.text("Dólar Americano"), findsOneWidget);
+    });
+
+    testWidgets('a lista abre no ativo escolhido', (WidgetTester tester) async {
+      await pumpPage(tester);
+      await tester.tap(find.text("USD").first);
+      await tester.pumpAndSettle();
+
+      // O visto só existe na linha do ativo escolhido, e a lista só monta o
+      // que está por perto da área visível: achá-lo é achar a linha do USD
+      // sem ter rolado nada.
+      expect(find.byIcon(Icons.check), findsOneWidget);
+    });
+
+    testWidgets('a lista separa moedas de criptomoedas',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+      await tester.tap(find.text("USD").first);
+      await tester.pumpAndSettle();
+
+      // Cada grupo tem o próprio título, e um título só aparece quando sobrou
+      // algum ativo dele na busca.
+      await tester.enterText(_assetSearchField, "dolar");
+      await tester.pumpAndSettle();
+
+      expect(find.text(localizations.currencyHistoryCurrenciesSectionLabel!),
+          findsOneWidget);
+      expect(
+          find.text(localizations.currencyHistoryCryptocurrenciesSectionLabel!),
+          findsNothing);
+
+      await tester.enterText(_assetSearchField, "bitcoin");
+      await tester.pumpAndSettle();
+
+      expect(
+          find.text(localizations.currencyHistoryCryptocurrenciesSectionLabel!),
+          findsOneWidget);
+      expect(find.text(localizations.currencyHistoryCurrenciesSectionLabel!),
+          findsNothing);
+      expect(find.text("BTC"), findsOneWidget);
+    });
+
+    testWidgets('escolher um ativo na lista troca o ativo da análise',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+      await tester.tap(find.text("USD").first);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(_assetSearchField, "bitcoin");
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("BTC"));
+      await tester.pumpAndSettle();
+
+      expect(bloc.selectedAssetCode, "BTC");
+      expect(bloc.selectedAssetKind, AssetKind.cryptocurrency);
+      expect(find.text("Bitcoin"), findsOneWidget);
+    });
+
+    testWidgets('busca sem resultado avisa que não há ativo',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+      await tester.tap(find.text("USD").first);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(_assetSearchField, "moeda que não existe");
+      await tester.pumpAndSettle();
+
+      expect(find.text(localizations.aiInsightsAssetNotFoundLabel!),
+          findsOneWidget);
     });
   });
 }
