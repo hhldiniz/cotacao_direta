@@ -40,6 +40,16 @@ class HomeBloc extends BaseBloc {
     return currencies.isEmpty ? defaultHomeCurrencies : currencies;
   }
 
+  /// Moeda usada como contrapartida das cotações, quando o app a conhece.
+  ///
+  /// É o outro lado de cada bolha: a bolha do dólar mostra quanto vale um dólar
+  /// nela. A tela usa isso para abrir a conversão no mesmo par que a bolha
+  /// tocada mostrava. Nulo se a moeda escolhida nas configurações não estiver
+  /// entre as que o app conhece — aí a tela de conversão fica com o destino
+  /// padrão dela.
+  Future<Currencies?> loadCounterCurrency() async =>
+      currencyForCode(await _currencyRepository.resolveCounterCurrency());
+
   Stream<String?> getNextStreamController() {
     if (_headsUpTextStreamController == null) {
       _headsUpTextStreamController = StreamController();

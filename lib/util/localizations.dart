@@ -27,6 +27,8 @@ class MyAppLocalizations {
       'conversionCurrencyPickerTitle': 'Choose a currency',
       'conversionCurrencySearchHint': 'Search by name or code',
       'conversionCurrencyNotFoundLabel': 'No currency found',
+      'conversionCurrencyPickerYoursLabel': 'Your currencies',
+      'conversionCurrencyPickerOthersLabel': 'All currencies',
       'conversionRateUnavailableLabel': 'Exchange rate unavailable',
       'conversionCopyResultTooltip': 'Copy result',
       'conversionResultCopiedLabel': 'Result copied',
@@ -177,6 +179,8 @@ class MyAppLocalizations {
       'conversionCurrencyPickerTitle': 'Escolha a moeda',
       'conversionCurrencySearchHint': 'Busque pelo nome ou código',
       'conversionCurrencyNotFoundLabel': 'Nenhuma moeda encontrada',
+      'conversionCurrencyPickerYoursLabel': 'Suas moedas',
+      'conversionCurrencyPickerOthersLabel': 'Todas as moedas',
       'conversionRateUnavailableLabel': 'Cotação indisponível',
       'conversionCopyResultTooltip': 'Copiar o resultado',
       'conversionResultCopiedLabel': 'Resultado copiado',
@@ -370,6 +374,20 @@ class MyAppLocalizations {
   String? get conversionCurrencyNotFoundLabel {
     return _localizedValues[locale.languageCode]!
         ['conversionCurrencyNotFoundLabel'];
+  }
+
+  /// Título da seção do seletor com as moedas da tela inicial, que aparecem
+  /// antes das demais.
+  String? get conversionCurrencyPickerYoursLabel {
+    return _localizedValues[locale.languageCode]!
+        ['conversionCurrencyPickerYoursLabel'];
+  }
+
+  /// Título da seção com o resto da lista, logo abaixo das moedas da tela
+  /// inicial.
+  String? get conversionCurrencyPickerOthersLabel {
+    return _localizedValues[locale.languageCode]!
+        ['conversionCurrencyPickerOthersLabel'];
   }
 
   String? get conversionRateUnavailableLabel {

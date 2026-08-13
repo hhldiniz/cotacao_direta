@@ -67,6 +67,12 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   // termina — é a mesma lista que o app abria antes de a opção existir.
   var _homeCurrencies = HomeBloc.defaultHomeCurrencies;
 
+  // Moeda em que as bolhas expressam suas cotações. Guardada aqui para o toque
+  // numa bolha abrir a conversão no mesmo par que ela mostrava, sem esperar uma
+  // leitura do banco no meio da navegação. Nula até a primeira leitura, e
+  // quando a contrapartida escolhida não é uma moeda que o app conhece.
+  Currencies? _counterCurrency;
+
   late final AnimationController _entranceAnimationController;
   late final AnimationController _refreshIconController;
 
@@ -148,6 +154,7 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     });
     _refreshIconController.repeat();
     _loadCounterCurrencyName(context);
+    _loadCounterCurrency();
     _loadHomeCurrencies();
     _checkCurrencyAlerts(context);
     await Future.delayed(const Duration(milliseconds: 400));
@@ -158,11 +165,26 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     setState(() => _isRefreshing = false);
   }
 
-  void _openConversionPage(BuildContext context) {
+  /// Abre a tela de conversão.
+  ///
+  /// Com [fromCurrency], a tela abre convertendo essa moeda para a
+  /// contrapartida das cotações — o mesmo par que a bolha tocada mostrava, para
+  /// o toque continuar de onde o usuário estava olhando em vez de recomeçar no
+  /// par padrão. Pelo botão flutuante, que não fala de nenhuma moeda em
+  /// especial, vale o par padrão da tela de conversão.
+  ///
+  /// As moedas em bolha vão junto para o seletor da outra tela abrir com elas
+  /// no topo.
+  void _openConversionPage(BuildContext context, {Currencies? fromCurrency}) {
+    var homeCurrencies = _homeCurrencies;
+    var counterCurrency = _counterCurrency;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) {
           return ConversionPageBlocProvider(
+            initialFromCurrency: fromCurrency,
+            initialToCurrency: fromCurrency == null ? null : counterCurrency,
+            priorityCurrencies: homeCurrencies,
             child: ConversionPage(
               MyAppLocalizations.of(context)!.conversionPageTitle,
             ),
@@ -176,6 +198,15 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   /// da tela, para o texto acima das bolhas.
   void _loadCounterCurrencyName(BuildContext context) {
     _bloc.loadCounterCurrencyName(MyAppLocalizations.of(context)!.locale);
+  }
+
+  /// Lê a contrapartida das cotações, que é o destino da conversão aberta ao
+  /// tocar numa bolha. Relida junto com o resto da tela porque a escolha pode
+  /// ter mudado na aba de opções.
+  Future<void> _loadCounterCurrency() async {
+    var currency = await _bloc.loadCounterCurrency();
+    if (!mounted || currency == _counterCurrency) return;
+    setState(() => _counterCurrency = currency);
   }
 
   /// Primeira carga da tela.
@@ -195,6 +226,8 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     await _bloc.loadCounterCurrencyName(
       MyAppLocalizations.of(context)!.locale,
     );
+    if (!mounted) return;
+    await _loadCounterCurrency();
     if (!mounted) return;
     setState(() => _ratesRevision++);
   }
@@ -233,6 +266,11 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
       // ela que impede o cartão de uma moeda de reaproveitar o estado (e a
       // cotação já buscada) do cartão de outra.
       key: ValueKey(currency),
+      // Tocar na bolha leva à conversão dessa moeda: ver a cotação e querer
+      // saber quanto dá numa quantidade qualquer é o passo seguinte natural,
+      // e antes disso ele custava abrir a conversão pelo botão flutuante e
+      // escolher a moeda de novo na lista.
+      onTap: () => _openConversionPage(context, fromCurrency: currency),
       hero: hero,
       color: color,
       icon: currencyIcon(currency),
@@ -251,9 +289,9 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   /// A grade de bolhas: a primeira moeda escolhida em destaque, ocupando a
   /// largura toda, e as demais em pares.
   ///
-  /// A grade mostra só cotações. O caminho para a conversão é o botão
-  /// flutuante da tela — a ação principal fica num lugar só, sempre visível,
-  /// em vez de repetida num tile que rola junto com o conteúdo.
+  /// Cada bolha leva à conversão da sua moeda; o botão flutuante continua
+  /// abrindo a mesma tela no par padrão, para quem quer converter sem partir
+  /// de nenhuma das moedas mostradas.
   Widget _buildBentoGrid(BuildContext context, double scale) {
     final rows = <Widget>[];
     var tileIndex = 0;
@@ -445,6 +483,7 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
           });
           if (index == 0) {
             _loadCounterCurrencyName(context);
+            _loadCounterCurrency();
             // As moedas em bolha podem ter mudado na aba de opções.
             _loadHomeCurrencies();
           }

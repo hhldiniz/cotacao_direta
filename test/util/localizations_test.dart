@@ -19,6 +19,8 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.conversionCurrencyPickerTitle,
       localizations.conversionCurrencySearchHint,
       localizations.conversionCurrencyNotFoundLabel,
+      localizations.conversionCurrencyPickerYoursLabel,
+      localizations.conversionCurrencyPickerOthersLabel,
       localizations.conversionRateUnavailableLabel,
       localizations.conversionCopyResultTooltip,
       localizations.conversionResultCopiedLabel,

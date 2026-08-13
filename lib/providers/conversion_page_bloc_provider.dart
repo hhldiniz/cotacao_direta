@@ -1,4 +1,5 @@
 import 'package:cotacao_direta/blocs/conversion_page_bloc.dart';
+import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:flutter/material.dart';
 
 /// Cria o [ConversionPageBloc] e o mantém vivo enquanto esta parte da árvore existir. Um
@@ -12,8 +13,21 @@ class ConversionPageBlocProvider extends StatefulWidget {
   /// provider só chama dispose no bloc que ele mesmo criou.
   final ConversionPageBloc? bloc;
 
-  ConversionPageBlocProvider({Key? key, required this.child, this.bloc})
-      : super(key: key);
+  /// Par de moedas com que a tela abre e moedas que o seletor mostra primeiro.
+  /// São repassados ao bloc quando é o provider quem o cria; um bloc pronto
+  /// já vem com as suas escolhas feitas.
+  final Currencies? initialFromCurrency;
+  final Currencies? initialToCurrency;
+  final List<Currencies> priorityCurrencies;
+
+  ConversionPageBlocProvider({
+    Key? key,
+    required this.child,
+    this.bloc,
+    this.initialFromCurrency,
+    this.initialToCurrency,
+    this.priorityCurrencies = const [],
+  }) : super(key: key);
 
   @override
   State<ConversionPageBlocProvider> createState() =>
@@ -28,7 +42,12 @@ class ConversionPageBlocProvider extends StatefulWidget {
 
 class _ConversionPageBlocProviderState
     extends State<ConversionPageBlocProvider> {
-  late final ConversionPageBloc _bloc = widget.bloc ?? ConversionPageBloc();
+  late final ConversionPageBloc _bloc = widget.bloc ??
+      ConversionPageBloc(
+        initialFromCurrency: widget.initialFromCurrency,
+        initialToCurrency: widget.initialToCurrency,
+        priorityCurrencies: widget.priorityCurrencies,
+      );
   late final bool _ownsBloc = widget.bloc == null;
 
   @override

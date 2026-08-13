@@ -58,8 +58,10 @@ class ConversionResult {
 
 class ConversionPageBloc extends BaseBloc {
   static const initialAmount = 1.0;
-  static const initialFromCurrency = Currencies.BRL;
-  static const initialToCurrency = Currencies.USD;
+
+  /// O par que a tela abre escolhido quando quem a abriu não pediu outro.
+  static const defaultFromCurrency = Currencies.BRL;
+  static const defaultToCurrency = Currencies.USD;
 
   // Broadcast porque mais de um trecho da tela acompanha a mesma informação
   // (a moeda de origem aparece no campo de quantidade e no seletor, por
@@ -76,19 +78,49 @@ class ConversionPageBloc extends BaseBloc {
   /// de fora pertence a quem o passou.
   final bool _ownsExchangeValueBloc;
 
-  ConversionPageBloc({ExchangeValueBloc? exchangeValueBloc})
-      : _exchangeValueBloc = exchangeValueBloc ?? ExchangeValueBloc(),
-        _ownsExchangeValueBloc = exchangeValueBloc == null;
+  /// Moedas que a tela de origem quer ver no topo do seletor — na prática, as
+  /// que estão em bolha na tela inicial. Quem chegou aqui tocando numa bolha
+  /// muito provavelmente vai querer converter para outra das suas moedas, e
+  /// não para uma das mais de trinta que a lista tem.
+  final List<Currencies> priorityCurrencies;
+
+  /// [initialFromCurrency] e [initialToCurrency] são o par que a tela abre já
+  /// escolhido: tocar na bolha do dólar na tela inicial abre esta tela
+  /// convertendo dólar para a contrapartida das cotações, o mesmo que a bolha
+  /// mostrava. Sem eles vale o par padrão (real para dólar).
+  ConversionPageBloc({
+    ExchangeValueBloc? exchangeValueBloc,
+    Currencies? initialFromCurrency,
+    Currencies? initialToCurrency,
+    List<Currencies> priorityCurrencies = const [],
+  })  : _exchangeValueBloc = exchangeValueBloc ?? ExchangeValueBloc(),
+        _ownsExchangeValueBloc = exchangeValueBloc == null,
+        priorityCurrencies = List.unmodifiable(priorityCurrencies),
+        _fromCurrency = initialFromCurrency ?? defaultFromCurrency,
+        _toCurrency = _resolveToCurrency(
+            initialFromCurrency ?? defaultFromCurrency, initialToCurrency) {
+    _result = ConversionResult(
+        status: ConversionStatus.loading,
+        amount: _amount,
+        from: _fromCurrency,
+        to: _toCurrency);
+  }
+
+  /// O destino pedido por quem abriu a tela, desde que ele não seja a própria
+  /// moeda de origem: uma moeda convertida para ela mesma não diria nada. Nesse
+  /// caso vale o outro lado do par padrão, para a tela abrir com uma conversão
+  /// de verdade — tocar na bolha do real com o real de contrapartida abre real
+  /// para dólar.
+  static Currencies _resolveToCurrency(Currencies from, Currencies? candidate) {
+    if (candidate != null && candidate != from) return candidate;
+    return from == defaultToCurrency ? defaultFromCurrency : defaultToCurrency;
+  }
 
   var _amount = initialAmount;
-  var _fromCurrency = initialFromCurrency;
-  var _toCurrency = initialToCurrency;
+  Currencies _fromCurrency;
+  Currencies _toCurrency;
 
-  var _result = const ConversionResult(
-      status: ConversionStatus.loading,
-      amount: initialAmount,
-      from: initialFromCurrency,
-      to: initialToCurrency);
+  late ConversionResult _result;
 
   /// Cada conversão leva um número de ordem para que a resposta de uma
   /// conversão antiga — a busca das cotações é assíncrona — não sobrescreva o
