@@ -218,6 +218,71 @@ class ConfigurationsPage extends StatelessWidget {
                 },
               ),
             ),
+            SizedBox(height: 12 * _scale),
+
+            // O app seguia o idioma do aparelho e pronto; aqui o usuário pode
+            // fixar um dos idiomas que existem nesta build.
+            AnimatedListEntry(
+              index: 3,
+              child: StreamBuilder<String>(
+                stream: _bloc.languageStream,
+                initialData: _bloc.languageCode,
+                builder: (BuildContext context, snapshot) {
+                  // "" é o idioma do aparelho; um código que esta build não
+                  // tem mais cai no mesmo lugar, senão o seletor ficaria com
+                  // um valor sem item correspondente.
+                  final selected = AppLocales.isSupported(snapshot.data)
+                      ? snapshot.data!
+                      : "";
+                  return BentoCard(
+                    padding: EdgeInsets.all(12 * _scale),
+                    child: Row(
+                      children: [
+                        _SettingBadge(
+                          icon: Icons.translate,
+                          color: CurrencyColors.cad,
+                          scale: _scale,
+                        ),
+                        SizedBox(width: 14 * _scale),
+                        Expanded(
+                          child: Text(
+                            _localization.appLanguageSettingLabel!,
+                            style: TextStyle(fontSize: 16 * _scale),
+                          ),
+                        ),
+                        DropdownButton<String>(
+                          items: [
+                            DropdownMenuItem(
+                              value: "",
+                              child: Text(
+                                _localization.appLanguageSystemOptionLabel!,
+                                style: TextStyle(fontSize: 16 * _scale),
+                              ),
+                            ),
+                            for (var locale in AppLocales.supported)
+                              DropdownMenuItem(
+                                value: locale.languageCode,
+                                child: Text(
+                                  AppLocales.displayNameOf(locale.languageCode),
+                                  style: TextStyle(fontSize: 16 * _scale),
+                                ),
+                              ),
+                          ],
+                          onChanged: (String? value) =>
+                              _bloc.updateLanguage(value),
+                          value: selected,
+                          iconSize: 24 * _scale,
+                          underline: const SizedBox.shrink(),
+                          borderRadius: BorderRadius.circular(
+                            BentoRadius.standard,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),

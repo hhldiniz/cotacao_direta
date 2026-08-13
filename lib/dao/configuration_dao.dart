@@ -18,7 +18,8 @@ class ConfigurationDao {
           "id",
           "overrideDefaultCurrency",
           "selectedOverrideCurrencyCode",
-          "homeCurrencyCodes"
+          "homeCurrencyCodes",
+          "languageCode"
         ],
         where: "id = ?",
         whereArgs: [configurationId],
@@ -31,6 +32,7 @@ class ConfigurationDao {
               result?.first["overrideDefaultCurrency"] == 1,
           selectedOverrideCurrencyCode:
               result?.first["selectedOverrideCurrencyCode"] as String?,
+          languageCode: result?.first["languageCode"] as String?,
           homeCurrencyCodes: Configuration.parseHomeCurrencyCodes(
               result?.first["homeCurrencyCodes"] as String?));
   }

@@ -121,6 +121,29 @@ não com o dart2js dos builds): em desenvolvimento o cache só atrapalharia, com
 o hot restart mostrando código velho. Para testar o comportamento sem rede,
 então, é preciso o build.
 
+## Idioma da interface
+
+O app tem textos em português e inglês, e sempre seguiu o idioma do aparelho.
+A aba **Opções** agora permite fixar um deles, para quem usa o aparelho em um
+idioma e prefere o app em outro.
+
+A lista oferecida é exatamente a da build: `AppLocales.supported`, em
+`lib/util/localizations.dart`, é a mesma fonte que alimenta o
+`supportedLocales` do `MaterialApp`, o `isSupported` do delegate de traduções
+e o seletor da tela de opções — acrescentar um idioma ao mapa de textos e a
+essa lista basta para ele aparecer nas três pontas.
+
+A escolha é gravada na tabela `Configurations` (coluna `languageCode`, migração
+8→9). Coluna vazia — o padrão, e o que os bancos já existentes recebem na
+migração — significa "seguir o aparelho", que é o comportamento anterior. Quem
+precisa do valor é o `MaterialApp` na raiz da árvore, acima dos blocs, então
+ele chega lá pelo `AppLocaleController` (`lib/util/app_locale_controller.dart`),
+um `ValueNotifier<Locale?>` de escopo do app: a tela de opções o atualiza junto
+com a gravação e o app inteiro é reconstruído no idioma novo na hora. Um código
+que a build não conhece — por exemplo ao instalar por cima de uma versão com
+mais traduções — é tratado como "seguir o aparelho", em vez de deixar a
+interface sem textos.
+
 ## IA local: insights e projeções
 
 A aba **IA** analisa um ativo (moeda ou criptomoeda) e mostra um resumo de

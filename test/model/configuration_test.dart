@@ -17,6 +17,8 @@ void main() {
       expect(configuration.homeCurrencyCodes,
           Configuration.defaultHomeCurrencyCodes,
           reason: "quem nunca escolheu vê as moedas que a tela já mostrava");
+      expect(configuration.languageCode, "",
+          reason: "sem escolha, a interface segue o idioma do aparelho");
     });
 
     test('aceita os valores informados', () {
@@ -37,7 +39,8 @@ void main() {
         'id': 1,
         'overrideDefaultCurrency': 1,
         'selectedOverrideCurrencyCode': "JPY",
-        'homeCurrencyCodes': "USD,EUR,CAD,JPY"
+        'homeCurrencyCodes': "USD,EUR,CAD,JPY",
+        'languageCode': ""
       });
     });
 
@@ -85,6 +88,26 @@ void main() {
           Configuration.defaultHomeCurrencyCodes);
     });
 
+    test('aceita o idioma escolhido para a interface', () {
+      expect(Configuration(1, languageCode: "pt").languageCode, "pt");
+    });
+
+    // O que vem do banco pode ter espaço ou caixa diferente; um "PT " não
+    // bateria com nenhum idioma da build e cairia no do aparelho.
+    test('parseLanguageCode normaliza espaços e caixa', () {
+      expect(Configuration.parseLanguageCode(" PT "), "pt");
+      expect(Configuration(1, languageCode: " EN").languageCode, "en");
+    });
+
+    test('parseLanguageCode lê nulo como o idioma do aparelho', () {
+      expect(Configuration.parseLanguageCode(null), "");
+    });
+
+    test('toMap guarda o idioma escolhido', () {
+      expect(Configuration(1, languageCode: "en").toMap()['languageCode'],
+          "en");
+    });
+
     test('toString expõe todos os campos', () {
       var text = Configuration(1,
               overrideDefaultCurrency: true,
@@ -95,6 +118,7 @@ void main() {
       expect(text, contains("overrideDefaultCurrency: true"));
       expect(text, contains("selectedOverrideCurrencyCode: GBP"));
       expect(text, contains("homeCurrencyCodes: USD,EUR,CAD,JPY"));
+      expect(text, contains("languageCode:"));
     });
   });
 }

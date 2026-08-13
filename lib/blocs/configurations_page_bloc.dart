@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cotacao_direta/blocs/base_bloc.dart';
 import 'package:cotacao_direta/model/configuration.dart';
 import 'package:cotacao_direta/repository/configuration_repository.dart';
+import 'package:cotacao_direta/util/app_locale_controller.dart';
 import 'package:cotacao_direta/view/widgets/widget_state_helpers/override_currency_state_helper.dart';
 
 class ConfigurationsPageBloc extends BaseBloc {
@@ -10,10 +11,17 @@ class ConfigurationsPageBloc extends BaseBloc {
       OverrideCurrencyStateHelper();
   final ConfigurationRepository _configurationRepository;
 
+  /// Quem leva o idioma escolhido até o MaterialApp da raiz, que está acima
+  /// deste bloc na árvore e por isso não pode ouvir os streams daqui.
+  final AppLocaleController _localeController;
+
   /// O repositório é injetável para os testes rodarem sem tocar no banco.
-  ConfigurationsPageBloc({ConfigurationRepository? configurationRepository})
+  ConfigurationsPageBloc(
+      {ConfigurationRepository? configurationRepository,
+      AppLocaleController? localeController})
       : _configurationRepository =
-            configurationRepository ?? ConfigurationRepository();
+            configurationRepository ?? ConfigurationRepository(),
+        _localeController = localeController ?? AppLocaleController.instance;
 
   StreamController _currencyOptionsStreamController = StreamController();
 
@@ -30,6 +38,12 @@ class ConfigurationsPageBloc extends BaseBloc {
   List<String> _homeCurrencyCodes =
       List.of(Configuration.defaultHomeCurrencyCodes);
 
+  // Idioma da interface escolhido pelo usuário. Vazio é "seguir o aparelho".
+  StreamController<String> _languageStreamController =
+      StreamController<String>.broadcast();
+
+  String _languageCode = "";
+
   Stream get currencyOptionsStream => _currencyOptionsStreamController.stream;
 
   Stream<List<String>> get homeCurrenciesStream =>
@@ -38,6 +52,12 @@ class ConfigurationsPageBloc extends BaseBloc {
   /// Última lista conhecida, para a tela ter o que mostrar antes de a leitura
   /// do banco terminar.
   List<String> get homeCurrencyCodes => _homeCurrencyCodes;
+
+  Stream<String> get languageStream => _languageStreamController.stream;
+
+  /// Último idioma conhecido, para a tela ter o que mostrar no seletor antes
+  /// de a leitura do banco terminar.
+  String get languageCode => _languageCode;
 
   Stream get overrideDefaultCurrencyValueStream =>
       _overrideDefaultCurrencyValueStreamController.stream;
@@ -59,6 +79,8 @@ class ConfigurationsPageBloc extends BaseBloc {
       overrideDefaultCurrencyValueSink.add(_overrideCurrencyStateHelper);
       _homeCurrencyCodes = List.of(configuration.homeCurrencyCodes);
       _homeCurrenciesStreamController.sink.add(_homeCurrencyCodes);
+      _languageCode = configuration.languageCode;
+      _languageStreamController.sink.add(_languageCode);
     });
   }
 
@@ -74,6 +96,21 @@ class ConfigurationsPageBloc extends BaseBloc {
     _homeCurrenciesStreamController.sink.add(_homeCurrencyCodes);
     var configuration = await _configurationRepository.getConfiguration();
     configuration.homeCurrencyCodes = List.of(currencyCodes);
+    await _configurationRepository.insert(configuration);
+  }
+
+  /// Grava o idioma da interface e o aplica na hora.
+  ///
+  /// [languageCode] nulo ou vazio volta a seguir o aparelho, que é o padrão.
+  /// A troca vai para o controlador antes da gravação: a tela toda é
+  /// reconstruída no idioma novo assim que o usuário escolhe, sem esperar o
+  /// banco.
+  Future<void> updateLanguage(String? languageCode) async {
+    _languageCode = Configuration.parseLanguageCode(languageCode);
+    _languageStreamController.sink.add(_languageCode);
+    _localeController.updateLanguage(_languageCode);
+    var configuration = await _configurationRepository.getConfiguration();
+    configuration.languageCode = _languageCode;
     await _configurationRepository.insert(configuration);
   }
 
@@ -122,5 +159,6 @@ class ConfigurationsPageBloc extends BaseBloc {
     _overrideDefaultCurrencyValueStreamController.close();
     _selectedCurrencyCodeStreamController.close();
     _homeCurrenciesStreamController.close();
+    _languageStreamController.close();
   }
 }

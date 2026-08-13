@@ -42,6 +42,8 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.homeCurrenciesSelectedCountLabel,
       localizations.homeCurrenciesEmptySelectionLabel,
       localizations.homeCurrenciesSaveBtnLabel,
+      localizations.appLanguageSettingLabel,
+      localizations.appLanguageSystemOptionLabel,
       localizations.appConfigurationsSectionLabel,
       localizations.pwaInstallSectionLabel,
       localizations.pwaInstallCardLabel,
@@ -274,6 +276,47 @@ void main() {
 
       expect(found, isNotNull);
       expect(found!.conversionPageTitle, "Conversão de Moedas");
+    });
+  });
+
+  group('AppLocales', () {
+    test('lista os idiomas que existem na build', () {
+      expect(AppLocales.supported,
+          const [Locale("en"), Locale("pt")]);
+    });
+
+    // A lista da tela de opções sai daqui: um idioma sem nome apareceria como
+    // um código solto para o usuário.
+    test('todo idioma da build tem um nome para mostrar', () {
+      for (var locale in AppLocales.supported) {
+        expect(AppLocales.displayNames[locale.languageCode], isNotNull,
+            reason: "falta o nome de ${locale.languageCode}");
+      }
+    });
+
+    test('displayNameOf devolve o próprio código quando não há nome', () {
+      expect(AppLocales.displayNameOf("pt"), "Português");
+      expect(AppLocales.displayNameOf("xx"), "xx");
+    });
+
+    test('isSupported reconhece só o que está na build', () {
+      expect(AppLocales.isSupported("pt"), isTrue);
+      expect(AppLocales.isSupported("en"), isTrue);
+      expect(AppLocales.isSupported("fr"), isFalse);
+      expect(AppLocales.isSupported(""), isFalse);
+      expect(AppLocales.isSupported(null), isFalse);
+    });
+
+    test('localeFor converte o código gravado', () {
+      expect(AppLocales.localeFor("pt"), const Locale("pt"));
+    });
+
+    // Vazio, nulo ou fora da build significam "seguir o aparelho", que é o que
+    // um locale nulo faz no MaterialApp.
+    test('localeFor devolve nulo quando não há idioma a fixar', () {
+      expect(AppLocales.localeFor(""), isNull);
+      expect(AppLocales.localeFor(null), isNull);
+      expect(AppLocales.localeFor("fr"), isNull);
     });
   });
 }

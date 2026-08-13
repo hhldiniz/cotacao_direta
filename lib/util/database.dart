@@ -84,6 +84,14 @@ class AppDatabase {
     "ALTER TABLE Configurations ADD homeCurrencyCodes TEXT NOT NULL DEFAULT ''"
   ];
 
+  // O idioma da interface passa a ser escolhido nas configurações, em vez de
+  // vir sempre do aparelho. A coluna guarda o código do Locale ("pt", "en");
+  // vazia — o que os bancos já existentes recebem aqui — significa "seguir o
+  // aparelho", que é o comportamento que o app sempre teve.
+  var migrationsScripts8_9 = [
+    "ALTER TABLE Configurations ADD languageCode TEXT NOT NULL DEFAULT ''"
+  ];
+
   /// Scripts a aplicar para chegar em cada versão, na ordem.
   Map<int, List<String>> get _migrationsByVersion => {
         2: migrationsScripts1_2,
@@ -93,6 +101,7 @@ class AppDatabase {
         6: migrationsScripts5_6,
         7: migrationsScripts6_7,
         8: migrationsScripts7_8,
+        9: migrationsScripts8_9,
       };
 
   /// A abertura em andamento. Guardar o Future (e não só o Database pronto) é o
@@ -113,7 +122,7 @@ class AppDatabase {
         await db.execute(
             "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, friendlyName TEXT NOT NULL DEFAULT '', counterCurrency TEXT NOT NULL DEFAULT 'BRL', PRIMARY KEY(id, historicalDate, counterCurrency))");
         await db.execute(
-            "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT, homeCurrencyCodes TEXT NOT NULL DEFAULT '')");
+            "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT, homeCurrencyCodes TEXT NOT NULL DEFAULT '', languageCode TEXT NOT NULL DEFAULT '')");
         await db.execute(
             "CREATE TABLE CurrencyAlerts(id INTEGER PRIMARY KEY AUTOINCREMENT, currencyCode TEXT NOT NULL, targetValue REAL NOT NULL, condition TEXT NOT NULL, triggered INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1)");
       }, onUpgrade: (database, oldVersion, newVersion) async {
@@ -124,7 +133,7 @@ class AppDatabase {
             await database.execute(script);
           }
         }
-      }, version: 8);
+      }, version: 9);
     return _database;
   }
 }
