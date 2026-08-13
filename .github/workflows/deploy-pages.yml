@@ -44,8 +44,13 @@ jobs:
       # --base-href precisa bater com o caminho do site de projeto no GitHub
       # Pages (https://<usuário>.github.io/<repositório>/); sem isso os
       # assets carregam com o caminho errado e a página fica em branco.
+      #
+      # --no-web-resources-cdn faz o CanvasKit ser servido junto do site, e não
+      # pelo CDN do Google. É o que permite ao service worker guardá-lo em
+      # cache: pelo CDN ele vem de outro domínio, e o app instalado não abriria
+      # sem rede. Ver a seção "Web como PWA" do README.
       - name: Compila o app Web (release)
-        run: flutter build web --release --base-href /cotacao_direta/
+        run: flutter build web --release --no-web-resources-cdn --base-href /cotacao_direta/
 
       - name: Configura o GitHub Pages
         uses: actions/configure-pages@v5

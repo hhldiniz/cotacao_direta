@@ -50,6 +50,23 @@ class MyAppLocalizations {
       'homeCurrenciesEmptySelectionLabel': 'Choose at least one currency',
       'homeCurrenciesSaveBtnLabel': 'Save',
       'appConfigurationsSectionLabel': 'App Configurations',
+      'pwaInstallSectionLabel': 'Install on this device',
+      'pwaInstallCardLabel': 'Install app',
+      'pwaInstallCardDescription':
+          'Add Cotação Direta to your device and open it from its own icon, '
+          'without the browser bar.',
+      'pwaInstallBtnLabel': 'Install',
+      'pwaInstallIosCardDescription':
+          'On iPhone and iPad the app is installed from the Safari share menu.',
+      'pwaInstallIosBtnLabel': 'How to install',
+      'pwaInstallIosDialogTitle': 'Add to Home Screen',
+      'pwaInstallIosDialogBody':
+          'In Safari, tap the share button at the bottom of the screen, choose '
+          '"Add to Home Screen" and confirm. Cotação Direta then shows up '
+          'among your apps.',
+      'pwaInstallIosDialogCloseBtnLabel': 'Got it',
+      'pwaInstallAcceptedLabel': 'App installed',
+      'pwaInstallDismissedLabel': 'Installation cancelled',
       'aboutAppDescription': 'A simple app that shows the exchange rate of '
           'the main currencies against the Brazilian real.',
       'aboutVersionLabel': 'Version',
@@ -183,6 +200,24 @@ class MyAppLocalizations {
       'homeCurrenciesEmptySelectionLabel': 'Escolha pelo menos uma moeda',
       'homeCurrenciesSaveBtnLabel': 'Salvar',
       'appConfigurationsSectionLabel': 'Configurações do Aplicativo',
+      'pwaInstallSectionLabel': 'Instalar no aparelho',
+      'pwaInstallCardLabel': 'Instalar aplicativo',
+      'pwaInstallCardDescription':
+          'Adicione o Cotação Direta ao seu aparelho e abra pelo ícone dele, '
+          'sem a barra do navegador.',
+      'pwaInstallBtnLabel': 'Instalar',
+      'pwaInstallIosCardDescription':
+          'No iPhone e no iPad a instalação é feita pelo menu de compartilhar '
+          'do Safari.',
+      'pwaInstallIosBtnLabel': 'Como instalar',
+      'pwaInstallIosDialogTitle': 'Adicionar à Tela de Início',
+      'pwaInstallIosDialogBody':
+          'No Safari, toque no botão de compartilhar, na parte de baixo da '
+          'tela, escolha "Adicionar à Tela de Início" e confirme. O Cotação '
+          'Direta passa a aparecer junto dos seus aplicativos.',
+      'pwaInstallIosDialogCloseBtnLabel': 'Entendi',
+      'pwaInstallAcceptedLabel': 'Aplicativo instalado',
+      'pwaInstallDismissedLabel': 'Instalação cancelada',
       'aboutAppDescription': 'Um aplicativo simples que mostra a cotação das '
           'principais moedas frente ao real.',
       'aboutVersionLabel': 'Versão',
@@ -438,6 +473,52 @@ class MyAppLocalizations {
   String? get appConfigurationsSectionLabel {
     return _localizedValues[locale.languageCode]!
         ['appConfigurationsSectionLabel'];
+  }
+
+  String? get pwaInstallSectionLabel {
+    return _localizedValues[locale.languageCode]!['pwaInstallSectionLabel'];
+  }
+
+  String? get pwaInstallCardLabel {
+    return _localizedValues[locale.languageCode]!['pwaInstallCardLabel'];
+  }
+
+  String? get pwaInstallCardDescription {
+    return _localizedValues[locale.languageCode]!['pwaInstallCardDescription'];
+  }
+
+  String? get pwaInstallBtnLabel {
+    return _localizedValues[locale.languageCode]!['pwaInstallBtnLabel'];
+  }
+
+  String? get pwaInstallIosCardDescription {
+    return _localizedValues[locale.languageCode]!
+        ['pwaInstallIosCardDescription'];
+  }
+
+  String? get pwaInstallIosBtnLabel {
+    return _localizedValues[locale.languageCode]!['pwaInstallIosBtnLabel'];
+  }
+
+  String? get pwaInstallIosDialogTitle {
+    return _localizedValues[locale.languageCode]!['pwaInstallIosDialogTitle'];
+  }
+
+  String? get pwaInstallIosDialogBody {
+    return _localizedValues[locale.languageCode]!['pwaInstallIosDialogBody'];
+  }
+
+  String? get pwaInstallIosDialogCloseBtnLabel {
+    return _localizedValues[locale.languageCode]!
+        ['pwaInstallIosDialogCloseBtnLabel'];
+  }
+
+  String? get pwaInstallAcceptedLabel {
+    return _localizedValues[locale.languageCode]!['pwaInstallAcceptedLabel'];
+  }
+
+  String? get pwaInstallDismissedLabel {
+    return _localizedValues[locale.languageCode]!['pwaInstallDismissedLabel'];
   }
 
   String? get aboutAppDescription {

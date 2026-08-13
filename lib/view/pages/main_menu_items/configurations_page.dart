@@ -8,6 +8,7 @@ import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:cotacao_direta/view/widgets/animated_list_entry.dart';
 import 'package:cotacao_direta/view/widgets/bento_card.dart';
 import 'package:cotacao_direta/view/widgets/home_currencies_picker_sheet.dart';
+import 'package:cotacao_direta/view/widgets/pwa_install_card.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cotacao_direta/view/widgets/widget_state_helpers/override_currency_state_helper.dart';
@@ -43,6 +44,10 @@ class ConfigurationsPage extends StatelessWidget {
             24 * _scale,
           ),
           children: [
+            // Só rende alguma coisa na web, e apenas enquanto o navegador
+            // aceitar instalar o app: nas outras plataformas some da lista.
+            const PwaInstallCard(index: 0),
+
             BentoSectionTitle(_localization.appConfigurationsSectionLabel!),
 
             // Cada opção vira um tile próprio, como na grade da tela inicial,
