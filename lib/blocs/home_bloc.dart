@@ -40,6 +40,23 @@ class HomeBloc extends BaseBloc {
     return currencies.isEmpty ? defaultHomeCurrencies : currencies;
   }
 
+  /// Grava a ordem em que as moedas aparecem em bolha na tela inicial.
+  ///
+  /// É a mesma configuração que a aba de opções escreve: reordenar a grade
+  /// arrastando as bolhas e refazer a escolha nas opções são dois caminhos
+  /// para a mesma lista, então a ordem arrastada continua valendo na próxima
+  /// vez que o app abrir.
+  ///
+  /// Uma lista vazia é ignorada, como nas opções: a coluna vazia significa
+  /// "o usuário nunca escolheu", e traria de volta as moedas padrão sem ele
+  /// ter pedido.
+  Future<void> saveHomeCurrencies(List<Currencies> currencies) async {
+    if (currencies.isEmpty) return;
+    var configuration = await _configurationRepository.getConfiguration();
+    configuration.homeCurrencyCodes = currencies.map(currencyCode).toList();
+    await _configurationRepository.insert(configuration);
+  }
+
   /// Moeda usada como contrapartida das cotações, quando o app a conhece.
   ///
   /// É o outro lado de cada bolha: a bolha do dólar mostra quanto vale um dólar

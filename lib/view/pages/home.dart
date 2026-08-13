@@ -20,6 +20,7 @@ import 'package:cotacao_direta/view/pages/main_menu_items/currency_alerts_page.d
 import 'package:cotacao_direta/view/widgets/currency_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/currency_rate_card.dart';
 import 'package:cotacao_direta/view/widgets/currency_refresh_scope.dart';
+import 'package:cotacao_direta/view/widgets/reorderable_bento_grid.dart';
 // listEquals: o material.dart não reexporta tudo do foundation.
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -292,57 +293,44 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   /// Cada bolha leva à conversão da sua moeda; o botão flutuante continua
   /// abrindo a mesma tela no par padrão, para quem quer converter sem partir
   /// de nenhuma das moedas mostradas.
+  ///
+  /// A ordem das bolhas é a da configuração, mas pode ser mudada aqui mesmo:
+  /// segurar o dedo sobre uma bolha e soltá-la sobre outra põe a arrastada
+  /// naquela posição, empurrando as demais (ver [ReorderableBentoGrid]).
   Widget _buildBentoGrid(BuildContext context, double scale) {
-    final rows = <Widget>[];
-    var tileIndex = 0;
-
-    if (_homeCurrencies.isNotEmpty) {
-      rows.add(_animatedTile(
-        tileIndex++,
-        _currencyCard(context, _homeCurrencies.first,
-            hero: true, scale: scale),
-      ));
-    }
-
-    final pairedTiles = <Widget>[
-      for (var currency in _homeCurrencies.skip(1))
-        _currencyCard(context, currency, hero: false, scale: scale),
-    ];
-
-    for (var first = 0; first < pairedTiles.length; first += 2) {
-      final hasSecond = first + 1 < pairedTiles.length;
-      rows.add(SizedBox(height: 12 * scale));
-      // O IntrinsicHeight é obrigatório aqui: a Row usa
-      // CrossAxisAlignment.stretch para os dois cartões terminarem com a
-      // mesma altura, mas o eixo transversal de uma Row é o vertical, que
-      // dentro do SingleChildScrollView é ilimitado. Sem uma altura
-      // definida, o stretch não tem o que esticar e o layout falha
-      // (RenderFlex sem size, erro a cada frame).
-      rows.add(IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: _animatedTile(tileIndex++, pairedTiles[first])),
-            SizedBox(width: 12 * scale),
-            // Numa linha ímpar o espaço vazio à direita fica reservado, para o
-            // cartão sozinho ter a mesma largura dos das outras linhas.
-            Expanded(
-              child: hasSecond
-                  ? _animatedTile(tileIndex++, pairedTiles[first + 1])
-                  : const SizedBox.shrink(),
-            ),
-          ],
-        ),
-      ));
-    }
-
+    final localization = MyAppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: rows,
+      child: ReorderableBentoGrid(
+        itemCount: _homeCurrencies.length,
+        spacing: 12 * scale,
+        onReorder: _reorderHomeCurrencies,
+        moveEarlierSemanticsLabel: localization.homeReorderMoveEarlierLabel,
+        moveLaterSemanticsLabel: localization.homeReorderMoveLaterLabel,
+        itemBuilder: (BuildContext context, int index, bool hero) =>
+            _animatedTile(
+          index,
+          _currencyCard(context, _homeCurrencies[index],
+              hero: hero, scale: scale),
+        ),
       ),
     );
+  }
+
+  /// Põe a bolha de [oldIndex] na posição [newIndex] e empurra as demais.
+  ///
+  /// A tela muda na hora e a gravação vem depois: a ordem nova é o que o
+  /// usuário acabou de fazer com o dedo, não faz sentido esperar o banco para
+  /// mostrá-la. A mesma configuração alimenta a lista da aba de opções, então
+  /// arrastar aqui é a mesma escolha, feita pelo outro lado.
+  void _reorderHomeCurrencies(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+    if (oldIndex < 0 || oldIndex >= _homeCurrencies.length) return;
+    if (newIndex < 0 || newIndex >= _homeCurrencies.length) return;
+    final currencies = List.of(_homeCurrencies);
+    currencies.insert(newIndex, currencies.removeAt(oldIndex));
+    setState(() => _homeCurrencies = currencies);
+    _bloc.saveHomeCurrencies(currencies);
   }
 
   @override
@@ -387,6 +375,40 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     // conversão fechando a grade.
     final bentoGrid = _buildBentoGrid(context, _scale);
 
+    // O toque longo que reordena a grade não se anuncia sozinho, então a tela
+    // o diz — e só quando há mais de uma bolha, que é quando reordenar
+    // significa alguma coisa.
+    final reorderHint = _homeCurrencies.length > 1
+        ? Padding(
+            padding: EdgeInsets.only(
+              left: 16 * _scale,
+              right: 16 * _scale,
+              bottom: 10 * _scale,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.drag_indicator,
+                  size: 16 * _scale,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                SizedBox(width: 6 * _scale),
+                Flexible(
+                  child: Text(
+                    _localization.homeReorderHintLabel!,
+                    style: TextStyle(
+                      fontSize: 12 * _scale,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          )
+        : const SizedBox.shrink();
+
     final List<Widget> _widgetOptions = <Widget>[
       // O escopo avisa os widgets de cotação abaixo dele quando os valores
       // precisam ser buscados de novo.
@@ -402,6 +424,7 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
                   padding: EdgeInsets.symmetric(vertical: 16 * _scale),
                   child: pageHeader,
                 ),
+                reorderHint,
                 bentoGrid,
                 // Espaço para o botão flutuante: ele paira sobre o fim da
                 // lista, e sem esta folga cobriria o último cartão de cotação
