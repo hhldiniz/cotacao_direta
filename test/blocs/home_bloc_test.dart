@@ -119,4 +119,40 @@ void main() {
       expect(await bloc.loadHomeCurrencies(), HomeBloc.defaultHomeCurrencies);
     });
   });
+
+  group('HomeBloc.saveHomeCurrencies', () {
+    // A ordem arrastada na grade da tela inicial vai para a mesma configuração
+    // que a aba de opções escreve.
+    test('grava os códigos na ordem recebida', () async {
+      var configurationRepository = FakeConfigurationRepository(
+          configuration: Configuration(1, homeCurrencyCodes: ["USD", "EUR"]));
+      var bloc = HomeBloc(
+          currencyRepository: CurrencyRepository.withDependencies(
+              configurationRepository: FakeConfigurationRepository()),
+          configurationRepository: configurationRepository);
+
+      await bloc.saveHomeCurrencies([Currencies.EUR, Currencies.USD]);
+
+      expect(configurationRepository.inserted.single.homeCurrencyCodes,
+          ["EUR", "USD"]);
+      expect(await bloc.loadHomeCurrencies(),
+          [Currencies.EUR, Currencies.USD],
+          reason: "a ordem gravada é a que a tela vai ler na próxima abertura");
+    });
+
+    // A coluna vazia significa "o usuário nunca escolheu", e traria de volta as
+    // moedas padrão sem ele ter pedido.
+    test('ignora uma lista vazia', () async {
+      var configurationRepository = FakeConfigurationRepository(
+          configuration: Configuration(1, homeCurrencyCodes: ["USD", "EUR"]));
+      var bloc = HomeBloc(
+          currencyRepository: CurrencyRepository.withDependencies(
+              configurationRepository: FakeConfigurationRepository()),
+          configurationRepository: configurationRepository);
+
+      await bloc.saveHomeCurrencies([]);
+
+      expect(configurationRepository.inserted, isEmpty);
+    });
+  });
 }

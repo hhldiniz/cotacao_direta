@@ -147,6 +147,9 @@ class MyAppLocalizations {
       'conversionButtonLabel': 'Conversions',
       'conversionPageTitle': "Currency Conversion",
       'homePageHeadsUpText': 'Exchange rates in %s',
+      'homeReorderHintLabel': 'Press and hold a quote to rearrange the grid.',
+      'homeReorderMoveEarlierLabel': 'Move one position back',
+      'homeReorderMoveLaterLabel': 'Move one position forward',
       'conversionMultiplierHint': 'Amount',
       'conversionPageExplanationText': 'Insert the amount value of the currency '
           'that will be converted, selected a currency to be converted and the '
@@ -301,6 +304,10 @@ class MyAppLocalizations {
       'conversionButtonLabel': "Conversões",
       'conversionPageTitle': "Conversão de Moedas",
       'homePageHeadsUpText': "Cotações em %s",
+      'homeReorderHintLabel':
+          'Segure uma cotação para reorganizar a grade.',
+      'homeReorderMoveEarlierLabel': 'Mover uma posição para trás',
+      'homeReorderMoveLaterLabel': 'Mover uma posição para frente',
       'conversionMultiplierHint': 'Quantidade',
       'conversionPageExplanationText': 'Insira a quantidade da moeda que será '
           'convertida, selecionada a moeda que será convertida e a moeda para '
@@ -459,6 +466,10 @@ class MyAppLocalizations {
       'conversionButtonLabel': 'Conversiones',
       'conversionPageTitle': 'Conversión de divisas',
       'homePageHeadsUpText': 'Cotizaciones en %s',
+      'homeReorderHintLabel':
+          'Mantén pulsada una cotización para reorganizar la cuadrícula.',
+      'homeReorderMoveEarlierLabel': 'Mover una posición hacia atrás',
+      'homeReorderMoveLaterLabel': 'Mover una posición hacia delante',
       'conversionMultiplierHint': 'Cantidad',
       'conversionPageExplanationText': 'Introduce la cantidad de la divisa que '
           'se va a convertir, elige esa divisa y la divisa a la que quieres '
@@ -621,6 +632,10 @@ class MyAppLocalizations {
       'conversionButtonLabel': 'Conversiones',
       'conversionPageTitle': 'Conversión de monedas',
       'homePageHeadsUpText': 'Cotizaciones en %s',
+      'homeReorderHintLabel':
+          'Mantén presionada una cotización para reorganizar la cuadrícula.',
+      'homeReorderMoveEarlierLabel': 'Mover una posición hacia atrás',
+      'homeReorderMoveLaterLabel': 'Mover una posición hacia adelante',
       'conversionMultiplierHint': 'Cantidad',
       'conversionPageExplanationText': 'Ingresa la cantidad de la moneda que '
           'vas a convertir, selecciona esa moneda y la moneda a la que quieres '
@@ -789,6 +804,21 @@ class MyAppLocalizations {
 
   String? get homePageHeadsUpText {
     return _values['homePageHeadsUpText'];
+  }
+
+  /// Diz que dá para reordenar a grade da tela inicial: o arrasto por toque
+  /// longo não se anuncia sozinho.
+  String? get homeReorderHintLabel {
+    return _values['homeReorderHintLabel'];
+  }
+
+  /// Ações da grade para o leitor de tela, no lugar do arrasto.
+  String? get homeReorderMoveEarlierLabel {
+    return _values['homeReorderMoveEarlierLabel'];
+  }
+
+  String? get homeReorderMoveLaterLabel {
+    return _values['homeReorderMoveLaterLabel'];
   }
 
   String? get conversionMultiplierHint {
