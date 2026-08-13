@@ -80,9 +80,9 @@ class AiInsightsBloc extends BaseBloc {
   /// query comes back).
   int _requestId = 0;
 
-  /// Language of the last analysis requested by the screen, to reuse when the
+  /// Locale of the last analysis requested by the screen, to reuse when the
   /// bloc itself re-runs the analysis (on a horizon change).
-  String _languageCode = "pt";
+  String _localeName = "pt";
 
   AiInsightsBloc({
     CurrencyRepository? currencyRepository,
@@ -130,7 +130,7 @@ class AiInsightsBloc extends BaseBloc {
     // The horizon only changes the projection; redoing the analysis is cheap
     // and needs no network, so the screen answers right away when a result is
     // already there.
-    if (_state.hasAnalysis) analyze(languageCode: _languageCode);
+    if (_state.hasAnalysis) analyze(localeName: _localeName);
   }
 
   /// Amount typed for the simulation, or null when the field is empty or
@@ -155,9 +155,9 @@ class AiInsightsBloc extends BaseBloc {
 
   /// Fetches the history of the selected asset and runs the local model over
   /// it.
-  Future<void> analyze({String languageCode = "pt"}) async {
+  Future<void> analyze({String localeName = "pt"}) async {
     final requestId = ++_requestId;
-    _languageCode = languageCode;
+    _localeName = localeName;
     _emit(const AiInsightsState.loading());
     try {
       final today = DateTime.now();
@@ -192,7 +192,7 @@ class AiInsightsBloc extends BaseBloc {
       final analysis = await Future(() => _aiService.analyze(
             series,
             horizonInDays: _horizonInDays,
-            languageCode: languageCode,
+            localeName: localeName,
           ));
       if (requestId != _requestId) return;
       _emit(AiInsightsState.ready(analysis));

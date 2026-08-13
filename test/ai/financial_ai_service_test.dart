@@ -103,8 +103,8 @@ void main() {
       final series = seriesFromPrices(
           syntheticPrices(length: 150, dailyDrift: 0.004, noise: 0.002));
 
-      final portugues = service.analyze(series, languageCode: "pt");
-      final ingles = service.analyze(series, languageCode: "en");
+      final portugues = service.analyze(series, localeName: "pt");
+      final ingles = service.analyze(series, localeName: "en");
 
       expect(
           portugues.insights

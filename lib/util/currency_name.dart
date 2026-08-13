@@ -12,43 +12,174 @@ import 'package:flutter/widgets.dart';
 /// uma lista em branco enquanto a rede não responde — e nenhum nome quando ela
 /// não responde.
 const Map<Currencies, Map<String, String>> _namesByCurrency = {
-  Currencies.AUD: {"pt": "Dólar Australiano", "en": "Australian Dollar"},
-  Currencies.BRL: {"pt": "Real Brasileiro", "en": "Brazilian Real"},
-  Currencies.CAD: {"pt": "Dólar Canadense", "en": "Canadian Dollar"},
-  Currencies.CZK: {"pt": "Coroa Tcheca", "en": "Czech Koruna"},
-  Currencies.DKK: {"pt": "Coroa Dinamarquesa", "en": "Danish Krone"},
-  Currencies.EUR: {"pt": "Euro", "en": "Euro"},
-  Currencies.GBP: {"pt": "Libra Esterlina", "en": "British Pound"},
-  Currencies.HKD: {"pt": "Dólar de Hong Kong", "en": "Hong Kong Dollar"},
-  Currencies.IDR: {"pt": "Rupia Indonésia", "en": "Indonesian Rupiah"},
-  Currencies.ILS: {"pt": "Novo Shekel Israelense", "en": "Israeli New Shekel"},
-  Currencies.INR: {"pt": "Rupia Indiana", "en": "Indian Rupee"},
-  Currencies.ISK: {"pt": "Coroa Islandesa", "en": "Icelandic Króna"},
-  Currencies.JPY: {"pt": "Iene Japonês", "en": "Japanese Yen"},
-  Currencies.USD: {"pt": "Dólar Americano", "en": "US Dollar"},
-  Currencies.PHP: {"pt": "Peso Filipino", "en": "Philippine Peso"},
-  Currencies.HUF: {"pt": "Florim Húngaro", "en": "Hungarian Forint"},
-  Currencies.RON: {"pt": "Leu Romeno", "en": "Romanian Leu"},
-  Currencies.SEK: {"pt": "Coroa Sueca", "en": "Swedish Krona"},
-  Currencies.RUB: {"pt": "Rublo Russo", "en": "Russian Ruble"},
-  Currencies.HRK: {"pt": "Kuna Croata", "en": "Croatian Kuna"},
-  Currencies.THB: {"pt": "Baht Tailandês", "en": "Thai Baht"},
-  Currencies.CHF: {"pt": "Franco Suíço", "en": "Swiss Franc"},
-  Currencies.MYR: {"pt": "Ringgit Malaio", "en": "Malaysian Ringgit"},
-  Currencies.BGN: {"pt": "Lev Búlgaro", "en": "Bulgarian Lev"},
-  Currencies.TRY: {"pt": "Lira Turca", "en": "Turkish Lira"},
-  Currencies.CNY: {"pt": "Yuan Chinês", "en": "Chinese Yuan"},
-  Currencies.NOK: {"pt": "Coroa Norueguesa", "en": "Norwegian Krone"},
-  Currencies.NZD: {"pt": "Dólar Neozelandês", "en": "New Zealand Dollar"},
-  Currencies.ZAR: {"pt": "Rand Sul-Africano", "en": "South African Rand"},
-  Currencies.MXN: {"pt": "Peso Mexicano", "en": "Mexican Peso"},
-  Currencies.SGD: {"pt": "Dólar de Singapura", "en": "Singapore Dollar"},
-  Currencies.KRW: {"pt": "Won Sul-Coreano", "en": "South Korean Won"},
-  Currencies.PLN: {"pt": "Zloty Polonês", "en": "Polish Zloty"},
+  Currencies.AUD: {
+    "pt": "Dólar Australiano",
+    "en": "Australian Dollar",
+    "es": "Dólar australiano"
+  },
+  Currencies.BRL: {
+    "pt": "Real Brasileiro",
+    "en": "Brazilian Real",
+    "es": "Real brasileño"
+  },
+  Currencies.CAD: {
+    "pt": "Dólar Canadense",
+    "en": "Canadian Dollar",
+    "es": "Dólar canadiense"
+  },
+  Currencies.CZK: {
+    "pt": "Coroa Tcheca",
+    "en": "Czech Koruna",
+    "es": "Corona checa"
+  },
+  Currencies.DKK: {
+    "pt": "Coroa Dinamarquesa",
+    "en": "Danish Krone",
+    "es": "Corona danesa"
+  },
+  Currencies.EUR: {"pt": "Euro", "en": "Euro", "es": "Euro"},
+  Currencies.GBP: {
+    "pt": "Libra Esterlina",
+    "en": "British Pound",
+    "es": "Libra esterlina"
+  },
+  Currencies.HKD: {
+    "pt": "Dólar de Hong Kong",
+    "en": "Hong Kong Dollar",
+    "es": "Dólar de Hong Kong"
+  },
+  Currencies.IDR: {
+    "pt": "Rupia Indonésia",
+    "en": "Indonesian Rupiah",
+    "es": "Rupia indonesia"
+  },
+  Currencies.ILS: {
+    "pt": "Novo Shekel Israelense",
+    "en": "Israeli New Shekel",
+    "es": "Nuevo séquel israelí"
+  },
+  Currencies.INR: {
+    "pt": "Rupia Indiana",
+    "en": "Indian Rupee",
+    "es": "Rupia india"
+  },
+  Currencies.ISK: {
+    "pt": "Coroa Islandesa",
+    "en": "Icelandic Króna",
+    "es": "Corona islandesa"
+  },
+  Currencies.JPY: {
+    "pt": "Iene Japonês",
+    "en": "Japanese Yen",
+    "es": "Yen japonés"
+  },
+  Currencies.USD: {
+    "pt": "Dólar Americano",
+    "en": "US Dollar",
+    "es": "Dólar estadounidense"
+  },
+  Currencies.PHP: {
+    "pt": "Peso Filipino",
+    "en": "Philippine Peso",
+    "es": "Peso filipino"
+  },
+  Currencies.HUF: {
+    "pt": "Florim Húngaro",
+    "en": "Hungarian Forint",
+    "es": "Forinto húngaro"
+  },
+  Currencies.RON: {
+    "pt": "Leu Romeno",
+    "en": "Romanian Leu",
+    "es": "Leu rumano"
+  },
+  Currencies.SEK: {
+    "pt": "Coroa Sueca",
+    "en": "Swedish Krona",
+    "es": "Corona sueca"
+  },
+  Currencies.RUB: {
+    "pt": "Rublo Russo",
+    "en": "Russian Ruble",
+    "es": "Rublo ruso"
+  },
+  Currencies.HRK: {
+    "pt": "Kuna Croata",
+    "en": "Croatian Kuna",
+    "es": "Kuna croata"
+  },
+  Currencies.THB: {
+    "pt": "Baht Tailandês",
+    "en": "Thai Baht",
+    "es": "Baht tailandés"
+  },
+  Currencies.CHF: {
+    "pt": "Franco Suíço",
+    "en": "Swiss Franc",
+    "es": "Franco suizo"
+  },
+  Currencies.MYR: {
+    "pt": "Ringgit Malaio",
+    "en": "Malaysian Ringgit",
+    "es": "Ringgit malayo"
+  },
+  Currencies.BGN: {
+    "pt": "Lev Búlgaro",
+    "en": "Bulgarian Lev",
+    "es": "Lev búlgaro"
+  },
+  Currencies.TRY: {
+    "pt": "Lira Turca",
+    "en": "Turkish Lira",
+    "es": "Lira turca"
+  },
+  Currencies.CNY: {
+    "pt": "Yuan Chinês",
+    "en": "Chinese Yuan",
+    "es": "Yuan chino"
+  },
+  Currencies.NOK: {
+    "pt": "Coroa Norueguesa",
+    "en": "Norwegian Krone",
+    "es": "Corona noruega"
+  },
+  Currencies.NZD: {
+    "pt": "Dólar Neozelandês",
+    "en": "New Zealand Dollar",
+    "es": "Dólar neozelandés"
+  },
+  Currencies.ZAR: {
+    "pt": "Rand Sul-Africano",
+    "en": "South African Rand",
+    "es": "Rand sudafricano"
+  },
+  Currencies.MXN: {
+    "pt": "Peso Mexicano",
+    "en": "Mexican Peso",
+    "es": "Peso mexicano"
+  },
+  Currencies.SGD: {
+    "pt": "Dólar de Singapura",
+    "en": "Singapore Dollar",
+    "es": "Dólar de Singapur"
+  },
+  Currencies.KRW: {
+    "pt": "Won Sul-Coreano",
+    "en": "South Korean Won",
+    "es": "Won surcoreano"
+  },
+  Currencies.PLN: {
+    "pt": "Zloty Polonês",
+    "en": "Polish Zloty",
+    "es": "Esloti polaco"
+  },
 };
 
 /// Nome da moeda no idioma de [locale], com o inglês como reserva para um
 /// idioma que ainda não tenha tradução.
+///
+/// A busca é pelo código do idioma, sem a região: o nome de uma moeda é o
+/// mesmo nas duas normas do espanhol que o app fala.
 String currencyName(Currencies currency, Locale locale) {
   var names = _namesByCurrency[currency];
   if (names == null) return currencyCode(currency);

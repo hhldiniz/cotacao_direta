@@ -43,10 +43,10 @@ class AppLocaleController extends ValueNotifier<Locale?> {
     }
   }
 
-  /// Aplica o idioma escolhido na tela de opções. Código vazio ou nulo volta a
-  /// seguir o aparelho. A gravação fica com o bloc, que já cuida do resto da
+  /// Aplica o idioma escolhido na tela de opções. Etiqueta vazia ou nula volta
+  /// a seguir o aparelho. A gravação fica com o bloc, que já cuida do resto da
   /// configuração.
-  void updateLanguage(String? languageCode) {
-    value = AppLocales.localeFor(languageCode);
+  void updateLanguage(String? languageTag) {
+    value = AppLocales.localeFor(languageTag);
   }
 }

@@ -190,24 +190,61 @@ void main() {
       expect(localizations.getConfigBottomNavItemLabel, "Options");
     });
 
-    test('os dois idiomas têm todos os textos preenchidos', () {
-      var portuguese = _allLabels(MyAppLocalizations(const Locale("pt")));
-      var english = _allLabels(MyAppLocalizations(const Locale("en")));
+    test('traduz para o espanhol da Espanha', () {
+      var localizations = MyAppLocalizations(const Locale("es", "ES"));
 
-      expect(portuguese, isNot(contains(null)));
-      expect(english, isNot(contains(null)));
-      expect(portuguese.length, english.length);
+      expect(localizations.conversionPageTitle, "Conversión de divisas");
+      expect(localizations.noDataLabel, "Sin datos");
+      expect(localizations.getConfigBottomNavItemLabel, "Ajustes");
     });
 
-    test('os dois idiomas têm o mesmo número de marcadores nos insights', () {
-      for (var locale in [const Locale("pt"), const Locale("en")]) {
+    test('traduz para o espanhol da América Latina', () {
+      var localizations = MyAppLocalizations(const Locale("es", "419"));
+
+      expect(localizations.conversionPageTitle, "Conversión de monedas");
+      expect(localizations.noDataLabel, "Sin datos");
+      expect(localizations.getConfigBottomNavItemLabel, "Configuración");
+    });
+
+    // As duas normas do espanhol são traduções separadas justamente porque o
+    // vocabulário muda; se as duas tivessem o mesmo texto em toda parte, uma
+    // delas não estaria pagando o que custa.
+    test('as duas normas do espanhol não são a mesma tradução', () {
+      var spain = _allLabels(MyAppLocalizations(const Locale("es", "ES")));
+      var latinAmerica =
+          _allLabels(MyAppLocalizations(const Locale("es", "419")));
+
+      expect(spain, isNot(latinAmerica));
+    });
+
+    test('um idioma do aparelho sem tradução cai no primeiro da build', () {
+      var localizations = MyAppLocalizations(const Locale("fr"));
+
+      expect(localizations.conversionPageTitle, "Currency Conversion");
+    });
+
+    test('todos os idiomas têm todos os textos preenchidos', () {
+      var byLocale = {
+        for (var locale in AppLocales.supported)
+          AppLocales.tagOf(locale): _allLabels(MyAppLocalizations(locale))
+      };
+
+      byLocale.forEach((tag, labels) {
+        expect(labels, isNot(contains(null)), reason: "faltam textos em $tag");
+        expect(labels.length, byLocale.values.first.length, reason: tag);
+      });
+    });
+
+    test('todos os idiomas têm o mesmo número de marcadores nos insights', () {
+      for (var locale in AppLocales.supported) {
         var localizations = MyAppLocalizations(locale);
+        var tag = AppLocales.tagOf(locale);
         _insightPlaceholderCount.forEach((key, expectedCount) {
           var template = _insightTemplate(localizations, key);
 
-          expect(template, isNotNull, reason: "$key em ${locale.languageCode}");
+          expect(template, isNotNull, reason: "$key em $tag");
           expect("%s".allMatches(template!).length, expectedCount,
-              reason: "$key em ${locale.languageCode}");
+              reason: "$key em $tag");
         });
       }
     });
@@ -234,14 +271,28 @@ void main() {
   group('MyAppLocalizationsDelegate', () {
     var delegate = MyAppLocalizationsDelegate();
 
-    test('suporta apenas português e inglês', () {
+    test('suporta apenas os idiomas da build', () {
       expect(delegate.isSupported(const Locale("pt")), isTrue);
       expect(delegate.isSupported(const Locale("en")), isTrue);
-      expect(delegate.isSupported(const Locale("es")), isFalse);
+      expect(delegate.isSupported(const Locale("es")), isTrue);
+      expect(delegate.isSupported(const Locale("fr")), isFalse);
     });
 
-    test('ignora o país ao verificar o suporte', () {
+    test('ignora o país quando ele não separa duas traduções', () {
       expect(delegate.isSupported(const Locale("pt", "BR")), isTrue);
+    });
+
+    test('atende qualquer país de língua espanhola', () {
+      expect(delegate.isSupported(const Locale("es", "MX")), isTrue);
+      expect(delegate.isSupported(const Locale("es", "AR")), isTrue);
+    });
+
+    test('carrega a tradução espanhola da região pedida', () async {
+      var mexico = await delegate.load(const Locale("es", "MX"));
+      var spain = await delegate.load(const Locale("es", "ES"));
+
+      expect(mexico.getConfigBottomNavItemLabel, "Configuración");
+      expect(spain.getConfigBottomNavItemLabel, "Ajustes");
     });
 
     test('carrega as traduções do locale pedido', () async {
@@ -249,6 +300,33 @@ void main() {
 
       expect(localizations.locale, const Locale("pt"));
       expect(localizations.noDataLabel, "Sem Dados");
+    });
+
+    // A resolução do idioma do aparelho é do MaterialApp, e sem o callback do
+    // AppLocales quem está no México abriria o app na tradução da Espanha.
+    testWidgets('um aparelho na América Latina abre no espanhol de lá',
+        (WidgetTester tester) async {
+      tester.platformDispatcher.localesTestValue = const [Locale("es", "MX")];
+      addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+      MyAppLocalizations? found;
+
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          MyAppLocalizationsDelegate()
+        ],
+        supportedLocales: AppLocales.supported,
+        localeListResolutionCallback: AppLocales.resolveDeviceLocales,
+        home: Builder(builder: (context) {
+          found = MyAppLocalizations.of(context);
+          return const SizedBox();
+        }),
+      ));
+
+      expect(found!.locale, const Locale("es", "419"));
+      expect(found!.conversionPageTitle, "Conversión de monedas");
     });
 
     test('nunca pede recarga', () {
@@ -281,34 +359,58 @@ void main() {
 
   group('AppLocales', () {
     test('lista os idiomas que existem na build', () {
-      expect(AppLocales.supported,
-          const [Locale("en"), Locale("pt")]);
+      expect(AppLocales.supported, const [
+        Locale("en"),
+        Locale("pt"),
+        Locale("es", "ES"),
+        Locale("es", "419")
+      ]);
     });
 
     // A lista da tela de opções sai daqui: um idioma sem nome apareceria como
-    // um código solto para o usuário.
+    // uma etiqueta solta para o usuário.
     test('todo idioma da build tem um nome para mostrar', () {
       for (var locale in AppLocales.supported) {
-        expect(AppLocales.displayNames[locale.languageCode], isNotNull,
-            reason: "falta o nome de ${locale.languageCode}");
+        var tag = AppLocales.tagOf(locale);
+        expect(AppLocales.displayNames[tag], isNotNull,
+            reason: "falta o nome de $tag");
       }
     });
 
-    test('displayNameOf devolve o próprio código quando não há nome', () {
+    test('tagOf só traz a região quando ela separa duas traduções', () {
+      expect(AppLocales.tagOf(const Locale("pt")), "pt");
+      expect(AppLocales.tagOf(const Locale("es", "419")), "es-419");
+    });
+
+    test('displayNameOf devolve a própria etiqueta quando não há nome', () {
       expect(AppLocales.displayNameOf("pt"), "Português");
+      expect(AppLocales.displayNameOf("es-ES"), "Español (España)");
+      expect(AppLocales.displayNameOf("es-419"), "Español (Latinoamérica)");
       expect(AppLocales.displayNameOf("xx"), "xx");
     });
 
     test('isSupported reconhece só o que está na build', () {
       expect(AppLocales.isSupported("pt"), isTrue);
       expect(AppLocales.isSupported("en"), isTrue);
+      expect(AppLocales.isSupported("es-419"), isTrue);
+      expect(AppLocales.isSupported("es"), isFalse);
       expect(AppLocales.isSupported("fr"), isFalse);
       expect(AppLocales.isSupported(""), isFalse);
       expect(AppLocales.isSupported(null), isFalse);
     });
 
-    test('localeFor converte o código gravado', () {
+    test('localeFor converte a etiqueta gravada', () {
       expect(AppLocales.localeFor("pt"), const Locale("pt"));
+      expect(AppLocales.localeFor("es-ES"), const Locale("es", "ES"));
+      expect(AppLocales.localeFor("es-419"), const Locale("es", "419"));
+    });
+
+    // O banco grava em caixa baixa, e uma etiqueta montada a partir de um
+    // Locale vem com "_" no lugar do "-".
+    test('localeFor não se prende à caixa nem ao separador', () {
+      expect(AppLocales.localeFor("es-es"), const Locale("es", "ES"));
+      expect(AppLocales.localeFor("es_419"), const Locale("es", "419"));
+      expect(AppLocales.localeFor(" PT "), const Locale("pt"));
     });
 
     // Vazio, nulo ou fora da build significam "seguir o aparelho", que é o que
@@ -317,6 +419,59 @@ void main() {
       expect(AppLocales.localeFor(""), isNull);
       expect(AppLocales.localeFor(null), isNull);
       expect(AppLocales.localeFor("fr"), isNull);
+    });
+
+    test('tagFor devolve a forma canônica da etiqueta gravada', () {
+      expect(AppLocales.tagFor("es-es"), "es-ES");
+      expect(AppLocales.tagFor("es_419"), "es-419");
+      expect(AppLocales.tagFor("fr"), "");
+      expect(AppLocales.tagFor(null), "");
+    });
+
+    test('resolve escolhe a tradução do país do aparelho', () {
+      expect(AppLocales.resolve(const Locale("es", "MX")),
+          const Locale("es", "419"));
+      expect(AppLocales.resolve(const Locale("es", "AR")),
+          const Locale("es", "419"));
+      expect(AppLocales.resolve(const Locale("es", "US")),
+          const Locale("es", "419"));
+      expect(AppLocales.resolve(const Locale("es", "ES")),
+          const Locale("es", "ES"));
+    });
+
+    // Sem região não dá para adivinhar o país, e a norma da Espanha é a que o
+    // CLDR pendura em "es".
+    test('resolve manda o espanhol sem região para a Espanha', () {
+      expect(AppLocales.resolve(const Locale("es")), const Locale("es", "ES"));
+      expect(AppLocales.resolve(const Locale("es", "GQ")),
+          const Locale("es", "ES"));
+    });
+
+    test('resolve ignora a região dos idiomas com uma tradução só', () {
+      expect(AppLocales.resolve(const Locale("pt", "BR")), const Locale("pt"));
+      expect(AppLocales.resolve(const Locale("en", "GB")), const Locale("en"));
+    });
+
+    test('resolve devolve nulo para um idioma que não está na build', () {
+      expect(AppLocales.resolve(const Locale("fr")), isNull);
+      expect(AppLocales.resolve(null), isNull);
+    });
+
+    test('resolveDeviceLocales segue a ordem de preferência do aparelho', () {
+      expect(
+          AppLocales.resolveDeviceLocales(
+              const [Locale("fr"), Locale("es", "CO")], AppLocales.supported),
+          const Locale("es", "419"));
+    });
+
+    // O mesmo que o Flutter faz quando nenhum idioma do aparelho corresponde.
+    test('resolveDeviceLocales cai no primeiro idioma da build', () {
+      expect(AppLocales.resolveDeviceLocales(null, AppLocales.supported),
+          const Locale("en"));
+      expect(
+          AppLocales.resolveDeviceLocales(
+              const [Locale("fr")], AppLocales.supported),
+          const Locale("en"));
     });
   });
 }

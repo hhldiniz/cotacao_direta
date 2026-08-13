@@ -12,11 +12,13 @@ import 'package:intl/intl.dart';
 /// [FinancialInsight.arguments]. That keeps the engine in pure Dart, free of
 /// Flutter, while both app languages are served by the same code.
 class InsightEngine {
-  /// Language the numbers are formatted in ("pt" or "en"): it changes the
-  /// decimal comma and the thousands separator.
-  final String languageCode;
+  /// Locale the numbers are formatted in ("pt", "es_419"…): it changes the
+  /// decimal comma and the thousands separator. The region matters on its own
+  /// — Latin American Spanish separates the decimals with a point, the Spanish
+  /// of Spain with a comma.
+  final String localeName;
 
-  const InsightEngine({this.languageCode = "pt"});
+  const InsightEngine({this.localeName = "pt"});
 
   /// Above this the period's change stops being noise and becomes a trend.
   static const double _trendThreshold = 0.025;
@@ -196,12 +198,12 @@ class InsightEngine {
   }
 
   String _percent(double fraction) =>
-      NumberFormat.decimalPercentPattern(locale: languageCode, decimalDigits: 1)
+      NumberFormat.decimalPercentPattern(locale: localeName, decimalDigits: 1)
           .format(fraction);
 
   String _number(double value, {int decimalDigits = 2}) =>
       NumberFormat.decimalPatternDigits(
-              locale: languageCode, decimalDigits: decimalDigits)
+              locale: localeName, decimalDigits: decimalDigits)
           .format(value);
 
   /// Quote with enough decimal places for the price not to turn into "0.00":

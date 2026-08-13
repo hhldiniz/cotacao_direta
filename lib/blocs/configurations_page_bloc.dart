@@ -101,7 +101,8 @@ class ConfigurationsPageBloc extends BaseBloc {
 
   /// Grava o idioma da interface e o aplica na hora.
   ///
-  /// [languageCode] nulo ou vazio volta a seguir o aparelho, que é o padrão.
+  /// [languageCode] é a etiqueta do idioma ("pt", "es-419"); nula ou vazia
+  /// volta a seguir o aparelho, que é o padrão.
   /// A troca vai para o controlador antes da gravação: a tela toda é
   /// reconstruída no idioma novo assim que o usuário escolhe, sem esperar o
   /// banco.
