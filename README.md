@@ -30,7 +30,8 @@ e o app Web. A versão do Flutter está fixada no workflow.
 ## Plataformas
 
 O app roda em Android, Linux desktop e Web (`flutter run -d chrome` ou
-`flutter build web`).
+`flutter build web`). Na web ele é instalável como PWA — ver a seção
+[Web como PWA](#web-como-pwa-instalável-no-aparelho).
 
 Persistência local (sqflite) usa um backend diferente por plataforma,
 selecionado em tempo de execução por `lib/util/database.dart`:
@@ -43,6 +44,82 @@ selecionado em tempo de execução por `lib/util/database.dart`:
   repositório; só é preciso gerá-los de novo, com
   `dart run sqflite_common_ffi_web:setup --force`, se a versão do pacote
   mudar.
+
+## Web como PWA (instalável no aparelho)
+
+A versão web é um *progressive web app*: dá para instalar o Cotação Direta no
+celular ou no desktop e abrir pelo ícone, em janela própria, sem a barra do
+navegador. O que sustenta isso:
+
+- `web/manifest.json` — nome, ícones (inclusive os *maskable*, que o Android
+  recorta na forma do sistema), `start_url`/`scope` relativos (`./`, para o app
+  continuar funcionando publicado num subcaminho como
+  `/cotacao_direta/`), `display: standalone` e as cores da janela;
+- `web/index.html` — a `viewport` (sem ela o navegador não considera a página
+  adequada a celular, e não oferece a instalação), a `theme-color` e as metas do
+  Safari do iOS;
+- `web/service_worker.js` — o service worker do app, que guarda os arquivos em
+  cache e o faz abrir mesmo sem rede; as cotações já vistas continuam vindo do
+  banco local;
+- `web/flutter_bootstrap.js` — versão própria do arquivo que o Flutter geraria
+  sozinho, só para registrar o service worker acima.
+
+O service worker é escrito à mão porque o Flutter 3.44 aposentou o dele: o
+`flutter_service_worker.js` ainda é gerado, mas hoje só se desregistra e não
+guarda mais nada em cache, e a opção `--pwa-strategy` deixou de existir. Sem um
+no lugar, o app perderia o funcionamento sem rede. As regras dele:
+
+- navegação e código do app (`main.dart.js`, o carregador, os metadados): a rede
+  primeiro, com o cache como reserva — quem está online sempre roda a versão
+  publicada mais recente;
+- o resto do mesmo domínio (CanvasKit, fontes, bandeiras, o SQLite em WASM):
+  responde do cache na hora e atualiza em segundo plano;
+- outros domínios, como a API de cotações: passam direto, sem cache.
+
+O `CACHE_NAME` no topo do arquivo só precisa mudar quando essas regras mudarem;
+arquivo novo publicado já é tratado pelas regras acima.
+
+A publicação usa `--no-web-resources-cdn` para o CanvasKit ser servido junto do
+site, e não pelo CDN do Google: vindo de outro domínio ele ficaria fora do
+alcance do service worker, e o app não abriria sem rede.
+
+O `id` do manifest está fixado em `/cotacao_direta/`, o mesmo caminho do
+`--base-href` usado na publicação no GitHub Pages
+(`.github/workflows/deploy-pages.yml`): é ele que dá identidade estável ao app
+instalado. Se o caminho de publicação mudar, os dois precisam mudar juntos.
+
+Dentro do app, a opção **Instalar aplicativo** aparece no topo das
+configurações. Ela é a leitura, do lado Flutter, do que o navegador decidiu:
+
+- `web/index.html` ouve o evento `beforeinstallprompt` e guarda o pedido de
+  instalação num objeto global. A escuta precisa começar aí, e não no Dart,
+  porque o navegador dispara o evento antes de o Flutter terminar de carregar;
+- `lib/util/pwa_install_service.dart` expõe esse estado ao app, com a mesma
+  troca de implementação por plataforma usada no resto do projeto
+  (`_io.dart` / `_web.dart`). Fora da web a resposta é sempre
+  `PwaInstallStatus.unsupported`, e a opção não aparece;
+- `lib/view/widgets/pwa_install_card.dart` é o cartão em si. No Safari do iOS,
+  que não oferece o pedido de instalação a quem faz a página, ele troca o botão
+  por uma explicação do caminho pelo menu de compartilhar.
+
+A oferta de instalação do próprio navegador continua valendo: o evento é
+guardado sem `preventDefault()`, então a faixa do Android e o ícone na barra de
+endereço do desktop seguem aparecendo normalmente.
+
+O navegador só aceita instalar um site servido por HTTPS (ou por `localhost`).
+Para conferir localmente:
+
+```sh
+flutter build web --release
+dart run dhttpd --path build/web --port 8080   # ou qualquer servidor estático
+```
+
+e abrir `http://localhost:8080`. O `flutter run -d chrome` serve o mesmo
+`web/flutter_bootstrap.js`, mas ele não registra o service worker quando
+percebe que está no servidor de desenvolvimento (que compila com o dartdevc, e
+não com o dart2js dos builds): em desenvolvimento o cache só atrapalharia, com
+o hot restart mostrando código velho. Para testar o comportamento sem rede,
+então, é preciso o build.
 
 ## IA local: insights e projeções
 

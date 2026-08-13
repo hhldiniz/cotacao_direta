@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -20,17 +20,150 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Um aplicativo simples que mostra a cotação das principais moedas frente ao real">
 
+  <!--
+    Sem esta linha o navegador do celular renderiza a página numa viewport de
+    desktop e depois reduz tudo: o app abre com os textos ilegíveis e falha o
+    critério de "mobile friendly" que o Chrome usa para oferecer a instalação.
+    O viewport-fit=cover deixa o Flutter desenhar sob o notch quando o app roda
+    instalado, em tela cheia.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+  <!-- Cor da barra do navegador/da janela do app instalado. Acompanha o
+       manifest, e não o tema do app: o ícone é azul, e é ele que o usuário vê
+       ao lado do título. -->
+  <meta name="theme-color" content="#02609A">
+
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
+  <!-- O Safari ainda lê o nome antigo desta chave; o Chrome usa o acima. -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Cotação Direta">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="application-name" content="Cotação Direta">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>Cotação Direta</title>
   <link rel="manifest" href="manifest.json">
+
+  <script>
+    // Ponte entre a instalação como PWA (uma API só do navegador) e o app
+    // Flutter, consumida em lib/util/pwa_install_service_web.dart.
+    //
+    // Precisa rodar aqui, no <head>, e não do lado Dart: o navegador dispara
+    // `beforeinstallprompt` assim que decide que o site é instalável, o que
+    // costuma acontecer antes de o Flutter terminar de carregar. Quem não
+    // estiver ouvindo nessa hora perde o evento — e, com ele, a única
+    // referência que permite abrir o pedido de instalação depois.
+    (function () {
+      var deferredPrompt = null;
+      var listeners = [];
+
+      function matchesDisplayMode(mode) {
+        return window.matchMedia('(display-mode: ' + mode + ')').matches;
+      }
+
+      // O app já está instalado quando a página não roda mais numa aba comum.
+      // O navigator.standalone é a forma equivalente no Safari do iOS, que não
+      // implementa a media query display-mode.
+      function isInstalled() {
+        return matchesDisplayMode('standalone') ||
+          matchesDisplayMode('fullscreen') ||
+          matchesDisplayMode('minimal-ui') ||
+          window.navigator.standalone === true;
+      }
+
+      // O Safari do iOS não tem `beforeinstallprompt`: lá a instalação só sai
+      // pelo menu Compartilhar, e o app precisa saber disso para explicar o
+      // caminho em vez de oferecer um botão que não funcionaria. O iPadOS se
+      // apresenta como "MacIntel", daí a checagem por touch.
+      function isIosBrowser() {
+        var ua = window.navigator.userAgent;
+        return /iPad|iPhone|iPod/.test(ua) ||
+          (window.navigator.platform === 'MacIntel' &&
+            window.navigator.maxTouchPoints > 1);
+      }
+
+      function notify() {
+        for (var i = 0; i < listeners.length; i++) {
+          try {
+            listeners[i]();
+          } catch (error) {
+            // Um ouvinte com problema não pode impedir os outros de rodar.
+            console.error(error);
+          }
+        }
+      }
+
+      var bridge = {
+        canInstall: false,
+        isInstalled: isInstalled(),
+        isIos: isIosBrowser(),
+
+        // Abre o pedido de instalação do navegador. Resolve com o texto do
+        // desfecho ('accepted', 'dismissed' ou 'unavailable').
+        promptInstall: function () {
+          var prompt = deferredPrompt;
+          if (!prompt) return Promise.resolve('unavailable');
+
+          // O evento vale uma chamada só; guardar depois disso só levaria a um
+          // segundo prompt que o navegador recusaria.
+          deferredPrompt = null;
+          bridge.canInstall = false;
+          notify();
+
+          // prompt() devolve uma Promise nos navegadores atuais e undefined nos
+          // mais antigos; o Promise.resolve cobre os dois casos.
+          return Promise.resolve(prompt.prompt())
+            .then(function () {
+              return prompt.userChoice;
+            })
+            .then(function (choice) {
+              return (choice && choice.outcome) || 'dismissed';
+            })
+            .catch(function (error) {
+              console.error(error);
+              return 'dismissed';
+            });
+        },
+
+        onChange: function (callback) {
+          listeners.push(callback);
+        }
+      };
+
+      window.addEventListener('beforeinstallprompt', function (event) {
+        // De propósito sem preventDefault(): assim o navegador continua
+        // mostrando a oferta de instalação dele (a faixa no Android, o ícone na
+        // barra de endereço no desktop), e o app ganha o botão próprio das
+        // configurações por cima disso.
+        deferredPrompt = event;
+        bridge.canInstall = true;
+        notify();
+      });
+
+      window.addEventListener('appinstalled', function () {
+        deferredPrompt = null;
+        bridge.canInstall = false;
+        bridge.isInstalled = true;
+        notify();
+      });
+
+      // Instalar pelo menu do navegador não recarrega a aba aberta, e desinstalar
+      // também não: acompanhar a media query mantém o app em dia nos dois casos.
+      window.matchMedia('(display-mode: standalone)')
+        .addEventListener('change', function () {
+          bridge.isInstalled = isInstalled();
+          notify();
+        });
+
+      window.cotacaoDiretaPwa = bridge;
+    })();
+  </script>
 </head>
 <body>
   <!--
