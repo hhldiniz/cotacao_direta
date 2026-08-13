@@ -118,6 +118,9 @@ class ConversionWidgetState extends State<ConversionWidget> {
     var selected = await showCurrencyPicker(
       context,
       selectedCurrency: forOrigin ? bloc.fromCurrency : bloc.toCurrency,
+      // As moedas em bolha na tela inicial abrem a lista: são as que o usuário
+      // acompanha, e por isso as que mais entram numa conversão.
+      priorityCurrencies: bloc.priorityCurrencies,
     );
     if (selected == null) return;
     if (forOrigin) {

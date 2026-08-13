@@ -177,6 +177,82 @@ void main() {
           () => bloc.conversionResultSink.add(bloc.result), throwsStateError);
     });
 
+    test('abre no par pedido por quem chamou a tela', () async {
+      var bloc = ConversionPageBloc(
+          exchangeValueBloc: exchangeValueBloc,
+          initialFromCurrency: Currencies.USD,
+          initialToCurrency: Currencies.EUR);
+      addTearDown(bloc.dispose);
+
+      expect(bloc.fromCurrency, Currencies.USD);
+      expect(bloc.toCurrency, Currencies.EUR);
+      expect(bloc.result.from, Currencies.USD,
+          reason: "a tela desenha o primeiro quadro a partir do resultado");
+      expect(bloc.result.to, Currencies.EUR);
+    });
+
+    test('só a origem pedida deixa o destino no padrão', () async {
+      var bloc = ConversionPageBloc(
+          exchangeValueBloc: exchangeValueBloc,
+          initialFromCurrency: Currencies.EUR);
+      addTearDown(bloc.dispose);
+
+      expect(bloc.fromCurrency, Currencies.EUR);
+      expect(bloc.toCurrency, Currencies.USD);
+    });
+
+    test('o mesmo par dos dois lados vira uma conversão de verdade', () async {
+      // Acontece com a bolha da própria moeda de contrapartida: a tela inicial
+      // pede real para real.
+      var bloc = ConversionPageBloc(
+          exchangeValueBloc: exchangeValueBloc,
+          initialFromCurrency: Currencies.BRL,
+          initialToCurrency: Currencies.BRL);
+      addTearDown(bloc.dispose);
+
+      expect(bloc.fromCurrency, Currencies.BRL);
+      expect(bloc.toCurrency, Currencies.USD);
+
+      var dollarBloc = ConversionPageBloc(
+          exchangeValueBloc: exchangeValueBloc,
+          initialFromCurrency: Currencies.USD,
+          initialToCurrency: Currencies.USD);
+      addTearDown(dollarBloc.dispose);
+
+      expect(dollarBloc.fromCurrency, Currencies.USD);
+      expect(dollarBloc.toCurrency, Currencies.BRL,
+          reason: "o outro lado do par padrão, para o par não ficar repetido");
+    });
+
+    test('converte o par pedido sem esperar nenhuma escolha', () async {
+      var bloc = ConversionPageBloc(
+          exchangeValueBloc: exchangeValueBloc,
+          initialFromCurrency: Currencies.USD,
+          initialToCurrency: Currencies.BRL);
+      addTearDown(bloc.dispose);
+
+      await bloc.updateResult();
+
+      expect(bloc.result.unitRate, closeTo(5, 0.000001),
+          reason: "um dólar vale cinco reais nas cotações do teste");
+    });
+
+    test('guarda as moedas em destaque para o seletor', () async {
+      var bloc = ConversionPageBloc(
+          exchangeValueBloc: exchangeValueBloc,
+          priorityCurrencies: [Currencies.EUR, Currencies.JPY]);
+      addTearDown(bloc.dispose);
+
+      expect(bloc.priorityCurrencies, [Currencies.EUR, Currencies.JPY]);
+      expect(() => bloc.priorityCurrencies.add(Currencies.USD),
+          throwsUnsupportedError,
+          reason: "a lista é do bloc, não de quem a leu");
+    });
+
+    test('sem moedas em destaque a lista fica vazia', () async {
+      expect(bloc.priorityCurrencies, isEmpty);
+    });
+
     test('não emite resultado depois de descartado', () async {
       exchangeValueBloc.holdLookups = true;
       var conversion = bloc.updateResult();

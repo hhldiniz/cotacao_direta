@@ -57,6 +57,30 @@ void main() {
     });
   });
 
+  group('HomeBloc.loadCounterCurrency', () {
+    test('devolve o real quando não há moeda sobrescrita', () async {
+      expect(await buildBloc().loadCounterCurrency(), Currencies.BRL);
+    });
+
+    test('devolve a moeda escolhida nas configurações', () async {
+      var bloc = buildBloc(
+          configuration: Configuration(1,
+              overrideDefaultCurrency: true,
+              selectedOverrideCurrencyCode: "JPY"));
+
+      expect(await bloc.loadCounterCurrency(), Currencies.JPY);
+    });
+
+    test('uma moeda que o app não conhece não vira contrapartida', () async {
+      var bloc = buildBloc(
+          configuration: Configuration(1,
+              overrideDefaultCurrency: true,
+              selectedOverrideCurrencyCode: "XYZ"));
+
+      expect(await bloc.loadCounterCurrency(), isNull);
+    });
+  });
+
   group('HomeBloc.loadHomeCurrencies', () {
     HomeBloc buildBlocWithConfiguration(Configuration configuration) => HomeBloc(
         currencyRepository: CurrencyRepository.withDependencies(

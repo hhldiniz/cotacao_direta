@@ -157,6 +157,85 @@ void main() {
       expect(find.text("Cotação indisponível"), findsOneWidget);
     });
 
+    testWidgets('o seletor abre com as moedas da tela inicial em destaque',
+        (WidgetTester tester) async {
+      // As bolhas da tela inicial: elas chegam aqui pelo bloc e devem abrir a
+      // lista, antes das outras trinta e tantas moedas.
+      bloc.dispose();
+      bloc = ConversionPageBloc(
+          exchangeValueBloc: _FakeExchangeValueBloc(),
+          priorityCurrencies: [Currencies.EUR, Currencies.BRL]);
+      await pumpConversionPage(tester);
+
+      await tester.tap(find.text("BRL"));
+      await tester.pumpAndSettle();
+
+      expect(find.text("Suas moedas"), findsOneWidget);
+      expect(find.text("Todas as moedas"), findsOneWidget);
+      expect(inCurrencyPicker(find.text("EUR")), findsOneWidget,
+          reason: "a moeda em destaque não se repete no resto da lista");
+      expect(
+          tester.getTopLeft(inCurrencyPicker(find.text("EUR"))).dy,
+          lessThan(tester.getTopLeft(find.text("Todas as moedas")).dy),
+          reason: "as moedas da tela inicial vêm antes do resto da lista");
+    });
+
+    testWidgets('converte com a moeda escolhida na seção de destaque',
+        (WidgetTester tester) async {
+      bloc.dispose();
+      bloc = ConversionPageBloc(
+          exchangeValueBloc: _FakeExchangeValueBloc(),
+          priorityCurrencies: [Currencies.EUR, Currencies.BRL]);
+      await pumpConversionPage(tester);
+
+      await tester.tap(find.text("BRL"));
+      await tester.pumpAndSettle();
+      await tester.tap(inCurrencyPicker(find.text("EUR")));
+      await tester.pumpAndSettle();
+
+      expect(find.text("1 EUR = 2,0000 USD"), findsOneWidget);
+    });
+
+    testWidgets('sem moedas em destaque a lista sai sem seções',
+        (WidgetTester tester) async {
+      await pumpConversionPage(tester);
+
+      await tester.tap(find.text("BRL"));
+      await tester.pumpAndSettle();
+
+      expect(find.text("Suas moedas"), findsNothing);
+      expect(find.text("Todas as moedas"), findsNothing);
+    });
+
+    testWidgets('a busca que não acha nenhuma moeda em destaque tira as seções',
+        (WidgetTester tester) async {
+      bloc.dispose();
+      bloc = ConversionPageBloc(
+          exchangeValueBloc: _FakeExchangeValueBloc(),
+          priorityCurrencies: [Currencies.EUR, Currencies.BRL]);
+      await pumpConversionPage(tester);
+
+      await tester.tap(find.text("BRL"));
+      await tester.pumpAndSettle();
+      await searchInCurrencyPicker(tester, "iene");
+
+      expect(find.text("Suas moedas"), findsNothing,
+          reason: "uma seção vazia só ocuparia espaço");
+      expect(inCurrencyPicker(find.text("JPY")), findsOneWidget);
+    });
+
+    testWidgets('a tela abre no par pedido pela tela inicial',
+        (WidgetTester tester) async {
+      bloc.dispose();
+      bloc = ConversionPageBloc(
+          exchangeValueBloc: _FakeExchangeValueBloc(),
+          initialFromCurrency: Currencies.USD,
+          initialToCurrency: Currencies.BRL);
+      await pumpConversionPage(tester);
+
+      expect(find.text("1 USD = 5,0000 BRL"), findsOneWidget);
+    });
+
     testWidgets('escolher no destino a moeda de origem inverte o par',
         (WidgetTester tester) async {
       await pumpConversionPage(tester);
