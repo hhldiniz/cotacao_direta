@@ -283,8 +283,7 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
         return FilledButton.icon(
           onPressed: loading
               ? null
-              : () => bloc.analyze(
-                  languageCode: localizations.locale.languageCode),
+              : () => bloc.analyze(localeName: localizations.locale.toString()),
           icon: const Icon(Icons.psychology_alt),
           label: Text(localizations.aiInsightsAnalyzeBtnLabel!),
         );
@@ -333,7 +332,7 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
           localizations.aiInsightsEmptyLabel!, scale);
     }
 
-    final formatter = _NumberFormatter(localizations.locale.languageCode);
+    final formatter = _NumberFormatter(localizations.locale.toString());
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -600,20 +599,22 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
   }
 }
 
-/// Formatting of the screen's numbers in the current language.
+/// Formatting of the screen's numbers in the current locale — the region
+/// included, since it is what tells apart the decimal separator of Latin
+/// American Spanish from the one used in Spain.
 class _NumberFormatter {
-  final String languageCode;
+  final String localeName;
 
-  const _NumberFormatter(this.languageCode);
+  const _NumberFormatter(this.localeName);
 
   String decimal(double value, {int digits = 2}) =>
       NumberFormat.decimalPatternDigits(
-              locale: languageCode, decimalDigits: digits)
+              locale: localeName, decimalDigits: digits)
           .format(value);
 
   String percent(double fraction, {int digits = 1}) =>
       NumberFormat.decimalPercentPattern(
-              locale: languageCode, decimalDigits: digits)
+              locale: localeName, decimalDigits: digits)
           .format(fraction);
 
   /// Percentage with an explicit sign: on a change, "+1.2%" and "-1.2%" are

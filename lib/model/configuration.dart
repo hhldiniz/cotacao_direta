@@ -15,9 +15,9 @@ class Configuration extends BaseModel {
   bool overrideDefaultCurrency;
   String? selectedOverrideCurrencyCode;
 
-  /// Idioma escolhido para a interface, no formato do código do Locale
-  /// ("pt", "en"). Vazio — o padrão da coluna e o que a migração deixa para
-  /// quem já usava o app — significa "seguir o aparelho".
+  /// Idioma escolhido para a interface, na etiqueta do idioma ("pt", "en",
+  /// "es-419"). Vazio — o padrão da coluna e o que a migração deixa para quem
+  /// já usava o app — significa "seguir o aparelho".
   String languageCode;
 
   /// Códigos das moedas que viram bolha na tela inicial, na ordem em que
@@ -34,8 +34,10 @@ class Configuration extends BaseModel {
             homeCurrencyCodes ?? List.of(defaultHomeCurrencyCodes);
 
   /// Normaliza o idioma gravado: espaços e caixa vindos do banco não podem
-  /// virar um código que não bate com nenhum idioma da build, e nulo é o mesmo
-  /// que "seguir o aparelho".
+  /// virar uma etiqueta que não bate com nenhum idioma da build, e nulo é o
+  /// mesmo que "seguir o aparelho". Pôr a etiqueta na forma canônica, com a
+  /// região em maiúsculas, é de quem a mostra — AppLocales.tagFor —, que
+  /// compara sem olhar a caixa.
   static String parseLanguageCode(String? storedValue) =>
       storedValue?.trim().toLowerCase() ?? "";
 

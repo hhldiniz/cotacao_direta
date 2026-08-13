@@ -41,6 +41,16 @@ void main() {
       expect(controller.value, const Locale("en"));
     });
 
+    // A escolha é gravada em caixa baixa; sem isso o app abriria no idioma do
+    // aparelho mesmo com uma variante do espanhol escolhida.
+    test('load reconhece a variante do espanhol gravada', () async {
+      repository.configuration = Configuration(1, languageCode: "es-419");
+
+      await controller.load();
+
+      expect(controller.value, const Locale("es", "419"));
+    });
+
     test('load sem idioma gravado segue o aparelho', () async {
       await controller.load();
 

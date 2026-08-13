@@ -123,9 +123,15 @@ então, é preciso o build.
 
 ## Idioma da interface
 
-O app tem textos em português e inglês, e sempre seguiu o idioma do aparelho.
-A aba **Opções** agora permite fixar um deles, para quem usa o aparelho em um
-idioma e prefere o app em outro.
+O app tem textos em português, inglês e espanhol, e sempre seguiu o idioma do
+aparelho. A aba **Opções** agora permite fixar um deles, para quem usa o
+aparelho em um idioma e prefere o app em outro.
+
+O espanhol são duas traduções, uma para cada norma: a da Espanha (`es-ES`) e a
+da América Latina (`es-419`, o código que o CLDR usa para a região). O
+vocabulário muda o bastante entre elas — "ajustes" e "móvil" de um lado,
+"configuración" e "celular" do outro — para não caber em um texto só. Por isso
+um idioma é identificado pela etiqueta inteira, e não só pelo código do idioma.
 
 A lista oferecida é exatamente a da build: `AppLocales.supported`, em
 `lib/util/localizations.dart`, é a mesma fonte que alimenta o
@@ -133,16 +139,30 @@ A lista oferecida é exatamente a da build: `AppLocales.supported`, em
 e o seletor da tela de opções — acrescentar um idioma ao mapa de textos e a
 essa lista basta para ele aparecer nas três pontas.
 
+Quem não fixa idioma nenhum é atendido pelo `localeListResolutionCallback` do
+`MaterialApp`: a resolução padrão do Flutter, sem país correspondente, daria a
+primeira variante de espanhol da lista para todo mundo — a da Espanha também
+para quem está no México. `AppLocales.resolve` decide pela região do aparelho:
+sem região, ou em um país que segue a norma europeia, vale a tradução da
+Espanha; o resto fica com a latino-americana.
+
+A região também vai junto na hora de formatar números, e não só de escolher os
+textos: o espanhol da América Latina separa os decimais com ponto ("12.3%"), o
+da Espanha com vírgula ("12,3 %"). Por isso a tela de IA passa o locale inteiro
+(`es_419`) ao `InsightEngine`, em vez de só o código do idioma.
+
 A escolha é gravada na tabela `Configurations` (coluna `languageCode`, migração
-8→9). Coluna vazia — o padrão, e o que os bancos já existentes recebem na
-migração — significa "seguir o aparelho", que é o comportamento anterior. Quem
-precisa do valor é o `MaterialApp` na raiz da árvore, acima dos blocs, então
-ele chega lá pelo `AppLocaleController` (`lib/util/app_locale_controller.dart`),
-um `ValueNotifier<Locale?>` de escopo do app: a tela de opções o atualiza junto
-com a gravação e o app inteiro é reconstruído no idioma novo na hora. Um código
-que a build não conhece — por exemplo ao instalar por cima de uma versão com
-mais traduções — é tratado como "seguir o aparelho", em vez de deixar a
-interface sem textos.
+8→9), com a etiqueta do idioma em caixa baixa (`pt`, `es-419`) — a forma
+canônica é remontada na leitura, por `AppLocales.tagFor`. Coluna vazia — o
+padrão, e o que os bancos já existentes recebem na migração — significa "seguir
+o aparelho", que é o comportamento anterior. Quem precisa do valor é o
+`MaterialApp` na raiz da árvore, acima dos blocs, então ele chega lá pelo
+`AppLocaleController` (`lib/util/app_locale_controller.dart`), um
+`ValueNotifier<Locale?>` de escopo do app: a tela de opções o atualiza junto
+com a gravação e o app inteiro é reconstruído no idioma novo na hora. Uma
+etiqueta que a build não conhece — por exemplo ao instalar por cima de uma
+versão com mais traduções — é tratada como "seguir o aparelho", em vez de
+deixar a interface sem textos.
 
 ## IA local: insights e projeções
 

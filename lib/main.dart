@@ -70,6 +70,10 @@ class MyApp extends StatelessWidget {
       // opção existir.
       locale: locale,
       supportedLocales: AppLocales.supported,
+      // Duas traduções em espanhol pedem uma escolha que a resolução padrão do
+      // Flutter não faz: sem país correspondente, ela daria a da Espanha
+      // também para quem está no México.
+      localeListResolutionCallback: AppLocales.resolveDeviceLocales,
       title: appName,
       home: HomeBlocProvider(
         child: CurrencyAlertsBlocProvider(

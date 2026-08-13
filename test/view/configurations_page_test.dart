@@ -175,10 +175,23 @@ void main() {
 
       expect(find.text("Idioma do sistema"), findsWidgets);
       for (var locale in AppLocales.supported) {
-        expect(find.text(AppLocales.displayNameOf(locale.languageCode)),
+        expect(
+            find.text(AppLocales.displayNameOf(AppLocales.tagOf(locale))),
             findsWidgets,
             reason: "todo idioma da build aparece na lista");
       }
+    });
+
+    // As duas variantes do espanhol aparecem como duas escolhas, cada uma com
+    // o nome da sua região: uma "Español" sozinha não diria qual é qual.
+    testWidgets('separa as duas variantes do espanhol',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+      await tester.tap(languageDropdown);
+      await tester.pumpAndSettle();
+
+      expect(find.text("Español (España)"), findsWidgets);
+      expect(find.text("Español (Latinoamérica)"), findsWidgets);
     });
 
     testWidgets('abre no idioma do aparelho quando nada foi escolhido',
@@ -206,6 +219,29 @@ void main() {
       expect(bloc.languageCode, "en");
       expect(repository.configuration.languageCode, "en");
       expect(localeController.value, const Locale("en"));
+    });
+
+    testWidgets('escolher uma variante do espanhol grava a região',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+
+      await chooseLanguage(tester, "Español (Latinoamérica)");
+
+      expect(AppLocales.tagFor(repository.configuration.languageCode),
+          "es-419");
+      expect(localeController.value, const Locale("es", "419"));
+    });
+
+    // O que está gravado vem em caixa baixa; sem a forma canônica de volta, o
+    // seletor ficaria com um valor sem item correspondente.
+    testWidgets('mostra a variante do espanhol que está gravada',
+        (WidgetTester tester) async {
+      repository.configuration = Configuration(1, languageCode: "es-ES");
+
+      await pumpPage(tester);
+
+      expect(tester.widget<DropdownButton<String>>(languageDropdown).value,
+          "es-ES");
     });
 
     testWidgets('voltar para o idioma do sistema apaga a escolha',

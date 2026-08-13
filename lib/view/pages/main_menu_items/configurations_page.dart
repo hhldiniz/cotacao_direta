@@ -228,12 +228,10 @@ class ConfigurationsPage extends StatelessWidget {
                 stream: _bloc.languageStream,
                 initialData: _bloc.languageCode,
                 builder: (BuildContext context, snapshot) {
-                  // "" é o idioma do aparelho; um código que esta build não
-                  // tem mais cai no mesmo lugar, senão o seletor ficaria com
-                  // um valor sem item correspondente.
-                  final selected = AppLocales.isSupported(snapshot.data)
-                      ? snapshot.data!
-                      : "";
+                  // "" é o idioma do aparelho; uma etiqueta que esta build
+                  // não tem mais cai no mesmo lugar, senão o seletor ficaria
+                  // com um valor sem item correspondente.
+                  final selected = AppLocales.tagFor(snapshot.data);
                   return BentoCard(
                     padding: EdgeInsets.all(12 * _scale),
                     child: Row(
@@ -261,9 +259,10 @@ class ConfigurationsPage extends StatelessWidget {
                             ),
                             for (var locale in AppLocales.supported)
                               DropdownMenuItem(
-                                value: locale.languageCode,
+                                value: AppLocales.tagOf(locale),
                                 child: Text(
-                                  AppLocales.displayNameOf(locale.languageCode),
+                                  AppLocales.displayNameOf(
+                                      AppLocales.tagOf(locale)),
                                   style: TextStyle(fontSize: 16 * _scale),
                                 ),
                               ),

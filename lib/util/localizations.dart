@@ -7,8 +7,18 @@ import 'package:flutter/material.dart';
 /// [MyAppLocalizationsDelegate] aceita e que a tela de opções oferece: com uma
 /// fonte única, acrescentar uma tradução ao mapa de textos é o bastante para
 /// ela aparecer nas três pontas.
+///
+/// O espanhol entra em duas traduções, uma para cada norma: a da Espanha e a
+/// da América Latina — es-419, o código que o CLDR usa para a região. Por isso
+/// um idioma é identificado pela etiqueta inteira ("es-ES", "es-419"), e não
+/// só pelo código do idioma.
 class AppLocales {
-  static const List<Locale> supported = [Locale("en"), Locale("pt")];
+  static const List<Locale> supported = [
+    Locale("en"),
+    Locale("pt"),
+    Locale("es", "ES"),
+    Locale("es", "419"),
+  ];
 
   /// Nome de cada idioma escrito nele mesmo. Quem está com o app em um idioma
   /// que não entende precisa reconhecer o seu na lista para conseguir voltar,
@@ -16,33 +26,120 @@ class AppLocales {
   static const Map<String, String> displayNames = {
     "en": "English",
     "pt": "Português",
+    "es-ES": "Español (España)",
+    "es-419": "Español (Latinoamérica)",
   };
 
-  static bool isSupported(String? languageCode) =>
-      supported.any((locale) => locale.languageCode == languageCode);
+  /// Os países de língua espanhola que seguem a norma da Espanha; o resto do
+  /// mundo hispanofalante fica com a tradução latino-americana. São os mesmos
+  /// que o CLDR pendura em "es" em vez de em "es-419".
+  static const Set<String> _europeanSpanishCountries = {"ES", "GQ", "PH"};
 
-  /// O idioma gravado nas configurações como [Locale], ou nulo para seguir o
-  /// aparelho — o que também vale para um código que esta build não tem, caso
-  /// o app seja instalado por cima de uma versão com mais traduções.
-  static Locale? localeFor(String? languageCode) {
-    if (languageCode == null || languageCode.isEmpty) return null;
-    if (!isSupported(languageCode)) return null;
-    return Locale(languageCode);
+  /// A etiqueta de um idioma da build: o código do idioma, mais a região
+  /// quando ela separa duas traduções ("es-ES", "es-419").
+  static String tagOf(Locale locale) {
+    var countryCode = locale.countryCode;
+    if (countryCode == null || countryCode.isEmpty) return locale.languageCode;
+    return "${locale.languageCode}-$countryCode";
   }
 
-  /// O nome a mostrar para um código de idioma, com o próprio código como
+  /// A etiqueta canônica do que está gravado nas configurações, ou vazio
+  /// quando não é um idioma desta build — o que inclui o valor vazio, que
+  /// significa "seguir o aparelho".
+  ///
+  /// O banco guarda o texto em caixa baixa, e a etiqueta pode chegar com "_"
+  /// no lugar do "-" de quem a montou a partir de um Locale, então a
+  /// comparação não depende nem da caixa nem do separador.
+  static String tagFor(String? storedTag) {
+    if (storedTag == null) return "";
+    var normalized = storedTag.trim().toLowerCase().replaceAll("_", "-");
+    if (normalized.isEmpty) return "";
+    for (var locale in supported) {
+      if (tagOf(locale).toLowerCase() == normalized) return tagOf(locale);
+    }
+    return "";
+  }
+
+  static bool isSupported(String? storedTag) => tagFor(storedTag).isNotEmpty;
+
+  /// O idioma gravado nas configurações como [Locale], ou nulo para seguir o
+  /// aparelho — o que também vale para uma etiqueta que esta build não tem,
+  /// caso o app seja instalado por cima de uma versão com mais traduções.
+  static Locale? localeFor(String? storedTag) {
+    var tag = tagFor(storedTag);
+    if (tag.isEmpty) return null;
+    return supported.firstWhere((locale) => tagOf(locale) == tag);
+  }
+
+  /// O idioma da build que atende [locale], ou nulo quando nenhum atende.
+  ///
+  /// Comparar o código do idioma não basta desde que existem duas traduções em
+  /// espanhol: o aparelho chega aqui como es-MX, es-AR, es-US… e nenhum deles
+  /// é igual a uma das duas. Sem região, ou em um país que segue a norma
+  /// europeia, vale a tradução da Espanha; o resto fica com a
+  /// latino-americana.
+  static Locale? resolve(Locale? locale) {
+    if (locale == null) return null;
+    for (var supportedLocale in supported) {
+      if (supportedLocale == locale) return supportedLocale;
+    }
+    if (locale.languageCode == "es") {
+      var countryCode = locale.countryCode?.toUpperCase() ?? "";
+      return countryCode.isEmpty ||
+              _europeanSpanishCountries.contains(countryCode)
+          ? const Locale("es", "ES")
+          : const Locale("es", "419");
+    }
+    for (var supportedLocale in supported) {
+      if (supportedLocale.languageCode == locale.languageCode) {
+        return supportedLocale;
+      }
+    }
+    return null;
+  }
+
+  /// O idioma a usar entre os que o aparelho pede, na ordem de preferência
+  /// dele, com o primeiro da build como reserva — o mesmo que o Flutter faz
+  /// quando nada corresponde.
+  ///
+  /// Vai no localeListResolutionCallback do MaterialApp: a escolha padrão do
+  /// Flutter, sem país correspondente, daria a primeira variante de espanhol
+  /// da lista para todo mundo, isto é, a da Espanha também para quem está no
+  /// México.
+  static Locale resolveDeviceLocales(
+      List<Locale>? deviceLocales, Iterable<Locale> supportedLocales) {
+    for (var deviceLocale in deviceLocales ?? const <Locale>[]) {
+      var resolved = resolve(deviceLocale);
+      if (resolved != null) return resolved;
+    }
+    return supportedLocales.first;
+  }
+
+  /// O nome a mostrar para uma etiqueta de idioma, com a própria etiqueta como
   /// último recurso.
-  static String displayNameOf(String languageCode) =>
-      displayNames[languageCode] ?? languageCode;
+  static String displayNameOf(String tag) => displayNames[tagFor(tag)] ?? tag;
 }
 
 class MyAppLocalizations {
-  MyAppLocalizations(this.locale);
+  MyAppLocalizations(this.locale) : _values = _valuesFor(locale);
 
   final Locale locale;
 
+  /// Os textos do idioma resolvido, guardados na construção: os getters são
+  /// muitos e são lidos a cada quadro, e o locale de uma instância não muda.
+  final Map<String, String> _values;
+
   static MyAppLocalizations? of(BuildContext context) {
     return Localizations.of<MyAppLocalizations>(context, MyAppLocalizations);
+  }
+
+  /// Os textos do idioma da build que atende [locale]. Um idioma que não está
+  /// na build cai no primeiro da lista, em vez de deixar a interface sem
+  /// nenhum texto — o delegate não carrega um locale desses, mas a classe
+  /// também é construída direto nos testes.
+  static Map<String, String> _valuesFor(Locale locale) {
+    var resolved = AppLocales.resolve(locale) ?? AppLocales.supported.first;
+    return _localizedValues[AppLocales.tagOf(resolved)]!;
   }
 
   static Map<String, Map<String, String>> _localizedValues = {
@@ -354,574 +451,847 @@ class MyAppLocalizations {
           'histórico, então a projeção segue a base estatística.',
       'aiInsightDataLimited': 'Histórico curto (%s janelas): a projeção usa '
           'apenas a base estatística.',
+    },
+    // O espanhol da Espanha. A diferença para o de baixo é de vocabulário —
+    // "ajustes" e "móvil" aqui, "configuración" e "celular" lá — e do tempo
+    // verbal do passado, que na Espanha costuma ser composto.
+    'es-ES': {
+      'conversionButtonLabel': 'Conversiones',
+      'conversionPageTitle': 'Conversión de divisas',
+      'homePageHeadsUpText': 'Cotizaciones en %s',
+      'conversionMultiplierHint': 'Cantidad',
+      'conversionPageExplanationText': 'Introduce la cantidad de la divisa que '
+          'se va a convertir, elige esa divisa y la divisa a la que quieres '
+          'convertirla.',
+      'conversionFromLabel': 'De',
+      'conversionToLabel': 'A',
+      'conversionSwapTooltip': 'Invertir las divisas',
+      'conversionClearAmountTooltip': 'Borrar la cantidad',
+      'conversionInvalidAmountError': 'Introduce un valor válido',
+      'conversionCurrencyPickerTitle': 'Elige una divisa',
+      'conversionCurrencySearchHint': 'Busca por nombre o código',
+      'conversionCurrencyNotFoundLabel': 'No se ha encontrado ninguna divisa',
+      'conversionCurrencyPickerYoursLabel': 'Tus divisas',
+      'conversionCurrencyPickerOthersLabel': 'Todas las divisas',
+      'conversionRateUnavailableLabel': 'Cotización no disponible',
+      'conversionCopyResultTooltip': 'Copiar el resultado',
+      'conversionResultCopiedLabel': 'Resultado copiado',
+      'mainCurrenciesBottomNavItemLabel': 'Divisas',
+      'currencyHistoryBottomNavItemLabel': 'Histórico',
+      'configBottomNavItemLabel': 'Ajustes',
+      'aboutBottomNavItemLabel': 'Acerca de',
+      'currencyHistoryFromDateLabel': 'Desde',
+      'currencyHistoryToDateLabel': 'Hasta',
+      'currencyHistoryCurrenciesSectionLabel': 'Divisas',
+      'currencyHistoryCryptocurrenciesSectionLabel': 'Criptomonedas',
+      'noDataLabel': 'Sin datos',
+      'getCurrencyHistoryBtnLabel': 'Obtener el histórico',
+      'overrideDefaultCurrencySwitchLabel': 'Sustituir la divisa por defecto',
+      'selectedOverrideCurrencyLabel': 'Divisa',
+      'homeCurrenciesSettingLabel': 'Cotizaciones en la pantalla de inicio',
+      'homeCurrenciesPickerTitle': 'Cotizaciones mostradas en burbujas',
+      'homeCurrenciesPickerDescription':
+          'La primera divisa elegida ocupa la burbuja destacada.',
+      'homeCurrenciesSelectedCountLabel': '%s seleccionadas',
+      'homeCurrenciesEmptySelectionLabel': 'Elige al menos una divisa',
+      'homeCurrenciesSaveBtnLabel': 'Guardar',
+      'appLanguageSettingLabel': 'Idioma de la aplicación',
+      'appLanguageSystemOptionLabel': 'Idioma del sistema',
+      'appConfigurationsSectionLabel': 'Ajustes de la aplicación',
+      'pwaInstallSectionLabel': 'Instalar en este dispositivo',
+      'pwaInstallCardLabel': 'Instalar la aplicación',
+      'pwaInstallCardDescription':
+          'Añade Cotação Direta a tu dispositivo y ábrelo desde su propio '
+          'icono, sin la barra del navegador.',
+      'pwaInstallBtnLabel': 'Instalar',
+      'pwaInstallIosCardDescription':
+          'En el iPhone y el iPad la instalación se hace desde el menú de '
+          'compartir de Safari.',
+      'pwaInstallIosBtnLabel': 'Cómo instalar',
+      'pwaInstallIosDialogTitle': 'Añadir a pantalla de inicio',
+      'pwaInstallIosDialogBody':
+          'En Safari, pulsa el botón de compartir, en la parte inferior de la '
+          'pantalla, elige "Añadir a pantalla de inicio" y confirma. Cotação '
+          'Direta aparecerá junto a tus aplicaciones.',
+      'pwaInstallIosDialogCloseBtnLabel': 'Entendido',
+      'pwaInstallAcceptedLabel': 'Aplicación instalada',
+      'pwaInstallDismissedLabel': 'Instalación cancelada',
+      'aboutAppDescription': 'Una aplicación sencilla que muestra la '
+          'cotización de las principales divisas frente al real brasileño.',
+      'aboutVersionLabel': 'Versión',
+      'aboutDeveloperLabel': 'Desarrollado por',
+      'aboutSourceCodeLabel': 'Código fuente',
+      'currencyAlertsBottomNavItemLabel': 'Alertas',
+      'currencyAlertsSectionLabel': 'Alertas de cambio',
+      'currencyAlertEmptyListLabel':
+          'Todavía no hay alertas. Pulsa el botón de abajo para crear una.',
+      'addCurrencyAlertBtnLabel': 'Nueva alerta',
+      'addCurrencyAlertDialogTitle': 'Nueva alerta de cambio',
+      'currencyAlertCurrencyLabel': 'Divisa',
+      'currencyAlertConditionLabel': 'Condición',
+      'currencyAlertConditionAbove': 'Suba por encima de',
+      'currencyAlertConditionBelow': 'Baje por debajo de',
+      'currencyAlertTargetValueLabel': 'Valor objetivo',
+      'currencyAlertInvalidValueError': 'Introduce un valor válido',
+      'currencyAlertSaveBtnLabel': 'Guardar',
+      'currencyAlertCancelBtnLabel': 'Cancelar',
+      'currencyAlertTriggeredLabel': 'Activada',
+      'currencyAlertActiveLabel': 'En espera',
+      'currencyAlertDeleteTooltip': 'Eliminar',
+      'currencyAlertNotificationTitle': 'Alerta de cambio',
+      'currencyAlertNotificationBody': '%s ha alcanzado %s',
+      'aiInsightsBottomNavItemLabel': 'IA',
+      'aiInsightsSectionLabel': 'Análisis con IA en el dispositivo',
+      'aiInsightsDescription': 'Una red neuronal pequeña se entrena en este '
+          'dispositivo, con las cotizaciones que la aplicación ya ha '
+          'descargado, para resumir el mercado y proyectar los próximos días. '
+          'Ningún dato sale de tu móvil.',
+      'aiInsightsAssetLabel': 'Activo',
+      'aiInsightsAssetPickerTitle': 'Elige un activo',
+      'aiInsightsAssetNotFoundLabel': 'No se ha encontrado ningún activo',
+      'aiInsightsHorizonLabel': 'Horizonte de la proyección',
+      'aiInsightsHorizonOptionLabel': '%s días',
+      'aiInsightsAmountLabel': 'Importe a simular (opcional)',
+      'aiInsightsAnalyzeBtnLabel': 'Analizar en el dispositivo',
+      'aiInsightsRunningLabel': 'Entrenando el modelo local…',
+      'aiInsightsEmptyLabel': 'Elige un activo y ejecuta el análisis.',
+      'aiInsightsNoDataError':
+          'No se han encontrado cotizaciones para este activo.',
+      'aiInsightsInsufficientDataError':
+          'No hay histórico suficiente para analizar este activo.',
+      'aiInsightsFailureError': 'No se ha podido completar el análisis.',
+      'aiInsightsSummarySectionLabel': 'Resumen del mercado',
+      'aiInsightsProjectionSectionLabel': 'Proyección',
+      'aiInsightsInsightsSectionLabel': 'Conclusiones',
+      'aiInsightsModelSectionLabel': 'Modelo local',
+      'aiInsightsLastPriceLabel': 'Cotización actual',
+      'aiInsightsWeeklyChangeLabel': 'Variación en 7 días',
+      'aiInsightsMonthlyChangeLabel': 'Variación en 30 días',
+      'aiInsightsVolatilityLabel': 'Volatilidad anualizada',
+      'aiInsightsRsiLabel': 'Momento (RSI 14)',
+      'aiInsightsDrawdownLabel': 'Mayor caída',
+      'aiInsightsTrendLabel': 'Tendencia anualizada',
+      'aiInsightsTrendFitLabel': 'Ajuste de la tendencia (R²)',
+      'aiInsightsProjectedPriceLabel': 'Cotización proyectada en %s días',
+      'aiInsightsProjectedChangeLabel': 'Variación proyectada',
+      'aiInsightsConfidenceBandLabel': 'Rango con %s de confianza',
+      'aiInsightsAmountProjectionLabel': 'Importe simulado',
+      'aiInsightsAmountProjectionHint': '%s invertidos hoy',
+      'aiInsightsModelSamplesLabel': 'Ventanas de entrenamiento',
+      'aiInsightsModelSkillLabel': 'Ventaja sobre el paseo aleatorio',
+      'aiInsightsModelEpochsLabel': 'Épocas',
+      'aiInsightsModelUntrainedLabel':
+          'Histórico corto: la proyección usa solo la base estadística.',
+      'aiInsightsDisclaimerLabel': 'Estimaciones calculadas en tu dispositivo '
+          'a partir de cotizaciones pasadas. No son una recomendación de '
+          'inversión.',
+      'aiInsightsChartHistoryLabel': 'Histórico',
+      'aiInsightsChartProjectionLabel': 'Proyección',
+      'aiInsightTrendUp': 'Tendencia alcista: %s en los últimos %s días.',
+      'aiInsightTrendDown': 'Tendencia bajista: %s en los últimos %s días.',
+      'aiInsightTrendSideways':
+          'Sin tendencia definida: %s en los últimos %s días.',
+      'aiInsightMomentumOverbought':
+          'Momento estirado: RSI en %s, en zona de sobrecompra.',
+      'aiInsightMomentumOversold':
+          'Momento presionado: RSI en %s, en zona de sobreventa.',
+      'aiInsightMomentumNeutral': 'Momento equilibrado: RSI en %s.',
+      'aiInsightVolatilityHigh': 'Volatilidad alta: %s al año, así que la '
+          'proyección tiene un rango amplio.',
+      'aiInsightVolatilityLow': 'Volatilidad baja: %s al año.',
+      'aiInsightProjectionUp':
+          'El modelo proyecta una subida del %s en %s días, hasta %s.',
+      'aiInsightProjectionDown':
+          'El modelo proyecta una bajada del %s en %s días, hasta %s.',
+      'aiInsightProjectionStable':
+          'El modelo proyecta estabilidad en %s días, en torno a %s.',
+      'aiInsightDrawdown':
+          'El activo cayó un %s desde su máximo en el periodo analizado.',
+      'aiInsightConfidenceGood':
+          'La red superó al paseo aleatorio en un %s en la validación.',
+      'aiInsightConfidenceLow': 'La red no superó al paseo aleatorio con este '
+          'histórico, así que la proyección sigue la base estadística.',
+      'aiInsightDataLimited': 'Histórico corto (%s ventanas): la proyección '
+          'usa solo la base estadística.',
+    },
+    // O espanhol da América Latina, o es-419 do CLDR: uma tradução só para as
+    // Américas, já que as diferenças entre os países de lá são menores do que
+    // as que separam qualquer um deles da Espanha.
+    'es-419': {
+      'conversionButtonLabel': 'Conversiones',
+      'conversionPageTitle': 'Conversión de monedas',
+      'homePageHeadsUpText': 'Cotizaciones en %s',
+      'conversionMultiplierHint': 'Cantidad',
+      'conversionPageExplanationText': 'Ingresa la cantidad de la moneda que '
+          'vas a convertir, selecciona esa moneda y la moneda a la que quieres '
+          'convertirla.',
+      'conversionFromLabel': 'De',
+      'conversionToLabel': 'A',
+      'conversionSwapTooltip': 'Invertir las monedas',
+      'conversionClearAmountTooltip': 'Borrar la cantidad',
+      'conversionInvalidAmountError': 'Ingresa un valor válido',
+      'conversionCurrencyPickerTitle': 'Selecciona una moneda',
+      'conversionCurrencySearchHint': 'Busca por nombre o código',
+      'conversionCurrencyNotFoundLabel': 'No se encontró ninguna moneda',
+      'conversionCurrencyPickerYoursLabel': 'Tus monedas',
+      'conversionCurrencyPickerOthersLabel': 'Todas las monedas',
+      'conversionRateUnavailableLabel': 'Cotización no disponible',
+      'conversionCopyResultTooltip': 'Copiar el resultado',
+      'conversionResultCopiedLabel': 'Resultado copiado',
+      'mainCurrenciesBottomNavItemLabel': 'Monedas',
+      'currencyHistoryBottomNavItemLabel': 'Historial',
+      'configBottomNavItemLabel': 'Configuración',
+      'aboutBottomNavItemLabel': 'Acerca de',
+      'currencyHistoryFromDateLabel': 'Desde',
+      'currencyHistoryToDateLabel': 'Hasta',
+      'currencyHistoryCurrenciesSectionLabel': 'Monedas',
+      'currencyHistoryCryptocurrenciesSectionLabel': 'Criptomonedas',
+      'noDataLabel': 'Sin datos',
+      'getCurrencyHistoryBtnLabel': 'Obtener el historial',
+      'overrideDefaultCurrencySwitchLabel':
+          'Reemplazar la moneda predeterminada',
+      'selectedOverrideCurrencyLabel': 'Moneda',
+      'homeCurrenciesSettingLabel': 'Cotizaciones en la pantalla de inicio',
+      'homeCurrenciesPickerTitle': 'Cotizaciones mostradas en burbujas',
+      'homeCurrenciesPickerDescription':
+          'La primera moneda seleccionada ocupa la burbuja destacada.',
+      'homeCurrenciesSelectedCountLabel': '%s seleccionadas',
+      'homeCurrenciesEmptySelectionLabel': 'Selecciona al menos una moneda',
+      'homeCurrenciesSaveBtnLabel': 'Guardar',
+      'appLanguageSettingLabel': 'Idioma de la aplicación',
+      'appLanguageSystemOptionLabel': 'Idioma del sistema',
+      'appConfigurationsSectionLabel': 'Configuración de la aplicación',
+      'pwaInstallSectionLabel': 'Instalar en este dispositivo',
+      'pwaInstallCardLabel': 'Instalar la aplicación',
+      'pwaInstallCardDescription':
+          'Agrega Cotação Direta a tu dispositivo y ábrelo desde su propio '
+          'ícono, sin la barra del navegador.',
+      'pwaInstallBtnLabel': 'Instalar',
+      'pwaInstallIosCardDescription':
+          'En el iPhone y el iPad la instalación se hace desde el menú de '
+          'compartir de Safari.',
+      'pwaInstallIosBtnLabel': 'Cómo instalar',
+      'pwaInstallIosDialogTitle': 'Agregar a la pantalla de inicio',
+      'pwaInstallIosDialogBody':
+          'En Safari, toca el botón de compartir, en la parte de abajo de la '
+          'pantalla, elige "Agregar a la pantalla de inicio" y confirma. '
+          'Cotação Direta va a aparecer junto a tus aplicaciones.',
+      'pwaInstallIosDialogCloseBtnLabel': 'Entendido',
+      'pwaInstallAcceptedLabel': 'Aplicación instalada',
+      'pwaInstallDismissedLabel': 'Instalación cancelada',
+      'aboutAppDescription': 'Una aplicación sencilla que muestra la '
+          'cotización de las principales monedas frente al real brasileño.',
+      'aboutVersionLabel': 'Versión',
+      'aboutDeveloperLabel': 'Desarrollado por',
+      'aboutSourceCodeLabel': 'Código fuente',
+      'currencyAlertsBottomNavItemLabel': 'Alertas',
+      'currencyAlertsSectionLabel': 'Alertas de cambio',
+      'currencyAlertEmptyListLabel':
+          'Todavía no hay alertas. Toca el botón de abajo para crear una.',
+      'addCurrencyAlertBtnLabel': 'Nueva alerta',
+      'addCurrencyAlertDialogTitle': 'Nueva alerta de cambio',
+      'currencyAlertCurrencyLabel': 'Moneda',
+      'currencyAlertConditionLabel': 'Condición',
+      'currencyAlertConditionAbove': 'Suba por encima de',
+      'currencyAlertConditionBelow': 'Baje por debajo de',
+      'currencyAlertTargetValueLabel': 'Valor objetivo',
+      'currencyAlertInvalidValueError': 'Ingresa un valor válido',
+      'currencyAlertSaveBtnLabel': 'Guardar',
+      'currencyAlertCancelBtnLabel': 'Cancelar',
+      'currencyAlertTriggeredLabel': 'Activada',
+      'currencyAlertActiveLabel': 'En espera',
+      'currencyAlertDeleteTooltip': 'Eliminar',
+      'currencyAlertNotificationTitle': 'Alerta de cambio',
+      'currencyAlertNotificationBody': '%s alcanzó %s',
+      'aiInsightsBottomNavItemLabel': 'IA',
+      'aiInsightsSectionLabel': 'Análisis con IA en el dispositivo',
+      'aiInsightsDescription': 'Una red neuronal pequeña se entrena en este '
+          'dispositivo, con las cotizaciones que la aplicación ya descargó, '
+          'para resumir el mercado y proyectar los próximos días. Ningún dato '
+          'sale de tu celular.',
+      'aiInsightsAssetLabel': 'Activo',
+      'aiInsightsAssetPickerTitle': 'Selecciona un activo',
+      'aiInsightsAssetNotFoundLabel': 'No se encontró ningún activo',
+      'aiInsightsHorizonLabel': 'Horizonte de la proyección',
+      'aiInsightsHorizonOptionLabel': '%s días',
+      'aiInsightsAmountLabel': 'Monto para simular (opcional)',
+      'aiInsightsAnalyzeBtnLabel': 'Analizar en el dispositivo',
+      'aiInsightsRunningLabel': 'Entrenando el modelo local…',
+      'aiInsightsEmptyLabel': 'Selecciona un activo y ejecuta el análisis.',
+      'aiInsightsNoDataError':
+          'No se encontraron cotizaciones para este activo.',
+      'aiInsightsInsufficientDataError':
+          'No hay historial suficiente para analizar este activo.',
+      'aiInsightsFailureError': 'No se pudo completar el análisis.',
+      'aiInsightsSummarySectionLabel': 'Resumen del mercado',
+      'aiInsightsProjectionSectionLabel': 'Proyección',
+      'aiInsightsInsightsSectionLabel': 'Conclusiones',
+      'aiInsightsModelSectionLabel': 'Modelo local',
+      'aiInsightsLastPriceLabel': 'Cotización actual',
+      'aiInsightsWeeklyChangeLabel': 'Variación en 7 días',
+      'aiInsightsMonthlyChangeLabel': 'Variación en 30 días',
+      'aiInsightsVolatilityLabel': 'Volatilidad anualizada',
+      'aiInsightsRsiLabel': 'Momento (RSI 14)',
+      'aiInsightsDrawdownLabel': 'Mayor caída',
+      'aiInsightsTrendLabel': 'Tendencia anualizada',
+      'aiInsightsTrendFitLabel': 'Ajuste de la tendencia (R²)',
+      'aiInsightsProjectedPriceLabel': 'Cotización proyectada en %s días',
+      'aiInsightsProjectedChangeLabel': 'Variación proyectada',
+      'aiInsightsConfidenceBandLabel': 'Rango con %s de confianza',
+      'aiInsightsAmountProjectionLabel': 'Monto simulado',
+      'aiInsightsAmountProjectionHint': '%s invertidos hoy',
+      'aiInsightsModelSamplesLabel': 'Ventanas de entrenamiento',
+      'aiInsightsModelSkillLabel': 'Ventaja sobre la caminata aleatoria',
+      'aiInsightsModelEpochsLabel': 'Épocas',
+      'aiInsightsModelUntrainedLabel':
+          'Historial corto: la proyección usa solo la base estadística.',
+      'aiInsightsDisclaimerLabel': 'Estimaciones calculadas en tu dispositivo '
+          'a partir de cotizaciones pasadas. No son una recomendación de '
+          'inversión.',
+      'aiInsightsChartHistoryLabel': 'Historial',
+      'aiInsightsChartProjectionLabel': 'Proyección',
+      'aiInsightTrendUp': 'Tendencia alcista: %s en los últimos %s días.',
+      'aiInsightTrendDown': 'Tendencia bajista: %s en los últimos %s días.',
+      'aiInsightTrendSideways':
+          'Sin tendencia definida: %s en los últimos %s días.',
+      'aiInsightMomentumOverbought':
+          'Momento estirado: RSI en %s, en zona de sobrecompra.',
+      'aiInsightMomentumOversold':
+          'Momento presionado: RSI en %s, en zona de sobreventa.',
+      'aiInsightMomentumNeutral': 'Momento equilibrado: RSI en %s.',
+      'aiInsightVolatilityHigh': 'Volatilidad alta: %s al año, así que la '
+          'proyección tiene un rango amplio.',
+      'aiInsightVolatilityLow': 'Volatilidad baja: %s al año.',
+      'aiInsightProjectionUp':
+          'El modelo proyecta un alza de %s en %s días, hasta %s.',
+      'aiInsightProjectionDown':
+          'El modelo proyecta una baja de %s en %s días, hasta %s.',
+      'aiInsightProjectionStable':
+          'El modelo proyecta estabilidad en %s días, alrededor de %s.',
+      'aiInsightDrawdown':
+          'El activo cayó %s desde su máximo en el período analizado.',
+      'aiInsightConfidenceGood':
+          'La red superó a la caminata aleatoria en %s en la validación.',
+      'aiInsightConfidenceLow': 'La red no superó a la caminata aleatoria con '
+          'este historial, así que la proyección sigue la base estadística.',
+      'aiInsightDataLimited': 'Historial corto (%s ventanas): la proyección '
+          'usa solo la base estadística.',
     }
   };
 
   String? get conversionButtonLabel {
-    return _localizedValues[locale.languageCode]!['conversionButtonLabel'];
+    return _values['conversionButtonLabel'];
   }
 
   String? get conversionPageTitle {
-    return _localizedValues[locale.languageCode]!['conversionPageTitle'];
+    return _values['conversionPageTitle'];
   }
 
   String? get homePageHeadsUpText {
-    return _localizedValues[locale.languageCode]!['homePageHeadsUpText'];
+    return _values['homePageHeadsUpText'];
   }
 
   String? get conversionMultiplierHint {
-    return _localizedValues[locale.languageCode]!['conversionMultiplierHint'];
+    return _values['conversionMultiplierHint'];
   }
 
   String? get conversionPageExplanationText {
-    return _localizedValues[locale.languageCode]!
-        ['conversionPageExplanationText'];
+    return _values['conversionPageExplanationText'];
   }
 
   String? get conversionFromLabel {
-    return _localizedValues[locale.languageCode]!['conversionFromLabel'];
+    return _values['conversionFromLabel'];
   }
 
   String? get conversionToLabel {
-    return _localizedValues[locale.languageCode]!['conversionToLabel'];
+    return _values['conversionToLabel'];
   }
 
   String? get conversionSwapTooltip {
-    return _localizedValues[locale.languageCode]!['conversionSwapTooltip'];
+    return _values['conversionSwapTooltip'];
   }
 
   String? get conversionClearAmountTooltip {
-    return _localizedValues[locale.languageCode]!
-        ['conversionClearAmountTooltip'];
+    return _values['conversionClearAmountTooltip'];
   }
 
   String? get conversionInvalidAmountError {
-    return _localizedValues[locale.languageCode]!
-        ['conversionInvalidAmountError'];
+    return _values['conversionInvalidAmountError'];
   }
 
   String? get conversionCurrencyPickerTitle {
-    return _localizedValues[locale.languageCode]!
-        ['conversionCurrencyPickerTitle'];
+    return _values['conversionCurrencyPickerTitle'];
   }
 
   String? get conversionCurrencySearchHint {
-    return _localizedValues[locale.languageCode]!
-        ['conversionCurrencySearchHint'];
+    return _values['conversionCurrencySearchHint'];
   }
 
   String? get conversionCurrencyNotFoundLabel {
-    return _localizedValues[locale.languageCode]!
-        ['conversionCurrencyNotFoundLabel'];
+    return _values['conversionCurrencyNotFoundLabel'];
   }
 
   /// Título da seção do seletor com as moedas da tela inicial, que aparecem
   /// antes das demais.
   String? get conversionCurrencyPickerYoursLabel {
-    return _localizedValues[locale.languageCode]!
-        ['conversionCurrencyPickerYoursLabel'];
+    return _values['conversionCurrencyPickerYoursLabel'];
   }
 
   /// Título da seção com o resto da lista, logo abaixo das moedas da tela
   /// inicial.
   String? get conversionCurrencyPickerOthersLabel {
-    return _localizedValues[locale.languageCode]!
-        ['conversionCurrencyPickerOthersLabel'];
+    return _values['conversionCurrencyPickerOthersLabel'];
   }
 
   String? get conversionRateUnavailableLabel {
-    return _localizedValues[locale.languageCode]!
-        ['conversionRateUnavailableLabel'];
+    return _values['conversionRateUnavailableLabel'];
   }
 
   String? get conversionCopyResultTooltip {
-    return _localizedValues[locale.languageCode]!
-        ['conversionCopyResultTooltip'];
+    return _values['conversionCopyResultTooltip'];
   }
 
   String? get conversionResultCopiedLabel {
-    return _localizedValues[locale.languageCode]!
-        ['conversionResultCopiedLabel'];
+    return _values['conversionResultCopiedLabel'];
   }
 
   String? get mainCurrenciesBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]!
-        ['mainCurrenciesBottomNavItemLabel'];
+    return _values['mainCurrenciesBottomNavItemLabel'];
   }
 
   String? get currencyHistoryBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]!
-        ['currencyHistoryBottomNavItemLabel'];
+    return _values['currencyHistoryBottomNavItemLabel'];
   }
 
   String? get aboutBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]!['aboutBottomNavItemLabel'];
+    return _values['aboutBottomNavItemLabel'];
   }
 
   String? get currencyHistoryFromDateLabel {
-    return _localizedValues[locale.languageCode]!
-        ['currencyHistoryFromDateLabel'];
+    return _values['currencyHistoryFromDateLabel'];
   }
 
   String? get currencyHistoryToDateLabel {
-    return _localizedValues[locale.languageCode]!['currencyHistoryToDateLabel'];
+    return _values['currencyHistoryToDateLabel'];
   }
 
   String? get currencyHistoryCurrenciesSectionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['currencyHistoryCurrenciesSectionLabel'];
+    return _values['currencyHistoryCurrenciesSectionLabel'];
   }
 
   String? get currencyHistoryCryptocurrenciesSectionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['currencyHistoryCryptocurrenciesSectionLabel'];
+    return _values['currencyHistoryCryptocurrenciesSectionLabel'];
   }
 
   String? get noDataLabel {
-    return _localizedValues[locale.languageCode]!['noDataLabel'];
+    return _values['noDataLabel'];
   }
 
   String? get getCurrencyHistoryBtnLabel {
-    return _localizedValues[locale.languageCode]!['getCurrencyHistoryBtnLabel'];
+    return _values['getCurrencyHistoryBtnLabel'];
   }
 
   String? get getConfigBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]!['configBottomNavItemLabel'];
+    return _values['configBottomNavItemLabel'];
   }
 
   String? get overrideDefaultCurrencySwitchLabel {
-    return _localizedValues[locale.languageCode]!
-        ['overrideDefaultCurrencySwitchLabel'];
+    return _values['overrideDefaultCurrencySwitchLabel'];
   }
 
   String? get selectedOverrideCurrencyLabel {
-    return _localizedValues[locale.languageCode]!
-        ['selectedOverrideCurrencyLabel'];
+    return _values['selectedOverrideCurrencyLabel'];
   }
 
   String? get homeCurrenciesSettingLabel {
-    return _localizedValues[locale.languageCode]!['homeCurrenciesSettingLabel'];
+    return _values['homeCurrenciesSettingLabel'];
   }
 
   String? get homeCurrenciesPickerTitle {
-    return _localizedValues[locale.languageCode]!['homeCurrenciesPickerTitle'];
+    return _values['homeCurrenciesPickerTitle'];
   }
 
   String? get homeCurrenciesPickerDescription {
-    return _localizedValues[locale.languageCode]!
-        ['homeCurrenciesPickerDescription'];
+    return _values['homeCurrenciesPickerDescription'];
   }
 
   String? get homeCurrenciesSelectedCountLabel {
-    return _localizedValues[locale.languageCode]!
-        ['homeCurrenciesSelectedCountLabel'];
+    return _values['homeCurrenciesSelectedCountLabel'];
   }
 
   String? get homeCurrenciesEmptySelectionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['homeCurrenciesEmptySelectionLabel'];
+    return _values['homeCurrenciesEmptySelectionLabel'];
   }
 
   String? get homeCurrenciesSaveBtnLabel {
-    return _localizedValues[locale.languageCode]!
-        ['homeCurrenciesSaveBtnLabel'];
+    return _values['homeCurrenciesSaveBtnLabel'];
   }
 
   String? get appLanguageSettingLabel {
-    return _localizedValues[locale.languageCode]!['appLanguageSettingLabel'];
+    return _values['appLanguageSettingLabel'];
   }
 
   String? get appLanguageSystemOptionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['appLanguageSystemOptionLabel'];
+    return _values['appLanguageSystemOptionLabel'];
   }
 
   String? get appConfigurationsSectionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['appConfigurationsSectionLabel'];
+    return _values['appConfigurationsSectionLabel'];
   }
 
   String? get pwaInstallSectionLabel {
-    return _localizedValues[locale.languageCode]!['pwaInstallSectionLabel'];
+    return _values['pwaInstallSectionLabel'];
   }
 
   String? get pwaInstallCardLabel {
-    return _localizedValues[locale.languageCode]!['pwaInstallCardLabel'];
+    return _values['pwaInstallCardLabel'];
   }
 
   String? get pwaInstallCardDescription {
-    return _localizedValues[locale.languageCode]!['pwaInstallCardDescription'];
+    return _values['pwaInstallCardDescription'];
   }
 
   String? get pwaInstallBtnLabel {
-    return _localizedValues[locale.languageCode]!['pwaInstallBtnLabel'];
+    return _values['pwaInstallBtnLabel'];
   }
 
   String? get pwaInstallIosCardDescription {
-    return _localizedValues[locale.languageCode]!
-        ['pwaInstallIosCardDescription'];
+    return _values['pwaInstallIosCardDescription'];
   }
 
   String? get pwaInstallIosBtnLabel {
-    return _localizedValues[locale.languageCode]!['pwaInstallIosBtnLabel'];
+    return _values['pwaInstallIosBtnLabel'];
   }
 
   String? get pwaInstallIosDialogTitle {
-    return _localizedValues[locale.languageCode]!['pwaInstallIosDialogTitle'];
+    return _values['pwaInstallIosDialogTitle'];
   }
 
   String? get pwaInstallIosDialogBody {
-    return _localizedValues[locale.languageCode]!['pwaInstallIosDialogBody'];
+    return _values['pwaInstallIosDialogBody'];
   }
 
   String? get pwaInstallIosDialogCloseBtnLabel {
-    return _localizedValues[locale.languageCode]!
-        ['pwaInstallIosDialogCloseBtnLabel'];
+    return _values['pwaInstallIosDialogCloseBtnLabel'];
   }
 
   String? get pwaInstallAcceptedLabel {
-    return _localizedValues[locale.languageCode]!['pwaInstallAcceptedLabel'];
+    return _values['pwaInstallAcceptedLabel'];
   }
 
   String? get pwaInstallDismissedLabel {
-    return _localizedValues[locale.languageCode]!['pwaInstallDismissedLabel'];
+    return _values['pwaInstallDismissedLabel'];
   }
 
   String? get aboutAppDescription {
-    return _localizedValues[locale.languageCode]!['aboutAppDescription'];
+    return _values['aboutAppDescription'];
   }
 
   String? get aboutVersionLabel {
-    return _localizedValues[locale.languageCode]!['aboutVersionLabel'];
+    return _values['aboutVersionLabel'];
   }
 
   String? get aboutDeveloperLabel {
-    return _localizedValues[locale.languageCode]!['aboutDeveloperLabel'];
+    return _values['aboutDeveloperLabel'];
   }
 
   String? get aboutSourceCodeLabel {
-    return _localizedValues[locale.languageCode]!['aboutSourceCodeLabel'];
+    return _values['aboutSourceCodeLabel'];
   }
 
   String? get currencyAlertsBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]!
-        ['currencyAlertsBottomNavItemLabel'];
+    return _values['currencyAlertsBottomNavItemLabel'];
   }
 
   String? get currencyAlertsSectionLabel {
-    return _localizedValues[locale.languageCode]!['currencyAlertsSectionLabel'];
+    return _values['currencyAlertsSectionLabel'];
   }
 
   String? get currencyAlertEmptyListLabel {
-    return _localizedValues[locale.languageCode]!['currencyAlertEmptyListLabel'];
+    return _values['currencyAlertEmptyListLabel'];
   }
 
   String? get addCurrencyAlertBtnLabel {
-    return _localizedValues[locale.languageCode]!['addCurrencyAlertBtnLabel'];
+    return _values['addCurrencyAlertBtnLabel'];
   }
 
   String? get addCurrencyAlertDialogTitle {
-    return _localizedValues[locale.languageCode]!
-        ['addCurrencyAlertDialogTitle'];
+    return _values['addCurrencyAlertDialogTitle'];
   }
 
   String? get currencyAlertCurrencyLabel {
-    return _localizedValues[locale.languageCode]!['currencyAlertCurrencyLabel'];
+    return _values['currencyAlertCurrencyLabel'];
   }
 
   String? get currencyAlertConditionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['currencyAlertConditionLabel'];
+    return _values['currencyAlertConditionLabel'];
   }
 
   String? get currencyAlertConditionAbove {
-    return _localizedValues[locale.languageCode]!
-        ['currencyAlertConditionAbove'];
+    return _values['currencyAlertConditionAbove'];
   }
 
   String? get currencyAlertConditionBelow {
-    return _localizedValues[locale.languageCode]!
-        ['currencyAlertConditionBelow'];
+    return _values['currencyAlertConditionBelow'];
   }
 
   String? get currencyAlertTargetValueLabel {
-    return _localizedValues[locale.languageCode]!
-        ['currencyAlertTargetValueLabel'];
+    return _values['currencyAlertTargetValueLabel'];
   }
 
   String? get currencyAlertInvalidValueError {
-    return _localizedValues[locale.languageCode]!
-        ['currencyAlertInvalidValueError'];
+    return _values['currencyAlertInvalidValueError'];
   }
 
   String? get currencyAlertSaveBtnLabel {
-    return _localizedValues[locale.languageCode]!['currencyAlertSaveBtnLabel'];
+    return _values['currencyAlertSaveBtnLabel'];
   }
 
   String? get currencyAlertCancelBtnLabel {
-    return _localizedValues[locale.languageCode]!
-        ['currencyAlertCancelBtnLabel'];
+    return _values['currencyAlertCancelBtnLabel'];
   }
 
   String? get currencyAlertTriggeredLabel {
-    return _localizedValues[locale.languageCode]!['currencyAlertTriggeredLabel'];
+    return _values['currencyAlertTriggeredLabel'];
   }
 
   String? get currencyAlertActiveLabel {
-    return _localizedValues[locale.languageCode]!['currencyAlertActiveLabel'];
+    return _values['currencyAlertActiveLabel'];
   }
 
   String? get currencyAlertDeleteTooltip {
-    return _localizedValues[locale.languageCode]!['currencyAlertDeleteTooltip'];
+    return _values['currencyAlertDeleteTooltip'];
   }
 
   String? get currencyAlertNotificationTitle {
-    return _localizedValues[locale.languageCode]!
-        ['currencyAlertNotificationTitle'];
+    return _values['currencyAlertNotificationTitle'];
   }
 
   String? get currencyAlertNotificationBody {
-    return _localizedValues[locale.languageCode]!
-        ['currencyAlertNotificationBody'];
+    return _values['currencyAlertNotificationBody'];
   }
 
   String? get aiInsightsBottomNavItemLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsBottomNavItemLabel'];
+    return _values['aiInsightsBottomNavItemLabel'];
   }
 
   String? get aiInsightsSectionLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsSectionLabel'];
+    return _values['aiInsightsSectionLabel'];
   }
 
   String? get aiInsightsDescription {
-    return _localizedValues[locale.languageCode]!['aiInsightsDescription'];
+    return _values['aiInsightsDescription'];
   }
 
   String? get aiInsightsAssetLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsAssetLabel'];
+    return _values['aiInsightsAssetLabel'];
   }
 
   String? get aiInsightsAssetPickerTitle {
-    return _localizedValues[locale.languageCode]!['aiInsightsAssetPickerTitle'];
+    return _values['aiInsightsAssetPickerTitle'];
   }
 
   String? get aiInsightsAssetNotFoundLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsAssetNotFoundLabel'];
+    return _values['aiInsightsAssetNotFoundLabel'];
   }
 
   String? get aiInsightsHorizonLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsHorizonLabel'];
+    return _values['aiInsightsHorizonLabel'];
   }
 
   String? get aiInsightsHorizonOptionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsHorizonOptionLabel'];
+    return _values['aiInsightsHorizonOptionLabel'];
   }
 
   String? get aiInsightsAmountLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsAmountLabel'];
+    return _values['aiInsightsAmountLabel'];
   }
 
   String? get aiInsightsAnalyzeBtnLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsAnalyzeBtnLabel'];
+    return _values['aiInsightsAnalyzeBtnLabel'];
   }
 
   String? get aiInsightsRunningLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsRunningLabel'];
+    return _values['aiInsightsRunningLabel'];
   }
 
   String? get aiInsightsEmptyLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsEmptyLabel'];
+    return _values['aiInsightsEmptyLabel'];
   }
 
   String? get aiInsightsNoDataError {
-    return _localizedValues[locale.languageCode]!['aiInsightsNoDataError'];
+    return _values['aiInsightsNoDataError'];
   }
 
   String? get aiInsightsInsufficientDataError {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsInsufficientDataError'];
+    return _values['aiInsightsInsufficientDataError'];
   }
 
   String? get aiInsightsFailureError {
-    return _localizedValues[locale.languageCode]!['aiInsightsFailureError'];
+    return _values['aiInsightsFailureError'];
   }
 
   String? get aiInsightsSummarySectionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsSummarySectionLabel'];
+    return _values['aiInsightsSummarySectionLabel'];
   }
 
   String? get aiInsightsProjectionSectionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsProjectionSectionLabel'];
+    return _values['aiInsightsProjectionSectionLabel'];
   }
 
   String? get aiInsightsInsightsSectionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsInsightsSectionLabel'];
+    return _values['aiInsightsInsightsSectionLabel'];
   }
 
   String? get aiInsightsModelSectionLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsModelSectionLabel'];
+    return _values['aiInsightsModelSectionLabel'];
   }
 
   String? get aiInsightsLastPriceLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsLastPriceLabel'];
+    return _values['aiInsightsLastPriceLabel'];
   }
 
   String? get aiInsightsWeeklyChangeLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsWeeklyChangeLabel'];
+    return _values['aiInsightsWeeklyChangeLabel'];
   }
 
   String? get aiInsightsMonthlyChangeLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsMonthlyChangeLabel'];
+    return _values['aiInsightsMonthlyChangeLabel'];
   }
 
   String? get aiInsightsVolatilityLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsVolatilityLabel'];
+    return _values['aiInsightsVolatilityLabel'];
   }
 
   String? get aiInsightsRsiLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsRsiLabel'];
+    return _values['aiInsightsRsiLabel'];
   }
 
   String? get aiInsightsDrawdownLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsDrawdownLabel'];
+    return _values['aiInsightsDrawdownLabel'];
   }
 
   String? get aiInsightsTrendLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsTrendLabel'];
+    return _values['aiInsightsTrendLabel'];
   }
 
   String? get aiInsightsTrendFitLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsTrendFitLabel'];
+    return _values['aiInsightsTrendFitLabel'];
   }
 
   String? get aiInsightsProjectedPriceLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsProjectedPriceLabel'];
+    return _values['aiInsightsProjectedPriceLabel'];
   }
 
   String? get aiInsightsProjectedChangeLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsProjectedChangeLabel'];
+    return _values['aiInsightsProjectedChangeLabel'];
   }
 
   String? get aiInsightsConfidenceBandLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsConfidenceBandLabel'];
+    return _values['aiInsightsConfidenceBandLabel'];
   }
 
   String? get aiInsightsAmountProjectionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsAmountProjectionLabel'];
+    return _values['aiInsightsAmountProjectionLabel'];
   }
 
   String? get aiInsightsAmountProjectionHint {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsAmountProjectionHint'];
+    return _values['aiInsightsAmountProjectionHint'];
   }
 
   String? get aiInsightsModelSamplesLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsModelSamplesLabel'];
+    return _values['aiInsightsModelSamplesLabel'];
   }
 
   String? get aiInsightsModelSkillLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsModelSkillLabel'];
+    return _values['aiInsightsModelSkillLabel'];
   }
 
   String? get aiInsightsModelEpochsLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsModelEpochsLabel'];
+    return _values['aiInsightsModelEpochsLabel'];
   }
 
   String? get aiInsightsModelUntrainedLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsModelUntrainedLabel'];
+    return _values['aiInsightsModelUntrainedLabel'];
   }
 
   String? get aiInsightsDisclaimerLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsDisclaimerLabel'];
+    return _values['aiInsightsDisclaimerLabel'];
   }
 
   String? get aiInsightsChartHistoryLabel {
-    return _localizedValues[locale.languageCode]!['aiInsightsChartHistoryLabel'];
+    return _values['aiInsightsChartHistoryLabel'];
   }
 
   String? get aiInsightsChartProjectionLabel {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightsChartProjectionLabel'];
+    return _values['aiInsightsChartProjectionLabel'];
   }
 
   String? get aiInsightTrendUp {
-    return _localizedValues[locale.languageCode]!['aiInsightTrendUp'];
+    return _values['aiInsightTrendUp'];
   }
 
   String? get aiInsightTrendDown {
-    return _localizedValues[locale.languageCode]!['aiInsightTrendDown'];
+    return _values['aiInsightTrendDown'];
   }
 
   String? get aiInsightTrendSideways {
-    return _localizedValues[locale.languageCode]!['aiInsightTrendSideways'];
+    return _values['aiInsightTrendSideways'];
   }
 
   String? get aiInsightMomentumOverbought {
-    return _localizedValues[locale.languageCode]!
-        ['aiInsightMomentumOverbought'];
+    return _values['aiInsightMomentumOverbought'];
   }
 
   String? get aiInsightMomentumOversold {
-    return _localizedValues[locale.languageCode]!['aiInsightMomentumOversold'];
+    return _values['aiInsightMomentumOversold'];
   }
 
   String? get aiInsightMomentumNeutral {
-    return _localizedValues[locale.languageCode]!['aiInsightMomentumNeutral'];
+    return _values['aiInsightMomentumNeutral'];
   }
 
   String? get aiInsightVolatilityHigh {
-    return _localizedValues[locale.languageCode]!['aiInsightVolatilityHigh'];
+    return _values['aiInsightVolatilityHigh'];
   }
 
   String? get aiInsightVolatilityLow {
-    return _localizedValues[locale.languageCode]!['aiInsightVolatilityLow'];
+    return _values['aiInsightVolatilityLow'];
   }
 
   String? get aiInsightProjectionUp {
-    return _localizedValues[locale.languageCode]!['aiInsightProjectionUp'];
+    return _values['aiInsightProjectionUp'];
   }
 
   String? get aiInsightProjectionDown {
-    return _localizedValues[locale.languageCode]!['aiInsightProjectionDown'];
+    return _values['aiInsightProjectionDown'];
   }
 
   String? get aiInsightProjectionStable {
-    return _localizedValues[locale.languageCode]!['aiInsightProjectionStable'];
+    return _values['aiInsightProjectionStable'];
   }
 
   String? get aiInsightDrawdown {
-    return _localizedValues[locale.languageCode]!['aiInsightDrawdown'];
+    return _values['aiInsightDrawdown'];
   }
 
   String? get aiInsightConfidenceGood {
-    return _localizedValues[locale.languageCode]!['aiInsightConfidenceGood'];
+    return _values['aiInsightConfidenceGood'];
   }
 
   String? get aiInsightConfidenceLow {
-    return _localizedValues[locale.languageCode]!['aiInsightConfidenceLow'];
+    return _values['aiInsightConfidenceLow'];
   }
 
   String? get aiInsightDataLimited {
-    return _localizedValues[locale.languageCode]!['aiInsightDataLimited'];
+    return _values['aiInsightDataLimited'];
   }
 }
 
 class MyAppLocalizationsDelegate
     extends LocalizationsDelegate<MyAppLocalizations> {
   @override
-  bool isSupported(Locale locale) => AppLocales.isSupported(locale.languageCode);
+  bool isSupported(Locale locale) => AppLocales.resolve(locale) != null;
 
   @override
   Future<MyAppLocalizations> load(Locale locale) {

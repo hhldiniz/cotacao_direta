@@ -319,7 +319,7 @@ void main() {
 
   group('InsightEngine formatação dos números', () {
     test('em português o separador decimal é a vírgula', () {
-      final insights = const InsightEngine(languageCode: "pt").generate(
+      final insights = const InsightEngine(localeName: "pt").generate(
           series: series,
           statistics: _statistics(monthlyChange: 0.1234),
           forecast: _forecast());
@@ -329,7 +329,7 @@ void main() {
     });
 
     test('em inglês o separador decimal é o ponto', () {
-      final insights = const InsightEngine(languageCode: "en").generate(
+      final insights = const InsightEngine(localeName: "en").generate(
           series: series,
           statistics: _statistics(monthlyChange: 0.1234),
           forecast: _forecast());
@@ -338,9 +338,28 @@ void main() {
           "12.3%");
     });
 
+    // O espanhol da Espanha separa os decimais com vírgula, o da América
+    // Latina com ponto: é o que faz a região ir junto do idioma até aqui.
+    test('as duas normas do espanhol separam os decimais de formas diferentes',
+        () {
+      final espanha = const InsightEngine(localeName: "es_ES").generate(
+          series: series,
+          statistics: _statistics(monthlyChange: 0.1234),
+          forecast: _forecast());
+      final americaLatina = const InsightEngine(localeName: "es_419").generate(
+          series: series,
+          statistics: _statistics(monthlyChange: 0.1234),
+          forecast: _forecast());
+
+      expect(_insightOf(espanha, InsightCode.trendUp).arguments.first,
+          startsWith("12,3"));
+      expect(_insightOf(americaLatina, InsightCode.trendUp).arguments.first,
+          startsWith("12.3"));
+    });
+
     test('a cotação projetada ganha casas decimais conforme a ordem de '
         'grandeza', () {
-      final insights = const InsightEngine(languageCode: "en").generate(
+      final insights = const InsightEngine(localeName: "en").generate(
           series: cryptoSeries,
           statistics: _statistics(lastPrice: 0.0000017),
           forecast:

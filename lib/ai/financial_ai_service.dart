@@ -30,19 +30,19 @@ class FinancialAiService {
 
   /// Analyses [series] and projects [horizonInDays] days ahead.
   ///
-  /// [languageCode] only affects the formatting of the numbers embedded in the
+  /// [localeName] only affects the formatting of the numbers embedded in the
   /// remarks ("3,2%" or "3.2%").
   FinancialAnalysis analyze(
     AssetSeries series, {
     int horizonInDays = 15,
-    String languageCode = "pt",
+    String localeName = "pt",
   }) {
     if (series.length < minimumPoints)
       throw ArgumentError("series with fewer than $minimumPoints points");
 
     final statistics = computeStatistics(series);
     final forecast = model.forecast(series, horizonInDays: horizonInDays);
-    final insights = InsightEngine(languageCode: languageCode).generate(
+    final insights = InsightEngine(localeName: localeName).generate(
       series: series,
       statistics: statistics,
       forecast: forecast,

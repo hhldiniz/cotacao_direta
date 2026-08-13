@@ -1,5 +1,6 @@
 import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/util/currency_name.dart';
+import 'package:cotacao_direta/util/localizations.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -11,15 +12,25 @@ void main() {
     });
 
     test('cai no inglês em um idioma sem tradução', () {
-      expect(currencyName(Currencies.BRL, const Locale("es")), "Brazilian Real");
+      expect(currencyName(Currencies.BRL, const Locale("fr")), "Brazilian Real");
     });
 
-    test('toda moeda suportada tem nome nos dois idiomas', () {
+    // O nome da moeda não muda entre as duas normas do espanhol, então as duas
+    // são atendidas pela busca sem região.
+    test('as duas variantes do espanhol têm o mesmo nome', () {
+      expect(currencyName(Currencies.USD, const Locale("es", "ES")),
+          "Dólar estadounidense");
+      expect(currencyName(Currencies.USD, const Locale("es", "419")),
+          "Dólar estadounidense");
+    });
+
+    test('toda moeda suportada tem nome em todos os idiomas', () {
       for (var currency in Currencies.values) {
-        for (var locale in const [Locale("pt"), Locale("en")]) {
+        for (var locale in AppLocales.supported) {
           expect(currencyName(currency, locale), isNotEmpty);
           expect(currencyName(currency, locale), isNot(currencyCode(currency)),
-              reason: "${currency.name} está sem nome em ${locale.languageCode}");
+              reason: "${currency.name} está sem nome em "
+                  "${AppLocales.tagOf(locale)}");
         }
       }
     });
