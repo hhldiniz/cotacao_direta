@@ -15,6 +15,11 @@ class Configuration extends BaseModel {
   bool overrideDefaultCurrency;
   String? selectedOverrideCurrencyCode;
 
+  /// Idioma escolhido para a interface, no formato do código do Locale
+  /// ("pt", "en"). Vazio — o padrão da coluna e o que a migração deixa para
+  /// quem já usava o app — significa "seguir o aparelho".
+  String languageCode;
+
   /// Códigos das moedas que viram bolha na tela inicial, na ordem em que
   /// aparecem — a primeira é a bolha de destaque.
   List<String> homeCurrencyCodes;
@@ -22,9 +27,17 @@ class Configuration extends BaseModel {
   Configuration(this.id,
       {this.overrideDefaultCurrency = false,
       this.selectedOverrideCurrencyCode = "",
+      String? languageCode,
       List<String>? homeCurrencyCodes})
-      : homeCurrencyCodes =
+      : languageCode = parseLanguageCode(languageCode),
+        homeCurrencyCodes =
             homeCurrencyCodes ?? List.of(defaultHomeCurrencyCodes);
+
+  /// Normaliza o idioma gravado: espaços e caixa vindos do banco não podem
+  /// virar um código que não bate com nenhum idioma da build, e nulo é o mesmo
+  /// que "seguir o aparelho".
+  static String parseLanguageCode(String? storedValue) =>
+      storedValue?.trim().toLowerCase() ?? "";
 
   /// Lê a lista guardada em uma única coluna de texto, separada por vírgula.
   ///
@@ -48,6 +61,7 @@ class Configuration extends BaseModel {
       'overrideDefaultCurrency': overrideDefaultCurrency ? 1 : 0,
       'selectedOverrideCurrencyCode': selectedOverrideCurrencyCode,
       'homeCurrencyCodes': homeCurrencyCodes.join(","),
+      'languageCode': languageCode,
     };
   }
 
@@ -58,6 +72,7 @@ class Configuration extends BaseModel {
         "overrideDefaultCurrency: $overrideDefaultCurrency,\n"
         "selectedOverrideCurrencyCode: $selectedOverrideCurrencyCode, \n"
         "homeCurrencyCodes: ${homeCurrencyCodes.join(",")}, \n"
+        "languageCode: $languageCode, \n"
         "}";
   }
 }

@@ -1,8 +1,10 @@
 import 'package:cotacao_direta/blocs/configurations_page_bloc.dart';
 import 'package:cotacao_direta/model/configuration.dart';
 import 'package:cotacao_direta/providers/configurations_page_bloc_provider.dart';
+import 'package:cotacao_direta/util/app_locale_controller.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/configurations_page.dart';
+import 'package:cotacao_direta/view/widgets/bento_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,14 +30,22 @@ void main() {
   // Um repositório em memória no lugar do banco: em teste de widget o relógio
   // é simulado, e esperar por E/S de verdade travaria o teste.
   late FakeConfigurationRepository repository;
+  late AppLocaleController localeController;
   late ConfigurationsPageBloc bloc;
 
   setUp(() {
     repository = FakeConfigurationRepository();
-    bloc = ConfigurationsPageBloc(configurationRepository: repository);
+    localeController =
+        AppLocaleController(configurationRepository: repository);
+    bloc = ConfigurationsPageBloc(
+        configurationRepository: repository,
+        localeController: localeController);
   });
 
-  tearDown(() => bloc.dispose());
+  tearDown(() {
+    bloc.dispose();
+    localeController.dispose();
+  });
 
   Future<void> pumpPage(WidgetTester tester) async {
     await tester.pumpWidget(_configurationsApp(bloc));
@@ -133,6 +143,81 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(bloc.homeCurrencyCodes, Configuration.defaultHomeCurrencyCodes);
+    });
+  });
+
+  group('ConfigurationsPage e o idioma da interface', () {
+    // A moeda de contrapartida também é escolhida por um DropdownButton de
+    // String; o do idioma é o que está no cartão com o rótulo dele.
+    final languageDropdown = find.descendant(
+        of: find.ancestor(
+            of: find.text("Idioma do aplicativo"),
+            matching: find.byType(BentoCard)),
+        matching: find.byType(DropdownButton<String>));
+
+    /// Abre a lista suspensa do idioma e escolhe o item pedido.
+    Future<void> chooseLanguage(WidgetTester tester, String label) async {
+      await tester.tap(languageDropdown);
+      await tester.pumpAndSettle();
+      // O item escolhido também fica desenhado no botão fechado; o do menu
+      // aberto é o último a ser construído.
+      await tester.tap(find.text(label).last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('oferece o aparelho e os idiomas da build',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+
+      expect(find.text("Idioma do aplicativo"), findsOneWidget);
+      await tester.tap(languageDropdown);
+      await tester.pumpAndSettle();
+
+      expect(find.text("Idioma do sistema"), findsWidgets);
+      for (var locale in AppLocales.supported) {
+        expect(find.text(AppLocales.displayNameOf(locale.languageCode)),
+            findsWidgets,
+            reason: "todo idioma da build aparece na lista");
+      }
+    });
+
+    testWidgets('abre no idioma do aparelho quando nada foi escolhido',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+
+      expect(tester.widget<DropdownButton<String>>(languageDropdown).value, "");
+    });
+
+    testWidgets('mostra o idioma gravado', (WidgetTester tester) async {
+      repository.configuration = Configuration(1, languageCode: "en");
+
+      await pumpPage(tester);
+
+      expect(
+          tester.widget<DropdownButton<String>>(languageDropdown).value, "en");
+    });
+
+    testWidgets('escolher um idioma grava e aplica na hora',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+
+      await chooseLanguage(tester, "English");
+
+      expect(bloc.languageCode, "en");
+      expect(repository.configuration.languageCode, "en");
+      expect(localeController.value, const Locale("en"));
+    });
+
+    testWidgets('voltar para o idioma do sistema apaga a escolha',
+        (WidgetTester tester) async {
+      repository.configuration = Configuration(1, languageCode: "en");
+      await pumpPage(tester);
+
+      await chooseLanguage(tester, "Idioma do sistema");
+
+      expect(bloc.languageCode, "");
+      expect(repository.configuration.languageCode, "");
+      expect(localeController.value, isNull);
     });
   });
 }

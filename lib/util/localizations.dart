@@ -1,6 +1,41 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+/// Os idiomas que entram na build do aplicativo.
+///
+/// É a mesma lista que o MaterialApp declara em supportedLocales, que o
+/// [MyAppLocalizationsDelegate] aceita e que a tela de opções oferece: com uma
+/// fonte única, acrescentar uma tradução ao mapa de textos é o bastante para
+/// ela aparecer nas três pontas.
+class AppLocales {
+  static const List<Locale> supported = [Locale("en"), Locale("pt")];
+
+  /// Nome de cada idioma escrito nele mesmo. Quem está com o app em um idioma
+  /// que não entende precisa reconhecer o seu na lista para conseguir voltar,
+  /// então estes nomes não são traduzidos.
+  static const Map<String, String> displayNames = {
+    "en": "English",
+    "pt": "Português",
+  };
+
+  static bool isSupported(String? languageCode) =>
+      supported.any((locale) => locale.languageCode == languageCode);
+
+  /// O idioma gravado nas configurações como [Locale], ou nulo para seguir o
+  /// aparelho — o que também vale para um código que esta build não tem, caso
+  /// o app seja instalado por cima de uma versão com mais traduções.
+  static Locale? localeFor(String? languageCode) {
+    if (languageCode == null || languageCode.isEmpty) return null;
+    if (!isSupported(languageCode)) return null;
+    return Locale(languageCode);
+  }
+
+  /// O nome a mostrar para um código de idioma, com o próprio código como
+  /// último recurso.
+  static String displayNameOf(String languageCode) =>
+      displayNames[languageCode] ?? languageCode;
+}
+
 class MyAppLocalizations {
   MyAppLocalizations(this.locale);
 
@@ -51,6 +86,8 @@ class MyAppLocalizations {
       'homeCurrenciesSelectedCountLabel': '%s selected',
       'homeCurrenciesEmptySelectionLabel': 'Choose at least one currency',
       'homeCurrenciesSaveBtnLabel': 'Save',
+      'appLanguageSettingLabel': 'App language',
+      'appLanguageSystemOptionLabel': 'System language',
       'appConfigurationsSectionLabel': 'App Configurations',
       'pwaInstallSectionLabel': 'Install on this device',
       'pwaInstallCardLabel': 'Install app',
@@ -203,6 +240,8 @@ class MyAppLocalizations {
       'homeCurrenciesSelectedCountLabel': '%s escolhidas',
       'homeCurrenciesEmptySelectionLabel': 'Escolha pelo menos uma moeda',
       'homeCurrenciesSaveBtnLabel': 'Salvar',
+      'appLanguageSettingLabel': 'Idioma do aplicativo',
+      'appLanguageSystemOptionLabel': 'Idioma do sistema',
       'appConfigurationsSectionLabel': 'Configurações do Aplicativo',
       'pwaInstallSectionLabel': 'Instalar no aparelho',
       'pwaInstallCardLabel': 'Instalar aplicativo',
@@ -486,6 +525,15 @@ class MyAppLocalizations {
   String? get homeCurrenciesSaveBtnLabel {
     return _localizedValues[locale.languageCode]!
         ['homeCurrenciesSaveBtnLabel'];
+  }
+
+  String? get appLanguageSettingLabel {
+    return _localizedValues[locale.languageCode]!['appLanguageSettingLabel'];
+  }
+
+  String? get appLanguageSystemOptionLabel {
+    return _localizedValues[locale.languageCode]!
+        ['appLanguageSystemOptionLabel'];
   }
 
   String? get appConfigurationsSectionLabel {
@@ -873,7 +921,7 @@ class MyAppLocalizations {
 class MyAppLocalizationsDelegate
     extends LocalizationsDelegate<MyAppLocalizations> {
   @override
-  bool isSupported(Locale locale) => ["en", "pt"].contains(locale.languageCode);
+  bool isSupported(Locale locale) => AppLocales.isSupported(locale.languageCode);
 
   @override
   Future<MyAppLocalizations> load(Locale locale) {
