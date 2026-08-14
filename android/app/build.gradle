@@ -5,6 +5,25 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// Credenciais de assinatura do release. O arquivo fica fora do repositório
+// (ver .gitignore e a seção "Assinatura do release" do README): na máquina de
+// desenvolvimento ele é criado por tool/generate_keystore.sh, e no CI é escrito
+// a partir dos secrets do repositório.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
+// Caminhos relativos em storeFile são resolvidos a partir de android/.
+def releaseKeystore = keystoreProperties["storeFile"] != null
+        ? rootProject.file(keystoreProperties["storeFile"])
+        : null
+if (releaseKeystore != null && !releaseKeystore.exists()) {
+    throw new GradleException("android/key.properties aponta para uma keystore "
+            + "que não existe: ${releaseKeystore}. Rode tool/generate_keystore.sh.")
+}
+
 android {
     namespace = "com.example.cotacao_direta"
     compileSdk = flutter.compileSdkVersion
@@ -33,11 +52,30 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (releaseKeystore != null) {
+            release {
+                storeFile = releaseKeystore
+                storePassword = keystoreProperties["storePassword"]
+                keyAlias = keystoreProperties["keyAlias"]
+                // keyPassword é opcional: quem gera a chave costuma usar a
+                // mesma senha da keystore, e é isso que o keytool faz por
+                // padrão num arquivo PKCS12.
+                keyPassword = keystoreProperties["keyPassword"]
+                        ?: keystoreProperties["storePassword"]
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Sem key.properties o release ainda compila, assinado com a chave
+            // de debug, para que `flutter run --release` funcione sem
+            // configuração nenhuma. Com o arquivo presente, sai assinado com o
+            // certificado auto assinado do projeto.
+            signingConfig = releaseKeystore != null
+                    ? signingConfigs.release
+                    : signingConfigs.debug
         }
     }
 }

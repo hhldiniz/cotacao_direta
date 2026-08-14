@@ -1,7 +1,8 @@
 name: Build APK
 
 # Sem gatilhos de push/pull_request de propósito: este workflow só roda
-# quando disparado manualmente (aba Actions > Run workflow).
+# quando disparado manualmente (aba Actions > Run workflow). O APK de debug
+# já é compilado a cada push pelo ci.yml; aqui o que sai é o release assinado.
 on:
   workflow_dispatch:
 
@@ -11,7 +12,7 @@ env:
 
 jobs:
   build-apk:
-    name: Build e publica APK (debug)
+    name: Build e publica APK (release)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,16 +28,61 @@ jobs:
           channel: stable
           cache: true
 
+      # O Android recusa instalar um APK sem assinatura, então o release
+      # precisa de um certificado. Com os secrets cadastrados, usa-se sempre o
+      # mesmo certificado, e um APK novo atualiza a instalação anterior. Sem
+      # eles, o passo gera um certificado auto assinado descartável, que serve
+      # para instalar e testar, mas muda a cada execução.
+      - name: Prepara o certificado de assinatura
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            echo "::warning::Sem o secret ANDROID_KEYSTORE_BASE64: gerando um certificado auto assinado só para esta execução. O APK não atualiza instalações assinadas com outro certificado."
+            tool/generate_keystore.sh
+            exit 0
+          fi
+
+          if [ -z "${KEYSTORE_PASSWORD:-}" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 está cadastrado, mas ANDROID_KEYSTORE_PASSWORD não."
+            exit 1
+          fi
+
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > android/release.keystore
+          {
+            echo "storeFile=release.keystore"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=${KEY_ALIAS:-cotacao_direta}"
+            echo "keyPassword=${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
+          } > android/key.properties
+
       - name: Baixa as dependências
         run: flutter pub get
 
-      # Build de debug: não depende de chave de assinatura.
-      - name: Compila o APK de debug
-        run: flutter build apk --debug
+      - name: Compila o APK de release
+        run: flutter build apk --release
+
+      # Confirma que o APK saiu mesmo assinado, e com qual certificado: a
+      # impressão digital é o que distingue uma chave da outra na hora de
+      # atualizar o app no aparelho.
+      - name: Verifica a assinatura do APK
+        run: |
+          set -euo pipefail
+          apksigner=$(ls "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1 || true)
+          if [ -z "$apksigner" ]; then
+            echo "::warning::apksigner não encontrado no runner; verificação pulada."
+            exit 0
+          fi
+          "$apksigner" verify --print-certs build/app/outputs/flutter-apk/app-release.apk
 
       - name: Publica o APK como artefato
         uses: actions/upload-artifact@v4
         with:
-          name: cotacao_direta-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: cotacao_direta-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error

@@ -25,7 +25,9 @@ caso.
 
 O CI (`.github/workflows/ci.yml`) roda a análise e os testes a cada push na
 `master` e em todo pull request, além de compilar o APK de debug, o app Linux
-e o app Web. A versão do Flutter está fixada no workflow.
+e o app Web. A versão do Flutter está fixada no workflow. O APK de release,
+assinado, sai do `.github/workflows/build-apk.yml`, disparado à mão — ver
+[Assinatura do release](#assinatura-do-release-android).
 
 ## Plataformas
 
@@ -220,6 +222,66 @@ motor já trabalha com ações (`AssetKind.stock`, com limiares de volatilidade
 próprios), mas a fonte de cotações usada pelo app (AwesomeAPI) só serve moeda
 fiduciária e criptomoeda; basta alimentar um `AssetSeries` com preços de ação
 para analisar uma.
+
+## Assinatura do release (Android)
+
+O Android não instala APK sem assinatura, e o build de release precisa de um
+certificado. O projeto usa um **certificado auto assinado**: serve para
+instalar e distribuir o APK por fora da loja, mas não vale para publicar na
+Play Store, que exige uma chave de upload cadastrada.
+
+Quem lê as credenciais é o `android/app/build.gradle`, a partir de
+`android/key.properties`:
+
+```properties
+storeFile=release.keystore   # caminho relativo a android/
+storePassword=...
+keyAlias=cotacao_direta
+keyPassword=...
+```
+
+Sem esse arquivo o release continua compilando, assinado com a chave de debug,
+para que `flutter run --release` funcione sem configuração. Com ele presente, o
+APK sai assinado com o certificado do projeto. Nem a keystore nem o
+`key.properties` entram no repositório (ver `.gitignore`): são chave privada e
+senha.
+
+### Gerar o certificado
+
+```sh
+tool/generate_keystore.sh
+```
+
+O script cria `android/release.keystore` (RSA de 4096 bits, validade de 10000
+dias) e escreve o `android/key.properties` correspondente, sorteando uma senha.
+Dá para escolher apelido, senha, validade e titular por variáveis de ambiente —
+as opções estão comentadas no começo do arquivo. Ele se recusa a sobrescrever
+uma keystore existente, a não ser com `FORCE=1`.
+
+Depois disso, `flutter build apk --release` já sai assinado.
+
+### Assinar no CI
+
+O workflow **Build APK** (Actions > Build APK > Run workflow) compila o release
+e publica o `.apk` como artefato. Ele monta o `key.properties` a partir destes
+secrets do repositório (Settings > Secrets and variables > Actions):
+
+| Secret | Conteúdo |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | a keystore em base64: `base64 -w0 android/release.keystore` |
+| `ANDROID_KEYSTORE_PASSWORD` | a senha da keystore |
+| `ANDROID_KEY_ALIAS` | o apelido da chave (padrão: `cotacao_direta`) |
+| `ANDROID_KEY_PASSWORD` | a senha da chave (em geral, a mesma da keystore) |
+
+Sem os secrets cadastrados o workflow não falha: ele chama o
+`tool/generate_keystore.sh` e assina com um certificado descartável, criado
+naquela execução. O APK instala e roda, mas cada build sai com um certificado
+diferente, e o Android só aceita atualizar um app instalado se a assinatura
+for a mesma. Para ter um APK que atualiza o anterior, cadastre os secrets.
+
+O último passo do workflow roda o `apksigner verify --print-certs` e mostra a
+impressão digital do certificado que assinou o APK — é por ela que se confere
+qual chave foi usada.
 
 ## Getting Started
 
