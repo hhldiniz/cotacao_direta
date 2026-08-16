@@ -167,6 +167,8 @@ class MyAppLocalizations {
       'conversionRateUnavailableLabel': 'Exchange rate unavailable',
       'conversionCopyResultTooltip': 'Copy result',
       'conversionResultCopiedLabel': 'Result copied',
+      'conversionHistorySectionLabel': 'Last %s days',
+      'conversionHistoryUnavailableLabel': 'No history for this period',
       'mainCurrenciesBottomNavItemLabel': 'Currencies',
       'currencyHistoryBottomNavItemLabel': 'History',
       'configBottomNavItemLabel': 'Options',
@@ -325,6 +327,8 @@ class MyAppLocalizations {
       'conversionRateUnavailableLabel': 'Cotação indisponível',
       'conversionCopyResultTooltip': 'Copiar o resultado',
       'conversionResultCopiedLabel': 'Resultado copiado',
+      'conversionHistorySectionLabel': 'Últimos %s dias',
+      'conversionHistoryUnavailableLabel': 'Sem histórico para o período',
       'mainCurrenciesBottomNavItemLabel': 'Moedas',
       'currencyHistoryBottomNavItemLabel': 'Histórico',
       'configBottomNavItemLabel': 'Opções',
@@ -487,6 +491,8 @@ class MyAppLocalizations {
       'conversionRateUnavailableLabel': 'Cotización no disponible',
       'conversionCopyResultTooltip': 'Copiar el resultado',
       'conversionResultCopiedLabel': 'Resultado copiado',
+      'conversionHistorySectionLabel': 'Últimos %s días',
+      'conversionHistoryUnavailableLabel': 'Sin historial para el periodo',
       'mainCurrenciesBottomNavItemLabel': 'Divisas',
       'currencyHistoryBottomNavItemLabel': 'Histórico',
       'configBottomNavItemLabel': 'Ajustes',
@@ -653,6 +659,8 @@ class MyAppLocalizations {
       'conversionRateUnavailableLabel': 'Cotización no disponible',
       'conversionCopyResultTooltip': 'Copiar el resultado',
       'conversionResultCopiedLabel': 'Resultado copiado',
+      'conversionHistorySectionLabel': 'Últimos %s días',
+      'conversionHistoryUnavailableLabel': 'Sin historial para el período',
       'mainCurrenciesBottomNavItemLabel': 'Monedas',
       'currencyHistoryBottomNavItemLabel': 'Historial',
       'configBottomNavItemLabel': 'Configuración',
@@ -883,6 +891,16 @@ class MyAppLocalizations {
 
   String? get conversionResultCopiedLabel {
     return _values['conversionResultCopiedLabel'];
+  }
+
+  /// Título do gráfico da tela de conversão. Traz o marcador do número de dias
+  /// mostrados, que é fixo na tela mas mora no bloc.
+  String? get conversionHistorySectionLabel {
+    return _values['conversionHistorySectionLabel'];
+  }
+
+  String? get conversionHistoryUnavailableLabel {
+    return _values['conversionHistoryUnavailableLabel'];
   }
 
   String? get mainCurrenciesBottomNavItemLabel {

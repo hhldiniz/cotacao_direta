@@ -1,12 +1,16 @@
 import 'package:cotacao_direta/blocs/conversion_page_bloc.dart';
 import 'package:cotacao_direta/blocs/exchange_value_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
+import 'package:cotacao_direta/model/currency.dart';
 import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/view/pages/conversion_page.dart';
+import 'package:cotacao_direta/view/widgets/charts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/fakes.dart';
 
 /// Cotações fixas no lugar da busca real, na convenção do CurrencyRepository:
 /// quantas unidades da moeda valem um real. O iene fica sem cotação, para a
@@ -37,11 +41,32 @@ Widget _conversionApp(ConversionPageBloc bloc) => MaterialApp(
           bloc: bloc, child: ConversionPage("Conversão de Moedas")),
     );
 
+/// Uma cotação de um dia, na convenção do CurrencyRepository.
+Currency _quote(String currencyCode, int daysAgo, double value) {
+  var today = DateTime.now();
+  return Currency(
+      id: currencyCode,
+      value: value,
+      historicalDate: DateTime(today.year, today.month, today.day)
+          .subtract(Duration(days: daysAgo))
+          .toIso8601String(),
+      counterCurrency: "BRL");
+}
+
 void main() {
+  late FakeCurrencyRepository currencyRepository;
   late ConversionPageBloc bloc;
 
-  setUp(() => bloc =
-      ConversionPageBloc(exchangeValueBloc: _FakeExchangeValueBloc()));
+  setUp(() {
+    currencyRepository = FakeCurrencyRepository();
+    currencyRepository.historicalDataByCode["USD"] = [
+      _quote("USD", 2, 0.2),
+      _quote("USD", 1, 0.25),
+    ];
+    bloc = ConversionPageBloc(
+        exchangeValueBloc: _FakeExchangeValueBloc(),
+        currencyRepository: currencyRepository);
+  });
 
   tearDown(() => bloc.dispose());
 
@@ -164,6 +189,7 @@ void main() {
       bloc.dispose();
       bloc = ConversionPageBloc(
           exchangeValueBloc: _FakeExchangeValueBloc(),
+          currencyRepository: currencyRepository,
           priorityCurrencies: [Currencies.EUR, Currencies.BRL]);
       await pumpConversionPage(tester);
 
@@ -185,6 +211,7 @@ void main() {
       bloc.dispose();
       bloc = ConversionPageBloc(
           exchangeValueBloc: _FakeExchangeValueBloc(),
+          currencyRepository: currencyRepository,
           priorityCurrencies: [Currencies.EUR, Currencies.BRL]);
       await pumpConversionPage(tester);
 
@@ -212,6 +239,7 @@ void main() {
       bloc.dispose();
       bloc = ConversionPageBloc(
           exchangeValueBloc: _FakeExchangeValueBloc(),
+          currencyRepository: currencyRepository,
           priorityCurrencies: [Currencies.EUR, Currencies.BRL]);
       await pumpConversionPage(tester);
 
@@ -229,6 +257,7 @@ void main() {
       bloc.dispose();
       bloc = ConversionPageBloc(
           exchangeValueBloc: _FakeExchangeValueBloc(),
+          currencyRepository: currencyRepository,
           initialFromCurrency: Currencies.USD,
           initialToCurrency: Currencies.BRL);
       await pumpConversionPage(tester);
@@ -248,6 +277,43 @@ void main() {
 
       expect(find.text("1 USD = 5,0000 BRL"), findsOneWidget,
           reason: "as duas pontas iguais não converteriam nada");
+    });
+
+    testWidgets('mostra o gráfico dos últimos sete dias do par',
+        (WidgetTester tester) async {
+      await pumpConversionPage(tester);
+
+      expect(find.text("Últimos 7 dias"), findsOneWidget);
+      expect(find.text("1 BRL → USD"), findsOneWidget,
+          reason: "a linha precisa dizer de que cotação ela é");
+      expect(find.byType(SimpleLineChart), findsOneWidget);
+    });
+
+    testWidgets('o gráfico acompanha a troca de moeda',
+        (WidgetTester tester) async {
+      currencyRepository.historicalDataByCode["EUR"] = [
+        _quote("EUR", 2, 0.1),
+        _quote("EUR", 1, 0.1),
+      ];
+      await pumpConversionPage(tester);
+
+      await tester.tap(find.text("USD"));
+      await tester.pumpAndSettle();
+      await searchInCurrencyPicker(tester, "euro");
+      await tester.tap(inCurrencyPicker(find.text("EUR")));
+      await tester.pumpAndSettle();
+
+      expect(find.text("1 BRL → EUR"), findsOneWidget);
+      expect(find.byType(SimpleLineChart), findsOneWidget);
+    });
+
+    testWidgets('avisa quando o par não tem histórico no período',
+        (WidgetTester tester) async {
+      currencyRepository.historicalDataByCode.clear();
+      await pumpConversionPage(tester);
+
+      expect(find.text("Sem histórico para o período"), findsOneWidget);
+      expect(find.byType(SimpleLineChart), findsNothing);
     });
   });
 }

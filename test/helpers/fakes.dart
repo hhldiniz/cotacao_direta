@@ -77,6 +77,11 @@ class FakeCurrencyRepository implements CurrencyRepository {
   /// período pedido.
   List<Currency> historicalData = [];
 
+  /// Histórico por código, para quem pede a série de mais de uma moeda e
+  /// precisa de uma resposta diferente para cada uma (a tela de conversão pede
+  /// as duas moedas do par). Enquanto estiver vazio vale [historicalData].
+  final Map<String, List<Currency>> historicalDataByCode = {};
+
   Currency? latestCurrency;
   String counterCurrency = "BRL";
 
@@ -91,7 +96,11 @@ class FakeCurrencyRepository implements CurrencyRepository {
       List<String> currencyCodeList, initialDate, finalDate) async {
     historicalDataCalls.add([currencyCodeList, initialDate, finalDate]);
     if (failure != null) throw failure!;
-    return historicalData;
+    if (historicalDataByCode.isEmpty) return historicalData;
+    return [
+      for (var currencyCode in currencyCodeList)
+        ...?historicalDataByCode[currencyCode]
+    ];
   }
 
   @override

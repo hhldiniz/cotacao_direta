@@ -3,7 +3,11 @@ import 'dart:async';
 import 'package:cotacao_direta/blocs/conversion_page_bloc.dart';
 import 'package:cotacao_direta/blocs/exchange_value_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
+import 'package:cotacao_direta/model/currency.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
+
+import '../helpers/fakes.dart';
 
 /// Cotações fixas por moeda, no lugar da busca real (rede e banco).
 ///
@@ -33,8 +37,22 @@ class _FakeExchangeValueBloc extends ExchangeValueBloc {
   }
 }
 
+/// Uma cotação de um dia, na convenção do CurrencyRepository.
+Currency _quote(String currencyCode, DateTime date, double value) => Currency(
+    id: currencyCode,
+    value: value,
+    historicalDate: date.toIso8601String(),
+    counterCurrency: "BRL");
+
+DateTime _daysAgo(int days) {
+  var today = DateTime.now();
+  return DateTime(today.year, today.month, today.day)
+      .subtract(Duration(days: days));
+}
+
 void main() {
   late _FakeExchangeValueBloc exchangeValueBloc;
+  late FakeCurrencyRepository currencyRepository;
   late ConversionPageBloc bloc;
 
   setUp(() {
@@ -44,7 +62,10 @@ void main() {
       Currencies.EUR: 0.1,
       Currencies.JPY: null,
     });
-    bloc = ConversionPageBloc(exchangeValueBloc: exchangeValueBloc);
+    currencyRepository = FakeCurrencyRepository();
+    bloc = ConversionPageBloc(
+        exchangeValueBloc: exchangeValueBloc,
+        currencyRepository: currencyRepository);
   });
 
   tearDown(() => bloc.dispose());
@@ -166,7 +187,8 @@ void main() {
 
     test('descartar fecha as streams', () async {
       var bloc = ConversionPageBloc(
-          exchangeValueBloc: _FakeExchangeValueBloc({Currencies.BRL: 1}));
+          exchangeValueBloc: _FakeExchangeValueBloc({Currencies.BRL: 1}),
+          currencyRepository: currencyRepository);
 
       bloc.dispose();
 
@@ -175,11 +197,14 @@ void main() {
       expect(() => bloc.currencyToSink.add(Currencies.USD), throwsStateError);
       expect(
           () => bloc.conversionResultSink.add(bloc.result), throwsStateError);
+      expect(() => bloc.conversionHistorySink.add(bloc.history),
+          throwsStateError);
     });
 
     test('abre no par pedido por quem chamou a tela', () async {
       var bloc = ConversionPageBloc(
           exchangeValueBloc: exchangeValueBloc,
+          currencyRepository: currencyRepository,
           initialFromCurrency: Currencies.USD,
           initialToCurrency: Currencies.EUR);
       addTearDown(bloc.dispose);
@@ -194,6 +219,7 @@ void main() {
     test('só a origem pedida deixa o destino no padrão', () async {
       var bloc = ConversionPageBloc(
           exchangeValueBloc: exchangeValueBloc,
+          currencyRepository: currencyRepository,
           initialFromCurrency: Currencies.EUR);
       addTearDown(bloc.dispose);
 
@@ -206,6 +232,7 @@ void main() {
       // pede real para real.
       var bloc = ConversionPageBloc(
           exchangeValueBloc: exchangeValueBloc,
+          currencyRepository: currencyRepository,
           initialFromCurrency: Currencies.BRL,
           initialToCurrency: Currencies.BRL);
       addTearDown(bloc.dispose);
@@ -215,6 +242,7 @@ void main() {
 
       var dollarBloc = ConversionPageBloc(
           exchangeValueBloc: exchangeValueBloc,
+          currencyRepository: currencyRepository,
           initialFromCurrency: Currencies.USD,
           initialToCurrency: Currencies.USD);
       addTearDown(dollarBloc.dispose);
@@ -227,6 +255,7 @@ void main() {
     test('converte o par pedido sem esperar nenhuma escolha', () async {
       var bloc = ConversionPageBloc(
           exchangeValueBloc: exchangeValueBloc,
+          currencyRepository: currencyRepository,
           initialFromCurrency: Currencies.USD,
           initialToCurrency: Currencies.BRL);
       addTearDown(bloc.dispose);
@@ -240,6 +269,7 @@ void main() {
     test('guarda as moedas em destaque para o seletor', () async {
       var bloc = ConversionPageBloc(
           exchangeValueBloc: exchangeValueBloc,
+          currencyRepository: currencyRepository,
           priorityCurrencies: [Currencies.EUR, Currencies.JPY]);
       addTearDown(bloc.dispose);
 
@@ -265,6 +295,217 @@ void main() {
 
       // Emitir numa stream fechada lançaria, e o erro chegaria aqui.
       await conversion;
+    });
+  });
+
+  group('ConversionPageBloc: histórico do par', () {
+    final apiDateFormatter = DateFormat("yyyy-MM-dd");
+
+    ConversionPageBloc buildBloc(
+        {Currencies? initialFromCurrency, Currencies? initialToCurrency}) {
+      var bloc = ConversionPageBloc(
+          exchangeValueBloc: exchangeValueBloc,
+          currencyRepository: currencyRepository,
+          initialFromCurrency: initialFromCurrency,
+          initialToCurrency: initialToCurrency);
+      addTearDown(bloc.dispose);
+      return bloc;
+    }
+
+    test('a série do par é a razão entre as séries das duas moedas', () async {
+      // A API cota cada moeda frente ao real; a cotação de euro em dólar não
+      // vem pronta de lugar nenhum.
+      currencyRepository.historicalDataByCode["EUR"] = [
+        _quote("EUR", _daysAgo(2), 0.1),
+        _quote("EUR", _daysAgo(1), 0.1),
+      ];
+      currencyRepository.historicalDataByCode["USD"] = [
+        _quote("USD", _daysAgo(2), 0.2),
+        _quote("USD", _daysAgo(1), 0.25),
+      ];
+      var bloc = buildBloc(
+          initialFromCurrency: Currencies.EUR,
+          initialToCurrency: Currencies.USD);
+
+      await bloc.loadHistory();
+
+      expect(bloc.history.status, ConversionHistoryStatus.ready);
+      expect(bloc.history.from, Currencies.EUR);
+      expect(bloc.history.to, Currencies.USD);
+      expect(bloc.history.points.map((point) => point.rate),
+          [closeTo(2, 0.000001), closeTo(2.5, 0.000001)],
+          reason: "um euro valia dois dólares e passou a valer dois e meio");
+      expect(bloc.history.points.first.date.isBefore(bloc.history.points.last.date),
+          isTrue,
+          reason: "o gráfico é desenhado do dia mais antigo para o mais novo");
+    });
+
+    test('a contrapartida das cotações vale uma unidade todo dia', () async {
+      // BRL é a contrapartida: ela não tem série própria (o repositório pula a
+      // consulta), e sem tratamento o gráfico do par mais comum ficaria vazio.
+      currencyRepository.historicalDataByCode["USD"] = [
+        _quote("USD", _daysAgo(2), 0.2),
+        _quote("USD", _daysAgo(1), 0.25),
+      ];
+      var bloc = buildBloc(
+          initialFromCurrency: Currencies.BRL,
+          initialToCurrency: Currencies.USD);
+
+      await bloc.loadHistory();
+
+      expect(bloc.history.points.map((point) => point.rate),
+          [closeTo(0.2, 0.000001), closeTo(0.25, 0.000001)]);
+      expect(currencyRepository.historicalDataCalls.map((call) => call.first),
+          [["USD"]],
+          reason: "não há o que pedir para a moeda da contrapartida");
+    });
+
+    test('o período pedido é a última semana', () async {
+      var bloc = buildBloc();
+
+      await bloc.loadHistory();
+
+      var today = DateTime.now();
+      expect(ConversionPageBloc.historyWindowInDays, 7);
+      expect(currencyRepository.historicalDataCalls.single.sublist(1), [
+        apiDateFormatter.format(today.subtract(const Duration(days: 6))),
+        apiDateFormatter.format(today)
+      ]);
+    });
+
+    test('só os dias com cotação das duas moedas entram no gráfico', () async {
+      // Feriado em um dos mercados: completar o dia que falta desenharia uma
+      // variação que não houve.
+      currencyRepository.historicalDataByCode["EUR"] = [
+        _quote("EUR", _daysAgo(2), 0.1),
+        _quote("EUR", _daysAgo(1), 0.1),
+      ];
+      currencyRepository.historicalDataByCode["USD"] = [
+        _quote("USD", _daysAgo(3), 0.2),
+        _quote("USD", _daysAgo(2), 0.2),
+        _quote("USD", _daysAgo(1), 0.25),
+      ];
+      var bloc = buildBloc(
+          initialFromCurrency: Currencies.EUR,
+          initialToCurrency: Currencies.USD);
+
+      await bloc.loadHistory();
+
+      expect(bloc.history.points.length, 2);
+      expect(bloc.history.points.first.date, _daysAgo(2));
+    });
+
+    test('cotações do mesmo dia não viram dois pontos', () async {
+      currencyRepository.historicalDataByCode["USD"] = [
+        _quote("USD", _daysAgo(2), 0.2),
+        _quote("USD", _daysAgo(1).add(const Duration(hours: 10)), 0.24),
+        _quote("USD", _daysAgo(1).add(const Duration(hours: 17)), 0.25),
+      ];
+      var bloc = buildBloc();
+
+      await bloc.loadHistory();
+
+      expect(bloc.history.points.length, 2);
+      expect(bloc.history.points.last.rate, closeTo(0.25, 0.000001),
+          reason: "vale a cotação mais recente do dia");
+    });
+
+    test('um ponto só não vira gráfico', () async {
+      currencyRepository.historicalDataByCode["USD"] = [
+        _quote("USD", _daysAgo(1), 0.2),
+      ];
+      var bloc = buildBloc();
+
+      await bloc.loadHistory();
+
+      expect(bloc.history.status, ConversionHistoryStatus.unavailable);
+      expect(bloc.history.points, isEmpty);
+    });
+
+    test('a busca que falha deixa a tela sem histórico', () async {
+      // Sem rede e sem nada salvo; para a tela é o mesmo que não ter histórico.
+      currencyRepository.failure = Exception("sem rede");
+      var bloc = buildBloc();
+
+      await bloc.loadHistory();
+
+      expect(bloc.history.status, ConversionHistoryStatus.unavailable);
+    });
+
+    test('anuncia o histórico pela stream', () async {
+      currencyRepository.historicalDataByCode["USD"] = [
+        _quote("USD", _daysAgo(2), 0.2),
+        _quote("USD", _daysAgo(1), 0.25),
+      ];
+      var bloc = buildBloc();
+      var emitted = <ConversionHistory>[];
+      bloc.conversionHistoryStream.listen(emitted.add);
+
+      await bloc.loadHistory();
+      // A stream é broadcast: os eventos chegam a quem escuta no ciclo
+      // seguinte do laço de eventos.
+      await Future<void>.delayed(Duration.zero);
+
+      expect(emitted.first.isLoading, isTrue);
+      expect(emitted.last.status, ConversionHistoryStatus.ready);
+    });
+
+    test('trocar de moeda busca o histórico do par novo', () async {
+      var bloc = buildBloc();
+
+      bloc.updateToCurrency(Currencies.EUR);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(bloc.history.to, Currencies.EUR);
+      expect(currencyRepository.historicalDataCalls.map((call) => call.first),
+          anyElement(equals(["EUR"])));
+    });
+
+    test('inverter o par redesenha o gráfico ao contrário', () async {
+      currencyRepository.historicalDataByCode["USD"] = [
+        _quote("USD", _daysAgo(2), 0.2),
+        _quote("USD", _daysAgo(1), 0.25),
+      ];
+      var bloc = buildBloc();
+      await bloc.loadHistory();
+
+      bloc.switchCurrencies();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(bloc.history.from, Currencies.USD);
+      expect(bloc.history.to, Currencies.BRL);
+      expect(bloc.history.points.map((point) => point.rate),
+          [closeTo(5, 0.000001), closeTo(4, 0.000001)],
+          reason: "um dólar valia cinco reais e passou a valer quatro");
+    });
+
+    test('o gráfico do par anterior fica na tela enquanto o novo não chega',
+        () async {
+      currencyRepository.historicalDataByCode["USD"] = [
+        _quote("USD", _daysAgo(2), 0.2),
+        _quote("USD", _daysAgo(1), 0.25),
+      ];
+      var bloc = buildBloc();
+      await bloc.loadHistory();
+
+      var reload = bloc.loadHistory();
+
+      expect(bloc.history.isLoading, isTrue);
+      expect(bloc.history.hasPoints, isTrue,
+          reason: "a linha some da tela a cada atualização se for descartada");
+      await reload;
+    });
+
+    test('não emite histórico depois de descartado', () async {
+      var bloc = ConversionPageBloc(
+          exchangeValueBloc: exchangeValueBloc,
+          currencyRepository: currencyRepository);
+
+      var loading = bloc.loadHistory();
+      bloc.dispose();
+
+      // Emitir numa stream fechada lançaria, e o erro chegaria aqui.
+      await loading;
     });
   });
 }
