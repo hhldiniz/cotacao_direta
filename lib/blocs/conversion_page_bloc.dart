@@ -2,6 +2,10 @@ import 'dart:async';
 
 import 'package:cotacao_direta/blocs/base_bloc.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
+import 'package:cotacao_direta/model/currency.dart';
+import 'package:cotacao_direta/repository/currency_repository.dart';
+import 'package:cotacao_direta/util/string_utils.dart';
+import 'package:intl/intl.dart';
 
 import 'exchange_value_bloc.dart';
 
@@ -56,8 +60,64 @@ class ConversionResult {
   bool get isLoading => status == ConversionStatus.loading;
 }
 
+/// Em que pé está o histórico do par mostrado no gráfico.
+enum ConversionHistoryStatus {
+  /// Buscando as séries das duas moedas.
+  loading,
+
+  /// Há pontos suficientes para desenhar a linha.
+  ready,
+
+  /// Faltou histórico de alguma das moedas, ou vieram pontos de menos para
+  /// uma linha dizer alguma coisa.
+  unavailable,
+}
+
+/// A cotação do par em um dia: quantas unidades da moeda de destino valia uma
+/// unidade da de origem, a mesma taxa que a tela mostra em "1 BRL = 0,20 USD".
+class ConversionRatePoint {
+  final DateTime date;
+  final double rate;
+
+  const ConversionRatePoint({required this.date, required this.rate});
+}
+
+/// O histórico do par junto do par a que ele pertence, pelo mesmo motivo de
+/// [ConversionResult]: uma linha desenhada com as moedas erradas ao lado seria
+/// uma informação falsa, e é o que aconteceria se os pontos chegassem à tela
+/// separados das moedas.
+class ConversionHistory {
+  final ConversionHistoryStatus status;
+  final Currencies from;
+  final Currencies to;
+
+  /// Um ponto por dia com cotação, do mais antigo para o mais recente.
+  final List<ConversionRatePoint> points;
+
+  const ConversionHistory({
+    required this.status,
+    required this.from,
+    required this.to,
+    this.points = const [],
+  });
+
+  bool get isLoading => status == ConversionHistoryStatus.loading;
+
+  bool get hasPoints => points.isNotEmpty;
+}
+
 class ConversionPageBloc extends BaseBloc {
   static const initialAmount = 1.0;
+
+  /// Dias de histórico que o gráfico da tela mostra. É um período fixo: aqui o
+  /// gráfico é um apoio à conversão — para onde a cotação vinha andando na
+  /// última semana —, e não a tela de histórico, que é onde se escolhe o
+  /// intervalo.
+  static const historyWindowInDays = 7;
+
+  /// Menos que isto não é uma linha, é um ponto: a tela mostra o mesmo aviso
+  /// de quando não veio histórico nenhum.
+  static const _minimumHistoryPoints = 2;
 
   /// O par que a tela abre escolhido quando quem a abriu não pediu outro.
   static const defaultFromCurrency = Currencies.BRL;
@@ -71,8 +131,17 @@ class ConversionPageBloc extends BaseBloc {
   final _currencyToController = StreamController<Currencies>.broadcast();
   final _conversionResultController =
       StreamController<ConversionResult>.broadcast();
+  final _conversionHistoryController =
+      StreamController<ConversionHistory>.broadcast();
 
   final ExchangeValueBloc _exchangeValueBloc;
+
+  /// De onde saem as séries do gráfico. É o mesmo repositório que a tela de
+  /// histórico usa, então o que já foi baixado por lá serve aqui.
+  final CurrencyRepository _currencyRepository;
+
+  final _enumValueAsStringUtil = EnumValueAsString();
+  final _apiDateFormatter = DateFormat("yyyy-MM-dd");
 
   /// Só descarta o bloc de cotações se foi ele quem o criou: um bloc recebido
   /// de fora pertence a quem o passou.
@@ -90,11 +159,13 @@ class ConversionPageBloc extends BaseBloc {
   /// mostrava. Sem eles vale o par padrão (real para dólar).
   ConversionPageBloc({
     ExchangeValueBloc? exchangeValueBloc,
+    CurrencyRepository? currencyRepository,
     Currencies? initialFromCurrency,
     Currencies? initialToCurrency,
     List<Currencies> priorityCurrencies = const [],
   })  : _exchangeValueBloc = exchangeValueBloc ?? ExchangeValueBloc(),
         _ownsExchangeValueBloc = exchangeValueBloc == null,
+        _currencyRepository = currencyRepository ?? CurrencyRepository(),
         priorityCurrencies = List.unmodifiable(priorityCurrencies),
         _fromCurrency = initialFromCurrency ?? defaultFromCurrency,
         _toCurrency = _resolveToCurrency(
@@ -102,6 +173,10 @@ class ConversionPageBloc extends BaseBloc {
     _result = ConversionResult(
         status: ConversionStatus.loading,
         amount: _amount,
+        from: _fromCurrency,
+        to: _toCurrency);
+    _history = ConversionHistory(
+        status: ConversionHistoryStatus.loading,
         from: _fromCurrency,
         to: _toCurrency);
   }
@@ -121,11 +196,15 @@ class ConversionPageBloc extends BaseBloc {
   Currencies _toCurrency;
 
   late ConversionResult _result;
+  late ConversionHistory _history;
 
   /// Cada conversão leva um número de ordem para que a resposta de uma
   /// conversão antiga — a busca das cotações é assíncrona — não sobrescreva o
   /// resultado de uma conversão pedida depois dela.
   var _lastRequestId = 0;
+
+  /// O mesmo, para a busca do histórico, que é independente da conversão.
+  var _lastHistoryRequestId = 0;
 
   var _disposed = false;
 
@@ -147,6 +226,12 @@ class ConversionPageBloc extends BaseBloc {
   Sink<ConversionResult> get conversionResultSink =>
       _conversionResultController.sink;
 
+  Stream<ConversionHistory> get conversionHistoryStream =>
+      _conversionHistoryController.stream;
+
+  Sink<ConversionHistory> get conversionHistorySink =>
+      _conversionHistoryController.sink;
+
   /// Estado atual, para a tela desenhar o primeiro quadro sem esperar a
   /// primeira emissão das streams.
   double get amount => _amount;
@@ -156,6 +241,8 @@ class ConversionPageBloc extends BaseBloc {
   Currencies get toCurrency => _toCurrency;
 
   ConversionResult get result => _result;
+
+  ConversionHistory get history => _history;
 
   /// Quantidade a converter. Um texto vazio ou inválido na tela vira zero, que
   /// converte para zero em vez de deixar o resultado anterior no lugar.
@@ -173,6 +260,7 @@ class ConversionPageBloc extends BaseBloc {
     _fromCurrency = value;
     _currencyFromController.add(value);
     updateResult();
+    loadHistory();
   }
 
   void updateToCurrency(Currencies value) {
@@ -180,6 +268,7 @@ class ConversionPageBloc extends BaseBloc {
     _toCurrency = value;
     _currencyToController.add(value);
     updateResult();
+    loadHistory();
   }
 
   void switchCurrencies() {
@@ -189,6 +278,7 @@ class ConversionPageBloc extends BaseBloc {
     _currencyFromController.add(_fromCurrency);
     _currencyToController.add(_toCurrency);
     updateResult();
+    loadHistory();
   }
 
   Future<void> updateResult() async {
@@ -210,6 +300,114 @@ class ConversionPageBloc extends BaseBloc {
       unitRate: rate,
       convertedAmount: rate == null ? null : amount * rate,
     ));
+  }
+
+  /// Busca os últimos [historyWindowInDays] dias de cotação do par para o
+  /// gráfico.
+  ///
+  /// A API cota cada moeda frente à contrapartida, e não uma moeda frente à
+  /// outra, então a série do par é montada aqui: a razão entre as duas séries,
+  /// dia a dia, é a mesma conta que [_unitRate] faz com a cotação do momento.
+  Future<void> loadHistory() async {
+    var requestId = ++_lastHistoryRequestId;
+    var from = _fromCurrency;
+    var to = _toCurrency;
+    _emitHistory(ConversionHistory(
+        status: ConversionHistoryStatus.loading,
+        from: from,
+        to: to,
+        // O gráfico anterior continua na tela enquanto o novo não chega, desde
+        // que seja do mesmo par; trocar de moeda apaga a linha antiga, que é
+        // de outra cotação.
+        points: _history.from == from && _history.to == to
+            ? _history.points
+            : const []));
+
+    List<ConversionRatePoint> points;
+    try {
+      points = await _pairHistory(from, to);
+    } catch (exception) {
+      // Sem rede e sem nada salvo a busca falha; para a tela é o mesmo que não
+      // ter histórico.
+      points = const [];
+    }
+
+    if (_disposed || requestId != _lastHistoryRequestId) return;
+    var enoughPoints = points.length >= _minimumHistoryPoints;
+    _emitHistory(ConversionHistory(
+      status: enoughPoints
+          ? ConversionHistoryStatus.ready
+          : ConversionHistoryStatus.unavailable,
+      from: from,
+      to: to,
+      // Um ponto solto não é uma linha: a tela mostra o mesmo aviso de quando
+      // não veio nada, em vez de um gráfico com um ponto só.
+      points: enoughPoints ? points : const [],
+    ));
+  }
+
+  Future<List<ConversionRatePoint>> _pairHistory(
+      Currencies from, Currencies to) async {
+    if (from == to) return const [];
+    var counterCurrency = await _currencyRepository.resolveCounterCurrency();
+    var today = DateTime.now();
+    var initialDate = _apiDateFormatter
+        .format(today.subtract(const Duration(days: historyWindowInDays - 1)));
+    var finalDate = _apiDateFormatter.format(today);
+
+    var fromSeries =
+        await _dailyValues(from, counterCurrency, initialDate, finalDate);
+    var toSeries =
+        await _dailyValues(to, counterCurrency, initialDate, finalDate);
+
+    // Só os dias em que as duas moedas têm cotação: inventar o valor que falta
+    // desenharia uma variação que não houve. Uma série nula é a da própria
+    // contrapartida, que vale uma unidade dela mesma todo dia e por isso não
+    // tira nenhum dia da conta.
+    var days = <DateTime>{...?fromSeries?.keys, ...?toSeries?.keys}
+        .where((day) =>
+            (fromSeries?.containsKey(day) ?? true) &&
+            (toSeries?.containsKey(day) ?? true))
+        .toList()
+      ..sort();
+
+    return days
+        .map((day) => ConversionRatePoint(
+            date: day, rate: (toSeries?[day] ?? 1) / (fromSeries?[day] ?? 1)))
+        .toList();
+  }
+
+  /// A cotação da moeda em cada dia do período, ou nulo quando ela é a própria
+  /// contrapartida — que não tem série (ver
+  /// [CurrencyRepository.getCurrencyHistoricalData]) porque vale sempre uma
+  /// unidade.
+  Future<Map<DateTime, double>?> _dailyValues(Currencies currency,
+      String counterCurrency, String initialDate, String finalDate) async {
+    var currencyCode =
+        _enumValueAsStringUtil.getEnumValue(currency.toString());
+    if (currencyCode == counterCurrency) return null;
+
+    var history = await _currencyRepository
+        .getCurrencyHistoricalData([currencyCode], initialDate, finalDate);
+    var valueByDay = <DateTime, double>{};
+    for (var quote in history) {
+      var day = _dayOf(quote);
+      var value = quote.value;
+      if (day == null || value == null || value <= 0) continue;
+      // Mais de uma cotação no mesmo dia: fica a mais recente, que é a última
+      // da lista devolvida pelo repositório (ordenada por data).
+      valueByDay[day] = value;
+    }
+    return valueByDay;
+  }
+
+  /// O dia da cotação, sem a hora: as duas séries precisam casar por dia, e
+  /// cada uma vem com o horário do seu fechamento.
+  DateTime? _dayOf(Currency quote) {
+    var historicalDate = quote.historicalDate;
+    if (historicalDate == null) return null;
+    var date = DateTime.tryParse(historicalDate);
+    return date == null ? null : DateTime(date.year, date.month, date.day);
   }
 
   /// Quantas unidades de [to] valem uma unidade de [from], ou nulo quando
@@ -254,6 +452,11 @@ class ConversionPageBloc extends BaseBloc {
     _conversionResultController.add(result);
   }
 
+  void _emitHistory(ConversionHistory history) {
+    _history = history;
+    _conversionHistoryController.add(history);
+  }
+
   @override
   void dispose() {
     _disposed = true;
@@ -261,6 +464,7 @@ class ConversionPageBloc extends BaseBloc {
     _currencyFromController.close();
     _currencyToController.close();
     _conversionResultController.close();
+    _conversionHistoryController.close();
     if (_ownsExchangeValueBloc) _exchangeValueBloc.dispose();
   }
 }

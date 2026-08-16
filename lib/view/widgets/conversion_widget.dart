@@ -7,10 +7,12 @@ import 'package:cotacao_direta/util/currency_name.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/quote_format.dart';
 import 'package:cotacao_direta/util/responsive.dart';
+import 'package:cotacao_direta/view/widgets/charts.dart';
 import 'package:cotacao_direta/view/widgets/currency_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:sprintf/sprintf.dart';
 
 /// A tela de conversão: uma quantidade na moeda de origem em cima, o valor
 /// convertido embaixo e a cotação usada logo abaixo dos dois.
@@ -52,8 +54,11 @@ class ConversionWidgetState extends State<ConversionWidget> {
     _initializedBloc = bloc;
     _amountController.text = _formatAmount(bloc.amount);
     // A tela já abre com uma conversão pronta em vez de um campo de resultado
-    // vazio esperando a primeira interação.
-    WidgetsBinding.instance.addPostFrameCallback((_) => bloc.updateResult());
+    // vazio esperando a primeira interação, e com o gráfico do par a caminho.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      bloc.updateResult();
+      bloc.loadHistory();
+    });
   }
 
   @override
@@ -165,6 +170,8 @@ class ConversionWidgetState extends State<ConversionWidget> {
                 _destinationCard(localizations, scale),
                 SizedBox(height: 16 * scale),
                 _rateCard(localizations, scale),
+                SizedBox(height: 16 * scale),
+                _historyCard(localizations, scale),
                 SizedBox(height: 24 * scale),
                 _explanation(localizations, scale),
               ],
@@ -388,6 +395,104 @@ class ConversionWidgetState extends State<ConversionWidget> {
           ),
         );
       },
+    );
+  }
+
+  /// O mesmo gráfico da tela de histórico, aqui com o período fixo na última
+  /// semana: mostra para onde a cotação do par vinha andando, que é o que
+  /// falta à conversão de hoje para se decidir entre converter agora ou
+  /// esperar.
+  Widget _historyCard(MyAppLocalizations localizations, double scale) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return StreamBuilder<ConversionHistory>(
+      initialData: bloc.history,
+      stream: bloc.conversionHistoryStream,
+      builder: (context, snapshot) {
+        var history = snapshot.data!;
+
+        return Card(
+          margin: EdgeInsets.zero,
+          color: colorScheme.surfaceContainerHighest,
+          elevation: 0,
+          child: Padding(
+            padding: EdgeInsets.all(16 * scale),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Icon(Icons.query_stats,
+                        size: 18 * scale, color: colorScheme.primary),
+                    SizedBox(width: 8 * scale),
+                    Expanded(
+                      child: Text(
+                        sprintf(localizations.conversionHistorySectionLabel!,
+                            [ConversionPageBloc.historyWindowInDays]),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15 * scale,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      "1 ${currencyCode(history.from)} → ${currencyCode(history.to)}",
+                      style: TextStyle(
+                        fontSize: 12 * scale,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12 * scale),
+                SizedBox(
+                  height: 160 * scale,
+                  // O gráfico do par anterior fica esmaecido enquanto o novo
+                  // não chega, do mesmo jeito que o valor convertido.
+                  child: AnimatedOpacity(
+                    opacity: history.isLoading && history.hasPoints ? 0.4 : 1,
+                    duration: const Duration(milliseconds: 200),
+                    child: _historyChart(history, localizations, scale),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _historyChart(ConversionHistory history,
+      MyAppLocalizations localizations, double scale) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (history.hasPoints) {
+      return Padding(
+        // Uma folga para a linha e o último rótulo do eixo não encostarem na
+        // borda do cartão.
+        padding: EdgeInsets.only(right: 8 * scale, top: 4 * scale),
+        child: SimpleLineChart.fromPoints(
+          points: history.points
+              .map((point) => (date: point.date, value: point.rate))
+              .toList(),
+        ),
+      );
+    }
+    if (history.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Center(
+      child: Text(
+        localizations.conversionHistoryUnavailableLabel!,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 14 * scale,
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
     );
   }
 

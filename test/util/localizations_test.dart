@@ -27,6 +27,8 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.conversionRateUnavailableLabel,
       localizations.conversionCopyResultTooltip,
       localizations.conversionResultCopiedLabel,
+      localizations.conversionHistorySectionLabel,
+      localizations.conversionHistoryUnavailableLabel,
       localizations.mainCurrenciesBottomNavItemLabel,
       localizations.currencyHistoryBottomNavItemLabel,
       localizations.aboutBottomNavItemLabel,
@@ -261,6 +263,16 @@ void main() {
           MyAppLocalizations(const Locale("en"))
               .homeCurrenciesSelectedCountLabel,
           contains("%s"));
+    });
+
+    // O título do gráfico da conversão traz o número de dias que o bloc fixou;
+    // sem o marcador, o texto diria um período diferente do desenhado.
+    test('conversionHistorySectionLabel traz o marcador de dias', () {
+      for (var locale in AppLocales.supported) {
+        expect(MyAppLocalizations(locale).conversionHistorySectionLabel,
+            contains("%s"),
+            reason: AppLocales.tagOf(locale));
+      }
     });
 
     test('homePageHeadsUpText traz o marcador de moeda', () {

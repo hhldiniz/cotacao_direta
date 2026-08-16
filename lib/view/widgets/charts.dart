@@ -4,23 +4,35 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// Gráfico de linha simples com o histórico de valores de uma moeda ao longo
-/// do tempo, uma [Currency] por dia.
+/// Um ponto do gráfico: o valor de um dia.
+typedef ChartPoint = ({DateTime date, double value});
+
+/// Gráfico de linha simples com o histórico de valores de uma série ao longo
+/// do tempo, um ponto por dia.
 class SimpleLineChart extends StatelessWidget {
-  final List<Currency> currencyList;
+  final List<ChartPoint> points;
 
-  SimpleLineChart({required this.currencyList});
+  /// A partir do histórico de uma moeda, uma [Currency] por dia.
+  SimpleLineChart({required List<Currency> currencyList})
+      : points = currencyList
+            .map((currency) => (
+                  date: DateTime.parse(currency.historicalDate!),
+                  value: currency.value ?? 0
+                ))
+            .toList();
 
-  final DateFormat _axisDateFormatter = DateFormat("dd/MM");
+  /// A partir de uma série montada por quem chama — a cotação de um par de
+  /// moedas, por exemplo, que não é o valor de uma [Currency] só.
+  const SimpleLineChart.fromPoints({required this.points});
+
+  static final DateFormat _axisDateFormatter = DateFormat("dd/MM");
 
   @override
   Widget build(BuildContext context) {
-    final dates = currencyList
-        .map((currency) => DateTime.parse(currency.historicalDate!))
-        .toList();
+    final dates = points.map((point) => point.date).toList();
     final spots = List.generate(
-      currencyList.length,
-      (index) => FlSpot(index.toDouble(), currencyList[index].value ?? 0),
+      points.length,
+      (index) => FlSpot(index.toDouble(), points[index].value),
     );
     final color = Theme.of(context).colorScheme.primary;
 
