@@ -1,3 +1,4 @@
+import 'package:cotacao_direta/blocs/selected_currency_details_bloc.dart';
 import 'package:cotacao_direta/model/currency.dart';
 import 'package:cotacao_direta/providers/selected_currency_details_bloc_provider.dart';
 import 'package:cotacao_direta/util/localizations.dart';
@@ -5,28 +6,53 @@ import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/view/widgets/bento_card.dart';
 import 'package:cotacao_direta/view/widgets/charts.dart';
 import 'package:flutter/material.dart';
+import 'package:sprintf/sprintf.dart';
 
-class SelectedCurrencyDetails extends StatelessWidget {
+class SelectedCurrencyDetails extends StatefulWidget {
   final String selectedCurrencyCode;
 
   SelectedCurrencyDetails({Key? key, required this.selectedCurrencyCode})
     : super(key: key);
 
   @override
+  State<SelectedCurrencyDetails> createState() =>
+      _SelectedCurrencyDetailsState();
+}
+
+class _SelectedCurrencyDetailsState extends State<SelectedCurrencyDetails> {
+  // O bloc pertence ao SelectedCurrencyDetailsBlocProvider, que o descarta
+  // junto com o próprio State: este widget apenas o consome.
+  late SelectedCurrencyDetailsBloc bloc;
+
+  SelectedCurrencyDetailsBloc? _initializedBloc;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    bloc = SelectedCurrencyDetailsBlocProvider.of(context);
+    if (identical(_initializedBloc, bloc)) return;
+    _initializedBloc = bloc;
+    // A tela já abre com o período padrão buscado, em vez de um gráfico vazio
+    // esperando o primeiro toque num chip ou no botão de buscar.
+    WidgetsBinding.instance.addPostFrameCallback((_) => bloc.selectPeriod(
+        SelectedCurrencyDetailsBloc.defaultPeriodInDays,
+        widget.selectedCurrencyCode));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final localizations = MyAppLocalizations.of(context)!;
-    var bloc = SelectedCurrencyDetailsBlocProvider.of(context);
     final _contentWidth = Responsive.contentMaxWidth(context);
     final _scale = Responsive.scaleFactor(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(selectedCurrencyCode)),
+      appBar: AppBar(title: Text(widget.selectedCurrencyCode)),
       floatingActionButton: FloatingActionButton.extended(
         // Esta tela abre em rota própria, mas a tag explícita evita o mesmo
         // conflito caso ela passe a ser embutida em outra tela.
         heroTag: "currencyHistoryFab",
         onPressed: () {
-          bloc.getCurrencyHistoryData(selectedCurrencyCode);
+          bloc.getCurrencyHistoryData(widget.selectedCurrencyCode);
         },
         icon: const Icon(Icons.query_stats),
         label: Text(localizations.getCurrencyHistoryBtnLabel!),
@@ -44,30 +70,40 @@ class SelectedCurrencyDetails extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Os dois seletores de data moram no mesmo cartão: são um
-                // controle só, o intervalo do gráfico.
+                // Os chips e os seletores de data moram no mesmo cartão: são
+                // um controle só, o intervalo do gráfico. Os chips são o
+                // atalho para os períodos mais pedidos; os seletores cobrem o
+                // resto.
                 BentoCard(
                   padding: EdgeInsets.all(12 * _scale),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        child: _dateField(
-                          context,
-                          controller: bloc.initialDateController,
-                          label: localizations.currencyHistoryFromDateLabel!,
-                          scale: _scale,
-                          onPicked: bloc.updateInitialDate,
-                        ),
-                      ),
-                      SizedBox(width: 12 * _scale),
-                      Expanded(
-                        child: _dateField(
-                          context,
-                          controller: bloc.endDateController,
-                          label: localizations.currencyHistoryToDateLabel!,
-                          scale: _scale,
-                          onPicked: bloc.updateFinalDate,
-                        ),
+                      _periodChips(localizations, _scale),
+                      SizedBox(height: 12 * _scale),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _dateField(
+                              context,
+                              controller: bloc.initialDateController,
+                              label:
+                                  localizations.currencyHistoryFromDateLabel!,
+                              scale: _scale,
+                              onPicked: bloc.updateInitialDate,
+                            ),
+                          ),
+                          SizedBox(width: 12 * _scale),
+                          Expanded(
+                            child: _dateField(
+                              context,
+                              controller: bloc.endDateController,
+                              label: localizations.currencyHistoryToDateLabel!,
+                              scale: _scale,
+                              onPicked: bloc.updateFinalDate,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -118,6 +154,35 @@ class SelectedCurrencyDetails extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Um chip por período de [SelectedCurrencyDetailsBloc.quickPeriodOptions]:
+  /// tocar num deles já preenche as duas datas e busca o histórico, sem
+  /// passar pelos seletores nem pelo botão de buscar.
+  Widget _periodChips(MyAppLocalizations localizations, double scale) {
+    return StreamBuilder<int?>(
+      initialData: bloc.selectedPeriodInDays,
+      stream: bloc.selectedPeriodStream,
+      builder: (context, snapshot) {
+        var selectedDays = snapshot.data;
+        return Wrap(
+          spacing: 8 * scale,
+          runSpacing: 8 * scale,
+          children: SelectedCurrencyDetailsBloc.quickPeriodOptions
+              .map((days) => ChoiceChip(
+                    label: Text(sprintf(
+                        localizations.currencyHistoryPeriodOptionLabel!,
+                        ["$days"])),
+                    labelStyle: TextStyle(fontSize: 13 * scale),
+                    visualDensity: VisualDensity.compact,
+                    selected: selectedDays == days,
+                    onSelected: (_) => bloc.selectPeriod(
+                        days, widget.selectedCurrencyCode),
+                  ))
+              .toList(),
+        );
+      },
     );
   }
 

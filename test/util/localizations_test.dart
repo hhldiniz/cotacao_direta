@@ -38,6 +38,7 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.currencyHistoryCryptocurrenciesSectionLabel,
       localizations.noDataLabel,
       localizations.getCurrencyHistoryBtnLabel,
+      localizations.currencyHistoryPeriodOptionLabel,
       localizations.getConfigBottomNavItemLabel,
       localizations.overrideDefaultCurrencySwitchLabel,
       localizations.selectedOverrideCurrencyLabel,
@@ -270,6 +271,16 @@ void main() {
     test('conversionHistorySectionLabel traz o marcador de dias', () {
       for (var locale in AppLocales.supported) {
         expect(MyAppLocalizations(locale).conversionHistorySectionLabel,
+            contains("%s"),
+            reason: AppLocales.tagOf(locale));
+      }
+    });
+
+    // O rótulo de cada chip de período traz o número de dias que o bloc
+    // calculou; sem o marcador, todo chip diria o mesmo texto.
+    test('currencyHistoryPeriodOptionLabel traz o marcador de dias', () {
+      for (var locale in AppLocales.supported) {
+        expect(MyAppLocalizations(locale).currencyHistoryPeriodOptionLabel,
             contains("%s"),
             reason: AppLocales.tagOf(locale));
       }
