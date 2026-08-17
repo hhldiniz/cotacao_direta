@@ -1,7 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import 'notification_permission_status.dart';
 
 /// Notificações locais fora da web (Android e Linux Desktop).
 final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+
+AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
+    .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
 
 Future<void> initializePlatformNotifications() async {
   const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -11,10 +19,26 @@ Future<void> initializePlatformNotifications() async {
   await _plugin.initialize(settings);
   // No Android 13+ a notificação só aparece com a permissão concedida em
   // tempo de execução; nas demais plataformas suportadas isto é um no-op.
-  await _plugin
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.requestNotificationsPermission();
+  await _android?.requestNotificationsPermission();
+}
+
+/// No Linux não existe permissão a conceder, então lá a resposta é sempre
+/// [NotificationPermissionStatus.granted]; no Android ela vale o que o usuário
+/// respondeu (ou desligou depois, nas configurações do sistema).
+Future<NotificationPermissionStatus> readNotificationPermission() async {
+  if (!Platform.isAndroid) return NotificationPermissionStatus.granted;
+  final enabled = await _android?.areNotificationsEnabled();
+  return enabled == false
+      ? NotificationPermissionStatus.denied
+      : NotificationPermissionStatus.granted;
+}
+
+Future<NotificationPermissionStatus> requestNotificationPermission() async {
+  if (!Platform.isAndroid) return NotificationPermissionStatus.granted;
+  final granted = await _android?.requestNotificationsPermission();
+  return granted == false
+      ? NotificationPermissionStatus.denied
+      : NotificationPermissionStatus.granted;
 }
 
 Future<void> showPlatformNotification(

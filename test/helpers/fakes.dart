@@ -235,8 +235,29 @@ class FakeCurrencyAlertRepository implements CurrencyAlertRepository {
 class FakeNotificationService implements NotificationService {
   final List<Map<String, Object>> shown = [];
 
+  /// O que [permissionStatus] responde, e o que [requestPermission] passa a
+  /// responder depois de chamado.
+  NotificationPermissionStatus status;
+  final NotificationPermissionStatus statusAfterRequest;
+  var requestCount = 0;
+
+  FakeNotificationService({
+    this.status = NotificationPermissionStatus.granted,
+    NotificationPermissionStatus? statusAfterRequest,
+  }) : statusAfterRequest =
+            statusAfterRequest ?? NotificationPermissionStatus.granted;
+
   @override
   Future<void> initialize() async {}
+
+  @override
+  Future<NotificationPermissionStatus> permissionStatus() async => status;
+
+  @override
+  Future<NotificationPermissionStatus> requestPermission() async {
+    requestCount++;
+    return status = statusAfterRequest;
+  }
 
   @override
   Future<void> showAlertTriggered(

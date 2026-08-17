@@ -233,6 +233,20 @@ class MyAppLocalizations {
       'currencyAlertDeleteTooltip': 'Delete',
       'currencyAlertNotificationTitle': 'Exchange rate alert',
       'currencyAlertNotificationBody': '%s reached %s',
+      'notificationPermissionCardLabel': 'Alert notifications',
+      'notificationPermissionCardDescription':
+          'Allow notifications to be told when an alert is reached. Alerts '
+              'are checked while the app is open.',
+      'notificationPermissionBtnLabel': 'Allow',
+      'notificationPermissionDeniedDescription':
+          'Notifications are blocked. Allow them again in this browser\'s '
+              'site settings to be told when an alert is reached.',
+      'notificationPermissionIosDescription':
+          'On iPhone and iPad notifications only work with the app added to '
+              'the Home Screen. Install it from the Safari share menu and '
+              'open it from its icon.',
+      'notificationPermissionGrantedLabel': 'Notifications enabled',
+      'notificationPermissionRefusedLabel': 'Notifications not enabled',
       'aiInsightsBottomNavItemLabel': 'AI',
       'aiInsightsSectionLabel': 'On-device AI insights',
       'aiInsightsDescription': 'A small neural network is trained on this '
@@ -395,6 +409,21 @@ class MyAppLocalizations {
       'currencyAlertDeleteTooltip': 'Excluir',
       'currencyAlertNotificationTitle': 'Alerta de câmbio',
       'currencyAlertNotificationBody': '%s atingiu %s',
+      'notificationPermissionCardLabel': 'Notificações dos alertas',
+      'notificationPermissionCardDescription':
+          'Permita as notificações para ser avisado quando um alerta for '
+              'atingido. Os alertas são conferidos enquanto o app está aberto.',
+      'notificationPermissionBtnLabel': 'Permitir',
+      'notificationPermissionDeniedDescription':
+          'As notificações estão bloqueadas. Libere-as nas configurações do '
+              'site, neste navegador, para voltar a ser avisado quando um '
+              'alerta for atingido.',
+      'notificationPermissionIosDescription':
+          'No iPhone e no iPad as notificações só funcionam com o app '
+              'adicionado à Tela de Início. Instale-o pelo menu Compartilhar '
+              'do Safari e abra pelo ícone.',
+      'notificationPermissionGrantedLabel': 'Notificações ativadas',
+      'notificationPermissionRefusedLabel': 'Notificações não ativadas',
       'aiInsightsBottomNavItemLabel': 'IA',
       'aiInsightsSectionLabel': 'Insights com IA no aparelho',
       'aiInsightsDescription': 'Uma rede neural pequena é treinada neste '
@@ -560,6 +589,22 @@ class MyAppLocalizations {
       'currencyAlertDeleteTooltip': 'Eliminar',
       'currencyAlertNotificationTitle': 'Alerta de cambio',
       'currencyAlertNotificationBody': '%s ha alcanzado %s',
+      'notificationPermissionCardLabel': 'Notificaciones de las alertas',
+      'notificationPermissionCardDescription':
+          'Permite las notificaciones para saber cuándo se alcanza una '
+              'alerta. Las alertas se comprueban mientras la aplicación está '
+              'abierta.',
+      'notificationPermissionBtnLabel': 'Permitir',
+      'notificationPermissionDeniedDescription':
+          'Las notificaciones están bloqueadas. Vuelve a permitirlas en los '
+              'ajustes del sitio de este navegador para recibir el aviso '
+              'cuando se alcance una alerta.',
+      'notificationPermissionIosDescription':
+          'En el iPhone y el iPad las notificaciones solo funcionan con la '
+              'aplicación añadida a la pantalla de inicio. Instálala desde el '
+              'menú Compartir de Safari y ábrela desde su icono.',
+      'notificationPermissionGrantedLabel': 'Notificaciones activadas',
+      'notificationPermissionRefusedLabel': 'Notificaciones no activadas',
       'aiInsightsBottomNavItemLabel': 'IA',
       'aiInsightsSectionLabel': 'Análisis con IA en el dispositivo',
       'aiInsightsDescription': 'Una red neuronal pequeña se entrena en este '
@@ -730,6 +775,22 @@ class MyAppLocalizations {
       'currencyAlertDeleteTooltip': 'Eliminar',
       'currencyAlertNotificationTitle': 'Alerta de cambio',
       'currencyAlertNotificationBody': '%s alcanzó %s',
+      'notificationPermissionCardLabel': 'Notificaciones de las alertas',
+      'notificationPermissionCardDescription':
+          'Permite las notificaciones para saber cuándo se alcanza una '
+              'alerta. Las alertas se revisan mientras la aplicación está '
+              'abierta.',
+      'notificationPermissionBtnLabel': 'Permitir',
+      'notificationPermissionDeniedDescription':
+          'Las notificaciones están bloqueadas. Vuelve a permitirlas en la '
+              'configuración del sitio de este navegador para recibir el '
+              'aviso cuando se alcance una alerta.',
+      'notificationPermissionIosDescription':
+          'En el iPhone y el iPad las notificaciones solo funcionan con la '
+              'aplicación agregada a la pantalla de inicio. Instálala desde '
+              'el menú Compartir de Safari y ábrela desde su ícono.',
+      'notificationPermissionGrantedLabel': 'Notificaciones activadas',
+      'notificationPermissionRefusedLabel': 'Notificaciones no activadas',
       'aiInsightsBottomNavItemLabel': 'IA',
       'aiInsightsSectionLabel': 'Análisis con IA en el dispositivo',
       'aiInsightsDescription': 'Una red neuronal pequeña se entrena en este '
@@ -1127,6 +1188,34 @@ class MyAppLocalizations {
 
   String? get currencyAlertNotificationBody {
     return _values['currencyAlertNotificationBody'];
+  }
+
+  String? get notificationPermissionCardLabel {
+    return _values['notificationPermissionCardLabel'];
+  }
+
+  String? get notificationPermissionCardDescription {
+    return _values['notificationPermissionCardDescription'];
+  }
+
+  String? get notificationPermissionBtnLabel {
+    return _values['notificationPermissionBtnLabel'];
+  }
+
+  String? get notificationPermissionDeniedDescription {
+    return _values['notificationPermissionDeniedDescription'];
+  }
+
+  String? get notificationPermissionIosDescription {
+    return _values['notificationPermissionIosDescription'];
+  }
+
+  String? get notificationPermissionGrantedLabel {
+    return _values['notificationPermissionGrantedLabel'];
+  }
+
+  String? get notificationPermissionRefusedLabel {
+    return _values['notificationPermissionRefusedLabel'];
   }
 
   String? get aiInsightsBottomNavItemLabel {

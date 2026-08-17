@@ -127,6 +127,31 @@ async function staleWhileRevalidate(request) {
   return cached || network;
 }
 
+// As notificações dos alertas de câmbio são mostradas por este service worker
+// (`registration.showNotification`), que é o único caminho que o Safari do iOS
+// aceita. Quem mostra a notificação também precisa dizer o que fazer quando
+// ela é tocada: sem este ouvinte, o toque apenas fecha o aviso e não leva a
+// lugar nenhum.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    (async () => {
+      const clientList = await self.clients.matchAll({
+        type: 'window',
+        // Inclui as abas que ainda não estão sob o controle deste service
+        // worker, para não abrir uma segunda janela do app à toa.
+        includeUncontrolled: true,
+      });
+      const appClient = clientList.find((client) => client.url.startsWith(SCOPE.href));
+      if (appClient) {
+        await appClient.focus();
+        return;
+      }
+      if (self.clients.openWindow) await self.clients.openWindow(SCOPE.href);
+    })()
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;

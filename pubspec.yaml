@@ -31,8 +31,9 @@ dependencies:
   package_info_plus: ^8.1.2
   url_launcher: ^6.3.1
   fl_chart: ^1.1.1
-  # Notificações locais para os alertas de câmbio (Android e Linux; a web não
-  # tem uma implementação neste app, ver lib/util/notification_service_web.dart).
+  # Notificações locais para os alertas de câmbio no Android e no Linux; na web
+  # elas saem pela Notification API do navegador, sem pacote nenhum (ver
+  # lib/util/notification_service_web.dart).
   flutter_local_notifications: ^19.0.0
 
 dev_dependencies:
