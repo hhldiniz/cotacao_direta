@@ -179,6 +179,7 @@ class MyAppLocalizations {
       'currencyHistoryCryptocurrenciesSectionLabel': 'Cryptocurrencies',
       'noDataLabel': 'No Data',
       'getCurrencyHistoryBtnLabel': 'Get history',
+      'currencyHistoryPeriodOptionLabel': '%s days',
       'overrideDefaultCurrencySwitchLabel': 'Override default currency',
       'selectedOverrideCurrencyLabel': 'Currency',
       'homeCurrenciesSettingLabel': 'Quotes on the home screen',
@@ -339,6 +340,7 @@ class MyAppLocalizations {
       'currencyHistoryCryptocurrenciesSectionLabel': 'Criptomoedas',
       'noDataLabel': 'Sem Dados',
       'getCurrencyHistoryBtnLabel': 'Obter histórico',
+      'currencyHistoryPeriodOptionLabel': '%s dias',
       'overrideDefaultCurrencySwitchLabel': 'Sobrescrever moeda padrão',
       'selectedOverrideCurrencyLabel': 'Moeda',
       'homeCurrenciesSettingLabel': 'Cotações na tela inicial',
@@ -503,6 +505,7 @@ class MyAppLocalizations {
       'currencyHistoryCryptocurrenciesSectionLabel': 'Criptomonedas',
       'noDataLabel': 'Sin datos',
       'getCurrencyHistoryBtnLabel': 'Obtener el histórico',
+      'currencyHistoryPeriodOptionLabel': '%s días',
       'overrideDefaultCurrencySwitchLabel': 'Sustituir la divisa por defecto',
       'selectedOverrideCurrencyLabel': 'Divisa',
       'homeCurrenciesSettingLabel': 'Cotizaciones en la pantalla de inicio',
@@ -671,6 +674,7 @@ class MyAppLocalizations {
       'currencyHistoryCryptocurrenciesSectionLabel': 'Criptomonedas',
       'noDataLabel': 'Sin datos',
       'getCurrencyHistoryBtnLabel': 'Obtener el historial',
+      'currencyHistoryPeriodOptionLabel': '%s días',
       'overrideDefaultCurrencySwitchLabel':
           'Reemplazar la moneda predeterminada',
       'selectedOverrideCurrencyLabel': 'Moneda',
@@ -937,6 +941,12 @@ class MyAppLocalizations {
 
   String? get getCurrencyHistoryBtnLabel {
     return _values['getCurrencyHistoryBtnLabel'];
+  }
+
+  /// Rótulo de cada chip de período rápido da tela de histórico. Traz o
+  /// marcador do número de dias.
+  String? get currencyHistoryPeriodOptionLabel {
+    return _values['currencyHistoryPeriodOptionLabel'];
   }
 
   String? get getConfigBottomNavItemLabel {

@@ -1,4 +1,5 @@
 import 'package:cotacao_direta/blocs/currency_history_menu_bloc.dart';
+import 'package:cotacao_direta/blocs/selected_currency_details_bloc.dart';
 import 'package:cotacao_direta/enums/cryptocurrency_enum.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
@@ -104,6 +105,7 @@ class CurrencyHistory extends StatelessWidget {
                       padding: EdgeInsets.only(bottom: 10 * _scale),
                       child: _cryptocurrencyTile(
                         context,
+                        bloc,
                         entry.cryptocurrency,
                         _scale,
                       ),
@@ -128,6 +130,7 @@ class CurrencyHistory extends StatelessWidget {
     final currencyCode = _codeOf(currency);
     return _quoteTile(
       context,
+      bloc: bloc,
       currencyCode: currencyCode,
       scale: scale,
       accent: CurrencyColors.eur,
@@ -152,11 +155,13 @@ class CurrencyHistory extends StatelessWidget {
 
   Widget _cryptocurrencyTile(
     BuildContext context,
+    CurrencyHistoryMenuBloc bloc,
     Cryptocurrencies cryptocurrency,
     double scale,
   ) {
     return _quoteTile(
       context,
+      bloc: bloc,
       currencyCode: _codeOf(cryptocurrency),
       scale: scale,
       accent: CurrencyColors.usd,
@@ -187,6 +192,7 @@ class CurrencyHistory extends StatelessWidget {
 
   Widget _quoteTile(
     BuildContext context, {
+    required CurrencyHistoryMenuBloc bloc,
     required String currencyCode,
     required Widget badge,
     required Widget subtitle,
@@ -200,6 +206,8 @@ class CurrencyHistory extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => SelectedCurrencyDetailsBlocProvider(
+              bloc: SelectedCurrencyDetailsBloc(
+                  currencyRepository: bloc.currencyRepository),
               child: SelectedCurrencyDetails(
                 selectedCurrencyCode: currencyCode,
               ),

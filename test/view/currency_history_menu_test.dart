@@ -47,10 +47,14 @@ void main() {
               headers: {"content-type": "application/json; charset=utf-8"});
         })),
         // Sem isto, resolveCounterCurrency() cairia no CurrencyRepository
-        // real e tentaria abrir o banco de configuração de verdade.
+        // real e tentaria abrir o banco de configuração de verdade. O DAO e a
+        // rede fakes evitam o mesmo problema ao abrir o histórico de uma
+        // moeda, que agora busca sozinho ao abrir a tela.
         currencyRepository: CurrencyRepository.withDependencies(
             configurationRepository:
-                FakeConfigurationRepository(configuration: configuration)));
+                FakeConfigurationRepository(configuration: configuration),
+            currencyDao: FakeCurrencyDao(),
+            networkUtils: FakeNetworkUtils(available: false)));
   }
 
   Future<CurrencyHistoryMenuBloc> pumpMenu(WidgetTester tester,

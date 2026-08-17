@@ -13,6 +13,12 @@ class CurrencyHistoryMenuBloc extends BaseBloc {
 
   Future<String>? _counterCurrencyFuture;
 
+  /// Exposto para a navegação ao histórico de uma moeda passar adiante o
+  /// mesmo repositório desta lista, em vez de deixar a tela seguinte cair no
+  /// singleton — o que faria a configuração injetada nos testes (ou trocada
+  /// nas opções) valer aqui e não lá.
+  CurrencyRepository get currencyRepository => _currencyRepository;
+
   CurrencyHistoryMenuBloc(
       {CountryNamesRepository? countryNamesRepository,
       CurrencyRepository? currencyRepository})
