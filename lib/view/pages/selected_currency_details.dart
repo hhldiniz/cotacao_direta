@@ -71,16 +71,14 @@ class _SelectedCurrencyDetailsState extends State<SelectedCurrencyDetails> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Os chips e os seletores de data moram no mesmo cartão: são
-                // um controle só, o intervalo do gráfico. Os chips são o
-                // atalho para os períodos mais pedidos; os seletores cobrem o
-                // resto.
+                // um controle só, o intervalo do gráfico. Os seletores cobrem
+                // o intervalo por extenso; os chips, logo abaixo, são o
+                // atalho para os períodos mais pedidos.
                 BentoCard(
                   padding: EdgeInsets.all(12 * _scale),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _periodChips(localizations, _scale),
-                      SizedBox(height: 12 * _scale),
                       Row(
                         children: [
                           Expanded(
@@ -105,6 +103,8 @@ class _SelectedCurrencyDetailsState extends State<SelectedCurrencyDetails> {
                           ),
                         ],
                       ),
+                      SizedBox(height: 12 * _scale),
+                      _periodChips(localizations, _scale),
                     ],
                   ),
                 ),
@@ -176,6 +176,9 @@ class _SelectedCurrencyDetailsState extends State<SelectedCurrencyDetails> {
                         ["$days"])),
                     labelStyle: TextStyle(fontSize: 13 * scale),
                     visualDensity: VisualDensity.compact,
+                    // Chip em pílula, para se diferenciar dos cartões
+                    // (arredondados, mas em retângulo) do resto da tela.
+                    shape: const StadiumBorder(),
                     selected: selectedDays == days,
                     onSelected: (_) => bloc.selectPeriod(
                         days, widget.selectedCurrencyCode),
