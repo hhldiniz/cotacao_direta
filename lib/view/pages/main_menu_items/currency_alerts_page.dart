@@ -8,6 +8,7 @@ import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:cotacao_direta/view/widgets/animated_list_entry.dart';
 import 'package:cotacao_direta/view/widgets/bento_card.dart';
+import 'package:cotacao_direta/view/widgets/notification_permission_card.dart';
 import 'package:flutter/material.dart';
 
 class CurrencyAlertsPage extends StatefulWidget {
@@ -50,7 +51,21 @@ class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
             builder: (context, snapshot) {
               var alerts = snapshot.data ?? [];
               if (alerts.isEmpty) {
-                return _emptyState(context, _localization, _scale);
+                // O aviso de permissão fica acima do estado vazio, e não
+                // dentro dele: é justamente quem ainda não criou nenhum alerta
+                // que precisa ler isto antes de cadastrar o primeiro.
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16 * _scale),
+                      child: const NotificationPermissionCard(),
+                    ),
+                    Expanded(
+                      child: _emptyState(context, _localization, _scale),
+                    ),
+                  ],
+                );
               }
               return ListView.builder(
                 padding: EdgeInsets.fromLTRB(
@@ -63,8 +78,14 @@ class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
                 itemCount: alerts.length + 1,
                 itemBuilder: (context, index) {
                   if (index == 0) {
-                    return BentoSectionTitle(
-                      _localization.currencyAlertsSectionLabel!,
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        BentoSectionTitle(
+                          _localization.currencyAlertsSectionLabel!,
+                        ),
+                        const NotificationPermissionCard(),
+                      ],
                     );
                   }
                   final alert = alerts[index - 1];
