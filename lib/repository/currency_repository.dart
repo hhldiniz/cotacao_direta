@@ -131,18 +131,26 @@ class CurrencyRepository {
     return friendlyCurrencyNamesMap;
   }
 
-  Future<Currency?> getLatestDataByCurrencyCode(String? currencyCode) async {
+  /// Última cotação de [currencyCode].
+  ///
+  /// [counterCurrency] cota a moeda frente a uma contrapartida específica, em
+  /// vez da escolhida nas configurações. É o que os alertas de câmbio pedem:
+  /// cada um guarda a moeda em que seu alvo foi digitado e precisa continuar
+  /// sendo avaliado contra ela, mesmo depois de a referência do app mudar.
+  Future<Currency?> getLatestDataByCurrencyCode(String? currencyCode,
+      {String? counterCurrency}) async {
     var networkAvailable = await _networkUtils.isNetworkAvailable();
-    var counterCurrency = await resolveCounterCurrency();
+    var pairCounterCurrency = counterCurrency ?? await resolveCounterCurrency();
     // A busca é pelo par, e não só pela moeda cotada: trocar a contrapartida
     // nas configurações precisa provocar uma consulta nova, mesmo que exista
     // uma cotação recente da mesma moeda frente à contrapartida anterior.
     var savedCurrency = await _currencyDao.getLatestDataByCurrencyCode(
-        currencyCode, counterCurrency);
+        currencyCode, pairCounterCurrency);
     if (networkAvailable &&
         (savedCurrency == null ||
             !_isCurrencyTimestampValid(savedCurrency.timestamp))) {
-      var newCurrency = await _fetchLatestQuote(currencyCode);
+      var newCurrency =
+          await _fetchLatestQuote(currencyCode, pairCounterCurrency);
       // Sem cotação nova (resposta inesperada, par inexistente), o que já está
       // salvo continua valendo: gravar um registro sem valor esconderia a
       // última cotação boa pela hora seguinte.
@@ -162,9 +170,9 @@ class CurrencyRepository {
     }
   }
 
-  Future<Currency?> _fetchLatestQuote(String? currencyCode) async {
+  Future<Currency?> _fetchLatestQuote(
+      String? currencyCode, String counterCurrency) async {
     if (currencyCode == null || currencyCode.isEmpty) return null;
-    var counterCurrency = await resolveCounterCurrency();
     // Uma moeda cotada contra ela mesma vale exatamente uma unidade; a API não
     // tem esse par.
     if (currencyCode == counterCurrency) {

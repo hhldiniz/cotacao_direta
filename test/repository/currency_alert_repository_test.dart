@@ -19,7 +19,8 @@ void main() {
       var alert = CurrencyAlert(
           currencyCode: "USD",
           targetValue: 5.0,
-          condition: CurrencyAlertCondition.above);
+          condition: CurrencyAlertCondition.above,
+          counterCurrency: "BRL");
 
       await repository.insert(alert);
 
@@ -31,7 +32,8 @@ void main() {
           id: 1,
           currencyCode: "USD",
           targetValue: 5.0,
-          condition: CurrencyAlertCondition.above);
+          condition: CurrencyAlertCondition.above,
+          counterCurrency: "BRL");
       dao.alerts.add(alert);
 
       alert.triggered = true;
@@ -45,7 +47,8 @@ void main() {
           id: 1,
           currencyCode: "USD",
           targetValue: 5.0,
-          condition: CurrencyAlertCondition.above));
+          condition: CurrencyAlertCondition.above,
+          counterCurrency: "BRL"));
 
       await repository.delete(1);
 
@@ -56,7 +59,8 @@ void main() {
       dao.alerts.add(CurrencyAlert(
           currencyCode: "USD",
           targetValue: 5.0,
-          condition: CurrencyAlertCondition.above));
+          condition: CurrencyAlertCondition.above,
+          counterCurrency: "BRL"));
 
       expect(await repository.getAll(), hasLength(1));
     });
@@ -66,11 +70,13 @@ void main() {
         CurrencyAlert(
             currencyCode: "USD",
             targetValue: 5.0,
-            condition: CurrencyAlertCondition.above),
+            condition: CurrencyAlertCondition.above,
+          counterCurrency: "BRL"),
         CurrencyAlert(
             currencyCode: "EUR",
             targetValue: 6.0,
-            condition: CurrencyAlertCondition.above),
+            condition: CurrencyAlertCondition.above,
+          counterCurrency: "BRL"),
       ]);
 
       var result = await repository.getActiveByCurrencyCode("USD");

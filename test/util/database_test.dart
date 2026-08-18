@@ -46,12 +46,12 @@ void main() {
       expect(identical(AppDatabase(), AppDatabase()), isTrue);
     });
 
-    test('abre o banco na versão 9', () async {
+    test('abre o banco na versão 10', () async {
       var db = await AppDatabase().openAppDatabase();
 
       expect(db, isNotNull);
       expect(db!.isOpen, isTrue);
-      expect(await db.getVersion(), 9);
+      expect(await db.getVersion(), 10);
     });
 
     test('reaproveita a mesma conexão em chamadas seguintes', () async {
@@ -139,6 +139,7 @@ void main() {
             "currencyCode",
             "targetValue",
             "condition",
+            "counterCurrency",
             "triggered",
             "active"
           ]));
@@ -162,7 +163,7 @@ void main() {
       expect(await reopened.query("Currency"), isEmpty);
     });
 
-    test('migra um banco da versão 1 até a 9, passando por todas as etapas',
+    test('migra um banco da versão 1 até a 10, passando por todas as etapas',
         () async {
       var path = await _createLegacyDatabase(version: 1, tables: [
         "CREATE TABLE Currency(id TEXT PRIMARY KEY, value REAL, timestamp TEXT)"
@@ -177,7 +178,7 @@ void main() {
 
       var db = (await AppDatabase().openAppDatabase())!;
 
-      expect(await db.getVersion(), 9);
+      expect(await db.getVersion(), 10);
       expect(await _columnsOf(db, "Currency"),
           containsAll(["historicalDate", "friendlyName"]));
       expect(await _columnsOf(db, "Configurations"),
@@ -192,12 +193,15 @@ void main() {
       expect(await _columnsOf(db, "Configurations"),
           containsAll(["languageCode"]),
           reason: "a etapa 8→9 não pode ser pulada");
+      expect(await _columnsOf(db, "CurrencyAlerts"),
+          containsAll(["counterCurrency"]),
+          reason: "a etapa 9→10 não pode ser pulada");
       var row = (await db.query("Currency")).single;
       expect(row["id"], "USD");
       expect(row["value"], 5.0);
     });
 
-    test('migra um banco da versão 4 para a 9 acrescentando o friendlyName e '
+    test('migra um banco da versão 4 para a 10 acrescentando o friendlyName e '
         'os alertas', () async {
       var path = await _createLegacyDatabase(version: 4, tables: [
         "CREATE TABLE Currency(id TEXT, value REAL, timestamp TEXT, historicalDate TEXT, PRIMARY KEY(id, historicalDate))",
@@ -214,7 +218,7 @@ void main() {
 
       var db = (await AppDatabase().openAppDatabase())!;
 
-      expect(await db.getVersion(), 9);
+      expect(await db.getVersion(), 10);
       var row = (await db.query("Currency")).single;
       expect(row["historicalDate"], "2024-01-01T00:00:00.000");
       expect(row["friendlyName"], "",
@@ -349,6 +353,34 @@ void main() {
           reason: "a configuração que já existia não pode se perder");
     });
 
+    test('a migração 9→10 marca os alertas existentes como sendo frente ao BRL',
+        () async {
+      var path = await _createLegacyDatabase(version: 9, tables: [
+        "CREATE TABLE Currency(id TEXT, historicalDate TEXT, value REAL, timestamp TEXT, friendlyName TEXT NOT NULL DEFAULT '', counterCurrency TEXT NOT NULL DEFAULT 'BRL', PRIMARY KEY(id, historicalDate, counterCurrency))",
+        "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT, homeCurrencyCodes TEXT NOT NULL DEFAULT '', languageCode TEXT NOT NULL DEFAULT '')",
+        "CREATE TABLE CurrencyAlerts(id INTEGER PRIMARY KEY AUTOINCREMENT, currencyCode TEXT NOT NULL, targetValue REAL NOT NULL, condition TEXT NOT NULL, triggered INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1)"
+      ], rows: {
+        "CurrencyAlerts": {
+          "id": 1,
+          "currencyCode": "USD",
+          "targetValue": 5.0,
+          "condition": "above",
+          "triggered": 0,
+          "active": 1
+        }
+      });
+      AppDatabase.databasePathOverride = path;
+
+      var db = (await AppDatabase().openAppDatabase())!;
+
+      var row = (await db.query("CurrencyAlerts")).single;
+      expect(row["counterCurrency"], "BRL",
+          reason: "o real era a contrapartida padrão antes da coluna existir");
+      expect(row["targetValue"], 5.0,
+          reason: "o alvo cadastrado não pode se perder");
+      expect(row["currencyCode"], "USD");
+    });
+
     test('os dados sobrevivem à reabertura quando o banco é um arquivo',
         () async {
       var directory =
@@ -366,7 +398,7 @@ void main() {
       await AppDatabase.reset();
 
       var reopened = (await AppDatabase().openAppDatabase())!;
-      expect(await reopened.getVersion(), 9,
+      expect(await reopened.getVersion(), 10,
           reason: "reabrir não deve disparar onCreate/onUpgrade de novo");
       expect((await reopened.query("Currency")).single["id"], "USD");
     });

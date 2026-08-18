@@ -10,6 +10,7 @@ CurrencyAlert _alert(String currencyCode,
         {int? id,
         double targetValue = 5.0,
         CurrencyAlertCondition condition = CurrencyAlertCondition.above,
+        String counterCurrency = "BRL",
         bool triggered = false,
         bool active = true}) =>
     CurrencyAlert(
@@ -17,6 +18,7 @@ CurrencyAlert _alert(String currencyCode,
         currencyCode: currencyCode,
         targetValue: targetValue,
         condition: condition,
+        counterCurrency: counterCurrency,
         triggered: triggered,
         active: active);
 
@@ -31,7 +33,7 @@ void main() {
 
   group('CurrencyAlertDao.insert', () {
     test('grava o alerta com todas as colunas', () async {
-      await dao.insert(_alert("USD", targetValue: 5.5));
+      await dao.insert(_alert("USD", targetValue: 5.5, counterCurrency: "EUR"));
 
       var db = (await AppDatabase().openAppDatabase())!;
       var row = (await db.query("CurrencyAlerts")).single;
@@ -39,6 +41,7 @@ void main() {
       expect(row["currencyCode"], "USD");
       expect(row["targetValue"], 5.5);
       expect(row["condition"], "above");
+      expect(row["counterCurrency"], "EUR");
       expect(row["triggered"], 0);
       expect(row["active"], 1);
     });

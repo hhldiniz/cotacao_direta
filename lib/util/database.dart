@@ -92,6 +92,19 @@ class AppDatabase {
     "ALTER TABLE Configurations ADD languageCode TEXT NOT NULL DEFAULT ''"
   ];
 
+  // Um alerta guarda um alvo numérico ("USD acima de 5,00"), e esse número só
+  // significa alguma coisa junto da moeda em que ele foi digitado. A tabela não
+  // guardava essa contrapartida: quem trocasse a moeda de referência nas
+  // configurações passava a ter os alertas antigos avaliados contra o par novo,
+  // com o alvo pensado para o antigo. A contrapartida passa a ser parte do
+  // alerta.
+  //
+  // Os alertas já cadastrados são migrados como BRL, a contrapartida padrão do
+  // app — a mesma escolha da migração 6→7 para a tabela de cotações.
+  var migrationsScripts9_10 = [
+    "ALTER TABLE CurrencyAlerts ADD counterCurrency TEXT NOT NULL DEFAULT 'BRL'"
+  ];
+
   /// Scripts a aplicar para chegar em cada versão, na ordem.
   Map<int, List<String>> get _migrationsByVersion => {
         2: migrationsScripts1_2,
@@ -102,6 +115,7 @@ class AppDatabase {
         7: migrationsScripts6_7,
         8: migrationsScripts7_8,
         9: migrationsScripts8_9,
+        10: migrationsScripts9_10,
       };
 
   /// A abertura em andamento. Guardar o Future (e não só o Database pronto) é o
@@ -124,7 +138,7 @@ class AppDatabase {
         await db.execute(
             "CREATE TABLE Configurations(id INT PRIMARY KEY, overrideDefaultCurrency INTEGER, selectedOverrideCurrencyCode TEXT, homeCurrencyCodes TEXT NOT NULL DEFAULT '', languageCode TEXT NOT NULL DEFAULT '')");
         await db.execute(
-            "CREATE TABLE CurrencyAlerts(id INTEGER PRIMARY KEY AUTOINCREMENT, currencyCode TEXT NOT NULL, targetValue REAL NOT NULL, condition TEXT NOT NULL, triggered INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1)");
+            "CREATE TABLE CurrencyAlerts(id INTEGER PRIMARY KEY AUTOINCREMENT, currencyCode TEXT NOT NULL, targetValue REAL NOT NULL, condition TEXT NOT NULL, counterCurrency TEXT NOT NULL DEFAULT 'BRL', triggered INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1)");
       }, onUpgrade: (database, oldVersion, newVersion) async {
         // Aplica todas as versões intermediárias, uma de cada vez: quem estava
         // na versão 1 precisa passar por 2, 3 e 4 antes de chegar na 5.
@@ -133,7 +147,7 @@ class AppDatabase {
             await database.execute(script);
           }
         }
-      }, version: 9);
+      }, version: 10);
     return _database;
   }
 }

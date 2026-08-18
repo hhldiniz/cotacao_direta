@@ -30,12 +30,22 @@ class CurrencyAlertsBloc extends BaseBloc {
     _alertsStreamController.sink.add(await _currencyAlertRepository.getAll());
   }
 
+  /// Moeda em que os alvos digitados agora estão expressos: a contrapartida
+  /// escolhida nas configurações. Não é guardada em cache porque esta tela
+  /// coexiste com a de opções no IndexedStack — a escolha pode mudar sem que o
+  /// bloc seja recriado.
+  Future<String> get counterCurrencyCode =>
+      _currencyRepository.resolveCounterCurrency();
+
+  /// Cadastra um alerta com a contrapartida em vigor agora, que passa a fazer
+  /// parte dele: é ela que dá sentido ao alvo digitado.
   Future<void> addAlert(String currencyCode, double targetValue,
       CurrencyAlertCondition condition) async {
     await _currencyAlertRepository.insert(CurrencyAlert(
         currencyCode: currencyCode,
         targetValue: targetValue,
-        condition: condition));
+        condition: condition,
+        counterCurrency: await counterCurrencyCode));
     await loadAlerts();
   }
 
@@ -55,6 +65,10 @@ class CurrencyAlertsBloc extends BaseBloc {
   /// o alvo do alerta é digitado, então comparar direto com o valor guardado
   /// invertia a relação: um alerta de "USD acima de 5,00" nunca disparava, e o
   /// aviso reportaria 0,1818 no lugar de 5,50.
+  ///
+  /// Cada alerta é conferido contra a contrapartida que ele guarda, e não
+  /// contra a escolhida agora nas configurações: um alvo digitado em reais
+  /// continua sendo lido em reais depois de o app passar a cotar em euros.
   Future<void> checkAlerts(
       {required String notificationTitle,
       required String Function(CurrencyAlert alert, double value)
@@ -64,19 +78,23 @@ class CurrencyAlertsBloc extends BaseBloc {
         alerts.where((alert) => alert.active && !alert.triggered).toList();
     if (pendingAlerts.isEmpty) return;
 
-    // Vários alertas costumam ser da mesma moeda: busca cada código uma única
-    // vez, e em paralelo, em vez de uma consulta sequencial por alerta.
-    var currencyCodes = pendingAlerts.map((alert) => alert.currencyCode).toSet();
-    var latestValueByCode = Map.fromEntries(
-      await Future.wait(currencyCodes.map((code) async {
-        var currency = await _currencyRepository.getLatestDataByCurrencyCode(code);
-        return MapEntry(code, _quotedRate(currency?.value));
+    // Vários alertas costumam ser do mesmo par: busca cada um uma única vez, e
+    // em paralelo, em vez de uma consulta sequencial por alerta. A chave é o
+    // par inteiro — a mesma moeda cotada frente a contrapartidas diferentes dá
+    // cotações diferentes.
+    var pairs = pendingAlerts.map(_pairOf).toSet();
+    var latestValueByPair = Map.fromEntries(
+      await Future.wait(pairs.map((pair) async {
+        var currency = await _currencyRepository.getLatestDataByCurrencyCode(
+            pair.currencyCode,
+            counterCurrency: pair.counterCurrency);
+        return MapEntry(pair, _quotedRate(currency?.value));
       })),
     );
 
     var triggeredAny = false;
     for (var alert in pendingAlerts) {
-      var value = latestValueByCode[alert.currencyCode];
+      var value = latestValueByPair[_pairOf(alert)];
       if (value == null || !alert.isMetBy(value)) continue;
       alert.triggered = true;
       await _currencyAlertRepository.update(alert);
@@ -88,6 +106,14 @@ class CurrencyAlertsBloc extends BaseBloc {
     }
     if (triggeredAny) await loadAlerts();
   }
+
+  /// O par cotado de um alerta, usado para agrupar as consultas.
+  ({String currencyCode, String counterCurrency}) _pairOf(
+          CurrencyAlert alert) =>
+      (
+        currencyCode: alert.currencyCode,
+        counterCurrency: alert.counterCurrency
+      );
 
   /// Converte o valor guardado em `Currency.value` na cotação exibida pelo
   /// app. Valor ausente ou zerado não vira cotação nenhuma: dividir por zero
