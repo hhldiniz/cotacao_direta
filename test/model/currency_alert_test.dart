@@ -10,7 +10,8 @@ void main() {
           CurrencyAlert(
               currencyCode: "USD",
               targetValue: 5.0,
-              condition: CurrencyAlertCondition.above),
+              condition: CurrencyAlertCondition.above,
+              counterCurrency: "BRL"),
           isA<BaseModel>());
     });
 
@@ -18,7 +19,8 @@ void main() {
       var alert = CurrencyAlert(
           currencyCode: "USD",
           targetValue: 5.0,
-          condition: CurrencyAlertCondition.above);
+          condition: CurrencyAlertCondition.above,
+          counterCurrency: "BRL");
 
       expect(alert.id, isNull);
       expect(alert.triggered, isFalse);
@@ -31,7 +33,8 @@ void main() {
         var alert = CurrencyAlert(
             currencyCode: "USD",
             targetValue: 5.0,
-            condition: CurrencyAlertCondition.above);
+            condition: CurrencyAlertCondition.above,
+            counterCurrency: "BRL");
 
         expect(alert.isMetBy(5.0), isTrue);
         expect(alert.isMetBy(5.5), isTrue);
@@ -42,7 +45,8 @@ void main() {
         var alert = CurrencyAlert(
             currencyCode: "USD",
             targetValue: 5.0,
-            condition: CurrencyAlertCondition.below);
+            condition: CurrencyAlertCondition.below,
+            counterCurrency: "BRL");
 
         expect(alert.isMetBy(5.0), isTrue);
         expect(alert.isMetBy(4.5), isTrue);
@@ -56,6 +60,7 @@ void main() {
               currencyCode: "EUR",
               targetValue: 6.2,
               condition: CurrencyAlertCondition.below,
+              counterCurrency: "EUR",
               triggered: true,
               active: false)
           .toMap();
@@ -65,6 +70,7 @@ void main() {
         'currencyCode': "EUR",
         'targetValue': 6.2,
         'condition': "below",
+        'counterCurrency': "EUR",
         'triggered': 1,
         'active': 0,
       });
@@ -75,12 +81,14 @@ void main() {
               id: 1,
               currencyCode: "GBP",
               targetValue: 7.0,
-              condition: CurrencyAlertCondition.above)
+              condition: CurrencyAlertCondition.above,
+              counterCurrency: "BRL")
           .toString();
 
       expect(text, contains("id: 1"));
       expect(text, contains("currencyCode: GBP"));
       expect(text, contains("targetValue: 7.0"));
+      expect(text, contains("counterCurrency: BRL"));
     });
   });
 }

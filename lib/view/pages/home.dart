@@ -251,9 +251,14 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     final _localization = MyAppLocalizations.of(context)!;
     _alertsBloc.checkAlerts(
       notificationTitle: _localization.currencyAlertNotificationTitle!,
+      // A cotação vai com a contrapartida do próprio alerta: "USD atingiu
+      // 5,5000" fica ambíguo para quem cadastrou alertas frente a moedas
+      // diferentes.
       notificationBody: (alert, value) => sprintf(
-          _localization.currencyAlertNotificationBody!,
-          [alert.currencyCode, value.toStringAsFixed(4)]),
+          _localization.currencyAlertNotificationBody!, [
+        alert.currencyCode,
+        "${value.toStringAsFixed(4)} ${alert.counterCurrency}"
+      ]),
     );
   }
 

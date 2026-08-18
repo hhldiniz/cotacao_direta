@@ -10,6 +10,7 @@ class CurrencyAlertDao {
     "currencyCode",
     "targetValue",
     "condition",
+    "counterCurrency",
     "triggered",
     "active"
   ];
@@ -56,6 +57,7 @@ class CurrencyAlertDao {
       currencyCode: row["currencyCode"] as String,
       targetValue: (row["targetValue"] as num).toDouble(),
       condition: CurrencyAlertCondition.values.byName(row["condition"] as String),
+      counterCurrency: row["counterCurrency"] as String,
       triggered: row["triggered"] == 1,
       active: row["active"] == 1,
     );

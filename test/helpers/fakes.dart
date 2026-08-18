@@ -34,6 +34,12 @@ class FakeCurrencyDao implements CurrencyDao {
   Currency? currencyByCode;
   List<Currency> historicalData = [];
 
+  /// Cotações por par, na chave "MOEDA-CONTRAPARTIDA" ("USD-BRL"), para os
+  /// testes que precisam de mais de um par ao mesmo tempo. Enquanto o mapa
+  /// estiver vazio vale [latestCurrency]; a partir do momento em que ele é
+  /// preenchido, um par ausente não tem cotação nenhuma.
+  final Map<String, Currency> latestCurrencyByPair = {};
+
   @override
   Future<void> insert(Currency currency) async => inserted.add(currency);
 
@@ -47,6 +53,8 @@ class FakeCurrencyDao implements CurrencyDao {
   Future<Currency?> getLatestDataByCurrencyCode(
       String? currencyCode, String counterCurrency) async {
     latestDataCounterCurrencies.add(counterCurrency);
+    if (latestCurrencyByPair.isNotEmpty)
+      return latestCurrencyByPair["$currencyCode-$counterCurrency"];
     // Uma cotação salva só serve para o par que a originou: devolvê-la para
     // outra contrapartida é justamente o bug que o registro do par evita.
     if (latestCurrency?.counterCurrency != null &&
@@ -104,7 +112,8 @@ class FakeCurrencyRepository implements CurrencyRepository {
   }
 
   @override
-  Future<Currency?> getLatestDataByCurrencyCode(String? currencyCode) async =>
+  Future<Currency?> getLatestDataByCurrencyCode(String? currencyCode,
+          {String? counterCurrency}) async =>
       latestCurrency;
 
   @override
