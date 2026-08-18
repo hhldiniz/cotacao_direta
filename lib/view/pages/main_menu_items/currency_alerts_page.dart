@@ -38,7 +38,7 @@ class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
         // Ver a nota no FAB da home: as duas telas coexistem no IndexedStack.
         heroTag: "addCurrencyAlertFab",
         onPressed: () =>
-            _showAddAlertDialog(context, _bloc, _localization, _currencyList),
+            _openAddAlertDialog(context, _bloc, _localization, _currencyList),
         label: Text(_localization.addCurrencyAlertBtnLabel!),
         icon: const Icon(Icons.add_alert),
       ),
@@ -152,8 +152,24 @@ class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
     );
   }
 
-  void _showAddAlertDialog(BuildContext context, CurrencyAlertsBloc bloc,
-      MyAppLocalizations localization, List<String> currencyList) {
+  /// Resolve a contrapartida antes de abrir o diálogo, em vez de deixar a tela
+  /// guardá-la: esta página fica montada ao lado da de opções no IndexedStack,
+  /// então a escolha pode ter mudado desde o último build. Ler na hora do toque
+  /// garante que o alerta nasça com a moeda que o rótulo mostrou.
+  Future<void> _openAddAlertDialog(BuildContext context, CurrencyAlertsBloc bloc,
+      MyAppLocalizations localization, List<String> currencyList) async {
+    var counterCurrency = await bloc.counterCurrencyCode;
+    if (!context.mounted) return;
+    _showAddAlertDialog(
+        context, bloc, localization, currencyList, counterCurrency);
+  }
+
+  void _showAddAlertDialog(
+      BuildContext context,
+      CurrencyAlertsBloc bloc,
+      MyAppLocalizations localization,
+      List<String> currencyList,
+      String counterCurrency) {
     var selectedCurrency = currencyList.first;
     var selectedCondition = CurrencyAlertCondition.above;
     var targetValueController = TextEditingController();
@@ -213,7 +229,11 @@ class _CurrencyAlertsPageState extends State<CurrencyAlertsPage> {
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
-                      labelText: localization.currencyAlertTargetValueLabel,
+                      // O alvo é um número solto ("5,00"): sem a moeda em que
+                      // ele é lido, não dá para saber o que se está pedindo.
+                      labelText:
+                          "${localization.currencyAlertTargetValueLabel} "
+                          "($counterCurrency)",
                       errorText: errorText,
                       border: OutlineInputBorder(
                         borderRadius:
@@ -306,7 +326,8 @@ class _AlertCard extends StatelessWidget {
               children: [
                 Text(
                   "${alert.currencyCode} $conditionLabel "
-                  "${alert.targetValue.toStringAsFixed(4)}",
+                  "${alert.targetValue.toStringAsFixed(4)} "
+                  "${alert.counterCurrency}",
                   style: TextStyle(
                     fontSize: 15 * scale,
                     fontWeight: FontWeight.w600,
