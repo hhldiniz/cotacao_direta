@@ -12,10 +12,13 @@ void main() {
   late FakeCurrencyDao currencyDao;
   late FakeNotificationService notificationService;
 
-  CurrencyAlertsBloc buildBloc({double currencyValue = 5.5}) {
+  /// [quotedRate] é a cotação na convenção que o usuário vê e digita no alerta
+  /// (quantos reais vale um dólar). O banco guarda o inverso disso, como faz o
+  /// CurrencyRepository.
+  CurrencyAlertsBloc buildBloc({double quotedRate = 5.5}) {
     currencyDao.latestCurrency = Currency(
         id: "USD",
-        value: currencyValue,
+        value: 1 / quotedRate,
         historicalDate: DateTime.now().toIso8601String(),
         timestamp: DateTime.now().toIso8601String(),
         friendlyName: "Dólar dos Estados Unidos");
@@ -85,21 +88,51 @@ void main() {
   group('CurrencyAlertsBloc.checkAlerts', () {
     test('dispara notificação e marca como disparado quando a condição é atendida',
         () async {
-      var bloc = buildBloc(currencyValue: 5.5);
+      var bloc = buildBloc(quotedRate: 5.5);
       await bloc.addAlert("USD", 5.0, CurrencyAlertCondition.above);
 
       await bloc.checkAlerts(
           notificationTitle: "Alerta",
-          notificationBody: (alert, value) => "${alert.currencyCode} $value");
+          notificationBody: (alert, value) =>
+              "${alert.currencyCode} ${value.toStringAsFixed(2)}");
 
       expect(alertRepository.alerts.single.triggered, isTrue);
       expect(notificationService.shown, hasLength(1));
       expect(notificationService.shown.single['title'], "Alerta");
-      expect(notificationService.shown.single['body'], "USD 5.5");
+      expect(notificationService.shown.single['body'], "USD 5.50");
+    });
+
+    test('avisa a cotação na mesma convenção da tela, e não o seu inverso',
+        () async {
+      var bloc = buildBloc(quotedRate: 5.5);
+      await bloc.addAlert("USD", 5.0, CurrencyAlertCondition.above);
+      double? reportedValue;
+
+      await bloc.checkAlerts(
+          notificationTitle: "Alerta",
+          notificationBody: (alert, value) {
+            reportedValue = value;
+            return "";
+          });
+
+      expect(reportedValue, closeTo(5.5, 0.0001));
+    });
+
+    test('não dispara "abaixo de" com a cotação acima do alvo', () async {
+      // O valor guardado para uma cotação de 5,50 é 0,1818: comparar direto com
+      // ele faria este alerta disparar na hora, com a relação invertida.
+      var bloc = buildBloc(quotedRate: 5.5);
+      await bloc.addAlert("USD", 5.0, CurrencyAlertCondition.below);
+
+      await bloc.checkAlerts(
+          notificationTitle: "Alerta", notificationBody: (alert, value) => "");
+
+      expect(alertRepository.alerts.single.triggered, isFalse);
+      expect(notificationService.shown, isEmpty);
     });
 
     test('não dispara quando a condição não é atendida', () async {
-      var bloc = buildBloc(currencyValue: 4.0);
+      var bloc = buildBloc(quotedRate: 4.0);
       await bloc.addAlert("USD", 5.0, CurrencyAlertCondition.above);
 
       await bloc.checkAlerts(
@@ -110,7 +143,7 @@ void main() {
     });
 
     test('ignora alertas já disparados', () async {
-      var bloc = buildBloc(currencyValue: 5.5);
+      var bloc = buildBloc(quotedRate: 5.5);
       await bloc.addAlert("USD", 5.0, CurrencyAlertCondition.above);
       alertRepository.alerts.single.triggered = true;
 
@@ -121,7 +154,7 @@ void main() {
     });
 
     test('ignora alertas inativos', () async {
-      var bloc = buildBloc(currencyValue: 5.5);
+      var bloc = buildBloc(quotedRate: 5.5);
       await bloc.addAlert("USD", 5.0, CurrencyAlertCondition.above);
       alertRepository.alerts.single.active = false;
 
