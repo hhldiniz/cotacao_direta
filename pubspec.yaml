@@ -35,6 +35,7 @@ dependencies:
   # elas saem pela Notification API do navegador, sem pacote nenhum (ver
   # lib/util/notification_service_web.dart).
   flutter_local_notifications: ^19.0.0
+  workmanager: ^0.10.7
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4

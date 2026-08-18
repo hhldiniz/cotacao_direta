@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:cotacao_direta/providers/currency_alerts_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:cotacao_direta/util/app_locale_controller.dart';
+import 'package:cotacao_direta/util/background_alert_service.dart';
 import 'package:cotacao_direta/util/currency_colors.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/notification_service.dart';
@@ -14,6 +17,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Stetho.initialize();
   await NotificationService().initialize();
+  // Agendar (ou reagendar) a checagem em segundo plano não pode atrasar a
+  // abertura da tela, nem derrubá-la se o serviço do sistema recusar o
+  // agendamento: só o Android tem esta tarefa, e lá ela é um extra por cima da
+  // checagem que a tela já faz.
+  unawaited(startBackgroundAlertChecks().catchError((Object error) {
+    debugPrint("Falha ao agendar a checagem de alertas em segundo plano: $error");
+  }));
   // Antes do primeiro quadro: a tela já abre no idioma escolhido, em vez de
   // aparecer no do aparelho e trocar em seguida.
   await AppLocaleController.instance.load();
