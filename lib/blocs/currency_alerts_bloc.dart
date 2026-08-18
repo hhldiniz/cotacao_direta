@@ -47,6 +47,14 @@ class CurrencyAlertsBloc extends BaseBloc {
   /// Confere os alertas ativos ainda não disparados: busca a cotação mais
   /// recente da moeda de cada um e, se a condição já for atendida, notifica o
   /// usuário e marca o alerta como disparado para não repetir o aviso.
+  ///
+  /// A comparação e o valor avisado usam a cotação na mesma convenção que o
+  /// usuário vê no app — quantas unidades da contrapartida valem uma unidade
+  /// da moeda ("um dólar a 5,50 reais") —, que é o inverso do que
+  /// `Currency.value` guarda (ver [CurrencyRepository]). É nessa convenção que
+  /// o alvo do alerta é digitado, então comparar direto com o valor guardado
+  /// invertia a relação: um alerta de "USD acima de 5,00" nunca disparava, e o
+  /// aviso reportaria 0,1818 no lugar de 5,50.
   Future<void> checkAlerts(
       {required String notificationTitle,
       required String Function(CurrencyAlert alert, double value)
@@ -62,7 +70,7 @@ class CurrencyAlertsBloc extends BaseBloc {
     var latestValueByCode = Map.fromEntries(
       await Future.wait(currencyCodes.map((code) async {
         var currency = await _currencyRepository.getLatestDataByCurrencyCode(code);
-        return MapEntry(code, currency?.value);
+        return MapEntry(code, _quotedRate(currency?.value));
       })),
     );
 
@@ -80,6 +88,12 @@ class CurrencyAlertsBloc extends BaseBloc {
     }
     if (triggeredAny) await loadAlerts();
   }
+
+  /// Converte o valor guardado em `Currency.value` na cotação exibida pelo
+  /// app. Valor ausente ou zerado não vira cotação nenhuma: dividir por zero
+  /// daria infinito, que atenderia qualquer alerta de "acima de".
+  double? _quotedRate(double? storedValue) =>
+      storedValue == null || storedValue == 0 ? null : 1 / storedValue;
 
   @override
   void dispose() {
