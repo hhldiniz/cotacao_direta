@@ -43,14 +43,28 @@ dev_dependencies:
     sdk: flutter
 
 # A chave flutter_icons foi deprecada na versão 0.14 do gerador.
-# Atenção: assets/launcher/icon.png não existe no repositório, então
-# `dart run flutter_launcher_icons` falha. É preciso adicionar a imagem (ou
-# corrigir o caminho) antes de gerar os ícones.
+# As imagens de origem ficam em assets/launcher/ (1024x1024) e os arquivos
+# gerados estão versionados em android/app/src/main/res/, então o build não
+# depende de rodar o gerador. Depois de mexer nas imagens de origem, refaça os
+# ícones com `dart run flutter_launcher_icons`.
+#   icon.png             marca completa (fundo azul + "R$"), usada no ícone
+#                        legado dos aparelhos anteriores ao Android 8
+#   icon_foreground.png  só a marca em branco, camada de frente do ícone
+#                        adaptativo (o inset de 16% a coloca na zona segura)
+# A camada monocromática (ícone temático do Android 13+, que segue a cor do
+# papel de parede) usa a mesma arte da camada de frente, então as duas apontam
+# para icon_foreground.png. O ic_launcher_monochrome gerado a partir dela é
+# também o ícone das notificações (ver lib/util/notification_service_io.dart).
 flutter_launcher_icons:
   android: true
   ios: false
   image_path_android: "assets/launcher/icon.png"
   image_path_ios: "assets/launcher/icon.png"
+  # #02609A é o mesmo azul do theme_color do web/manifest.json e dos ícones da
+  # PWA, para o app ter a mesma marca no Android e na web.
+  adaptive_icon_background: "#02609A"
+  adaptive_icon_foreground: "assets/launcher/icon_foreground.png"
+  adaptive_icon_monochrome: "assets/launcher/icon_foreground.png"
 
 flutter:
   uses-material-design: true

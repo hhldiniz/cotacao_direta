@@ -12,7 +12,12 @@ AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
         AndroidFlutterLocalNotificationsPlugin>();
 
 Future<void> initializePlatformNotifications() async {
-  const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+  // O ícone pequeno da notificação é recortado pelo canal alfa, então usar
+  // o @mipmap/ic_launcher (opaco) deixaria só um quadrado branco na barra
+  // de status. A camada monocromática do ícone tem a marca em branco sobre
+  // fundo transparente, que é exatamente o formato esperado aqui.
+  const androidSettings =
+      AndroidInitializationSettings('@drawable/ic_launcher_monochrome');
   const linuxSettings = LinuxInitializationSettings(defaultActionName: 'Abrir');
   const settings =
       InitializationSettings(android: androidSettings, linux: linuxSettings);

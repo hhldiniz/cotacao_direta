@@ -223,6 +223,39 @@ próprios), mas a fonte de cotações usada pelo app (AwesomeAPI) só serve moed
 fiduciária e criptomoeda; basta alimentar um `AssetSeries` com preços de ação
 para analisar uma.
 
+## Ícone do app (Android)
+
+O ícone é a mesma marca da PWA — "R$" em branco sobre o azul `#02609A`, o
+`theme_color` do `web/manifest.json` —, agora desenhada em Roboto Bold, a fonte
+do app. As imagens de origem ficam em `assets/launcher/`, em 1024x1024:
+
+- `icon.png` — a marca inteira, com o fundo azul e os cantos arredondados. Vira
+  o ícone legado (`mipmap-*/ic_launcher.png`), que é o que os aparelhos
+  anteriores ao Android 8 usam;
+- `icon_foreground.png` — só o "R$" em branco, sobre fundo transparente. É a
+  camada de frente do ícone adaptativo, que o Android 8+ recorta na forma do
+  lançador (círculo, *squircle*, etc.). O `mipmap-anydpi-v26/ic_launcher.xml`
+  aplica um `inset` de 16% nela, o que mantém a marca dentro da zona segura de
+  72dp do canvas de 108dp;
+- a camada monocromática — o ícone temático do Android 13+, que segue a cor do
+  papel de parede — usa a mesma arte da camada de frente, então também sai do
+  `icon_foreground.png`. O `ic_launcher_monochrome` gerado a partir dela é
+  ainda o ícone pequeno das notificações dos alertas de câmbio: ali o sistema
+  recorta pelo canal alfa, e o ícone colorido viraria só um quadrado branco.
+
+A cor de fundo do ícone adaptativo é um recurso de cor
+(`values/colors.xml`, `ic_launcher_background`), não uma imagem.
+
+Os arquivos gerados estão versionados em `android/app/src/main/res/`, então o
+build não depende de rodar gerador nenhum. Depois de mexer nas imagens de
+origem, refaça os ícones com:
+
+```bash
+dart run flutter_launcher_icons
+```
+
+A configuração fica na chave `flutter_launcher_icons` do `pubspec.yaml`.
+
 ## Assinatura do release (Android)
 
 O Android não instala APK sem assinatura, e o build de release precisa de um
