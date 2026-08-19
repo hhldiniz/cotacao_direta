@@ -11,8 +11,8 @@
     "launch_handler": {
         "client_mode": "focus-existing"
     },
-    "background_color": "#02609A",
-    "theme_color": "#02609A",
+    "background_color": "#6C4DFF",
+    "theme_color": "#6C4DFF",
     "description": "Um aplicativo simples que mostra a cotação das principais moedas frente ao real",
     "orientation": "portrait-primary",
     "categories": ["finance", "utilities"],
