@@ -223,6 +223,63 @@ próprios), mas a fonte de cotações usada pelo app (AwesomeAPI) só serve moed
 fiduciária e criptomoeda; basta alimentar um `AssetSeries` com preços de ação
 para analisar uma.
 
+## Ícone do app
+
+A marca é o câmbio em si: duas setas opostas, uma âmbar e uma coral, sobre o
+roxo `#6C4DFF`. As três cores saem do próprio app — o roxo é a semente do tema
+(`CurrencyColors.seed`) e as setas usam as cores de destaque do dólar e do
+dólar canadense (`currency_visuals.dart`). O par de setas monocromático seria o
+símbolo de "sincronizar"; uma cor em cada uma o transforma em duas moedas se
+trocando.
+
+O mesmo desenho vale no Android e na web, e a cor acompanha: é o `theme_color`
+do `web/manifest.json` e o `<meta name="theme-color">` do `web/index.html`.
+
+### Android
+
+As imagens de origem ficam em `assets/launcher/`, em 1024x1024:
+
+- `icon.png` — a marca inteira, com o fundo roxo e os cantos arredondados. Vira
+  o ícone legado (`mipmap-*/ic_launcher.png`), que é o que os aparelhos
+  anteriores ao Android 8 usam;
+- `icon_foreground.png` — só as setas, sobre fundo transparente. É a camada de
+  frente do ícone adaptativo, que o Android 8+ recorta na forma do lançador
+  (círculo, *squircle*, etc.). O `mipmap-anydpi-v26/ic_launcher.xml` aplica um
+  `inset` de 16% nela, o que mantém a marca dentro da zona segura de 72dp do
+  canvas de 108dp;
+- a camada monocromática — o ícone temático do Android 13+, que segue a cor do
+  papel de parede — usa a mesma arte da camada de frente, então também sai do
+  `icon_foreground.png`: como as setas são figuras cheias, a silhueta que o
+  sistema recorta pelo alfa é a própria marca. O `ic_launcher_monochrome`
+  gerado a partir dela é ainda o ícone pequeno das notificações dos alertas de
+  câmbio, onde o recorte pelo alfa também vale e o ícone colorido viraria só um
+  quadrado branco.
+
+A cor de fundo do ícone adaptativo é um recurso de cor
+(`values/colors.xml`, `ic_launcher_background`), não uma imagem.
+
+Os arquivos gerados estão versionados em `android/app/src/main/res/`, então o
+build não depende de rodar gerador nenhum. Depois de mexer nas imagens de
+origem, refaça os ícones com:
+
+```bash
+dart run flutter_launcher_icons
+```
+
+A configuração fica na chave `flutter_launcher_icons` do `pubspec.yaml`.
+
+### Web
+
+Os ícones da PWA em `web/icons/` são gerados à mão a partir da mesma marca, e
+não pelo `flutter_launcher_icons` (a configuração dele só cobre o Android):
+
+- `Icon-192.png` e `Icon-512.png` — o mesmo quadrado de cantos arredondados do
+  ícone legado do Android;
+- `Icon-maskable-192.png` e `Icon-maskable-512.png` — quadrado inteiro, sem
+  cantos, e com as setas menores: o sistema recorta a borda desses, então a
+  marca precisa caber na zona segura;
+- `favicon.png` — o quadrado arredondado em 32x32.
+
 ## Assinatura do release (Android)
 
 O Android não instala APK sem assinatura, e o build de release precisa de um

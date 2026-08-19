@@ -43,14 +43,31 @@ dev_dependencies:
     sdk: flutter
 
 # A chave flutter_icons foi deprecada na versão 0.14 do gerador.
-# Atenção: assets/launcher/icon.png não existe no repositório, então
-# `dart run flutter_launcher_icons` falha. É preciso adicionar a imagem (ou
-# corrigir o caminho) antes de gerar os ícones.
+# As imagens de origem ficam em assets/launcher/ (1024x1024) e os arquivos
+# gerados estão versionados em android/app/src/main/res/, então o build não
+# depende de rodar o gerador. Depois de mexer nas imagens de origem, refaça os
+# ícones com `dart run flutter_launcher_icons`.
+#   icon.png             marca completa (as setas sobre o roxo, com os cantos
+#                        arredondados), usada no ícone legado dos aparelhos
+#                        anteriores ao Android 8
+#   icon_foreground.png  só as setas, camada de frente do ícone adaptativo
+#                        (o inset de 16% as coloca na zona segura)
+# A camada monocromática (ícone temático do Android 13+, que segue a cor do
+# papel de parede) usa a mesma arte da camada de frente, então as duas apontam
+# para icon_foreground.png: como as setas são figuras cheias, a silhueta que o
+# sistema recorta pelo alfa é a própria marca. O ic_launcher_monochrome gerado
+# a partir dela é também o ícone das notificações
+# (ver lib/util/notification_service_io.dart).
 flutter_launcher_icons:
   android: true
   ios: false
   image_path_android: "assets/launcher/icon.png"
   image_path_ios: "assets/launcher/icon.png"
+  # #6C4DFF é a semente do tema (CurrencyColors.seed), a mesma cor do
+  # theme_color do web/manifest.json e do fundo dos ícones da PWA.
+  adaptive_icon_background: "#6C4DFF"
+  adaptive_icon_foreground: "assets/launcher/icon_foreground.png"
+  adaptive_icon_monochrome: "assets/launcher/icon_foreground.png"
 
 flutter:
   uses-material-design: true
