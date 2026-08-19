@@ -7,6 +7,7 @@ import 'package:cotacao_direta/providers/conversion_page_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_alerts_bloc_provider.dart';
 import 'package:cotacao_direta/providers/currency_history_menu_bloc_provider.dart';
 import 'package:cotacao_direta/providers/home_bloc_provider.dart';
+import 'package:cotacao_direta/util/background_alert_check.dart';
 import 'package:cotacao_direta/util/color_utils.dart';
 import 'package:cotacao_direta/util/currency_name.dart';
 import 'package:cotacao_direta/util/currency_visuals.dart';
@@ -251,14 +252,10 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     final _localization = MyAppLocalizations.of(context)!;
     _alertsBloc.checkAlerts(
       notificationTitle: _localization.currencyAlertNotificationTitle!,
-      // A cotação vai com a contrapartida do próprio alerta: "USD atingiu
-      // 5,5000" fica ambíguo para quem cadastrou alertas frente a moedas
-      // diferentes.
-      notificationBody: (alert, value) => sprintf(
-          _localization.currencyAlertNotificationBody!, [
-        alert.currencyCode,
-        "${value.toStringAsFixed(4)} ${alert.counterCurrency}"
-      ]),
+      // O mesmo texto da tarefa de segundo plano do Android: o aviso não pode
+      // mudar conforme o app estava aberto ou não.
+      notificationBody: (alert, value) =>
+          currencyAlertNotificationBody(_localization, alert, value),
     );
   }
 
