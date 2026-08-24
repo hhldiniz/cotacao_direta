@@ -51,6 +51,36 @@
   <link rel="manifest" href="manifest.json">
 
   <script>
+    // Nome do app mostrado ao instalar (o título da aba, o rótulo do "Adicionar
+    // à tela de início" e o manifest do PWA) no idioma do navegador, entre os
+    // que a build traduz (ver lib/util/localizations.dart). Roda logo depois
+    // dos elementos acima para poder trocá-los antes de o navegador decidir se
+    // oferece a instalação — o idioma escolhido nas configurações do app não
+    // dá para ler daqui, porque mora no banco do Flutter, que ainda não
+    // carregou nesta hora.
+    (function () {
+      var language = (window.navigator.language || '').toLowerCase();
+      var appName = document.title;
+      var manifestHref = 'manifest.json';
+      var htmlLang = 'pt-BR';
+      if (language.indexOf('en') === 0) {
+        appName = 'Direct Quote';
+        manifestHref = 'manifest-en.json';
+        htmlLang = 'en';
+      } else if (language.indexOf('es') === 0) {
+        appName = 'Cotización Directa';
+        manifestHref = 'manifest-es.json';
+        htmlLang = 'es';
+      }
+      document.documentElement.lang = htmlLang;
+      document.title = appName;
+      document.querySelector('link[rel="manifest"]').href = manifestHref;
+      document.querySelector('meta[name="apple-mobile-web-app-title"]').content = appName;
+      document.querySelector('meta[name="application-name"]').content = appName;
+    })();
+  </script>
+
+  <script>
     // Ponte entre a instalação como PWA (uma API só do navegador) e o app
     // Flutter, consumida em lib/util/pwa_install_service_web.dart.
     //

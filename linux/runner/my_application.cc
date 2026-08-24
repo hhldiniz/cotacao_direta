@@ -14,6 +14,20 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
+// Nome da janela no idioma do sistema, entre os que a build traduz (ver
+// lib/util/localizations.dart). O idioma escolhido nas configurações do app
+// não dá para ler daqui: mora no banco do Flutter, que só abre depois desta
+// janela.
+static const gchar* window_title() {
+  const gchar* const* languages = g_get_language_names();
+  for (int i = 0; languages[i] != nullptr; i++) {
+    if (g_str_has_prefix(languages[i], "en")) return "Direct Quote";
+    if (g_str_has_prefix(languages[i], "es")) return "Cotización Directa";
+    if (g_str_has_prefix(languages[i], "pt")) return "Cotação Direta";
+  }
+  return "Cotação Direta";
+}
+
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
@@ -45,11 +59,11 @@ static void my_application_activate(GApplication* application) {
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "Cotação Direta");
+    gtk_header_bar_set_title(header_bar, window_title());
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
-    gtk_window_set_title(window, "Cotação Direta");
+    gtk_window_set_title(window, window_title());
   }
 
   gtk_window_set_default_size(window, 1280, 720);

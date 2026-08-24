@@ -1,0 +1,46 @@
+{
+    "id": "/cotacao_direta/",
+    "name": "Direct Quote",
+    "short_name": "Direct Quote",
+    "lang": "en",
+    "dir": "ltr",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "display_override": ["standalone", "minimal-ui", "browser"],
+    "launch_handler": {
+        "client_mode": "focus-existing"
+    },
+    "background_color": "#6C4DFF",
+    "theme_color": "#6C4DFF",
+    "description": "A simple app that shows the exchange rate of the main currencies against the Brazilian real",
+    "orientation": "portrait-primary",
+    "categories": ["finance", "utilities"],
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

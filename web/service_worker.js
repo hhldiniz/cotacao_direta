@@ -34,6 +34,8 @@ const NETWORK_FIRST_PATHS = [
   'flutter.js',
   'index.html',
   'manifest.json',
+  'manifest-en.json',
+  'manifest-es.json',
   'version.json',
 ];
 
@@ -45,7 +47,15 @@ const SCOPE = new URL('./', self.location.href);
 /// for pedido, porque parte disso é baixada antes de o service worker assumir
 /// o controle da página na primeira visita. O resto (CanvasKit, fontes,
 /// bandeiras, o SQLite em WASM) entra pela regra de busca, conforme é usado.
-const APP_SHELL = ['', 'flutter_bootstrap.js', 'main.dart.js', 'flutter.js', 'manifest.json'];
+const APP_SHELL = [
+  '',
+  'flutter_bootstrap.js',
+  'main.dart.js',
+  'flutter.js',
+  'manifest.json',
+  'manifest-en.json',
+  'manifest-es.json',
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
