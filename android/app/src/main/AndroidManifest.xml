@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sem esta permissão, o app funciona normalmente em builds debug/profile
+         (o Flutter injeta INTERNET automaticamente para hot reload, ver
+         android/app/src/debug/AndroidManifest.xml), mas todo acesso de rede
+         falha silenciosamente em release: sem cotação salva, a tela inicial
+         mostra o Real como "Sem Dados" e as conversões quebram. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Necessária no Android 13+ para exibir a notificação dos alertas de
          câmbio; o app pede a permissão em tempo de execução (ver
          lib/util/notification_service_io.dart). -->
