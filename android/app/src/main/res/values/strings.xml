@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nome do app no launcher do Android. Traduzido em values-en/ e
+         values-es/, um por idioma suportado (ver lib/util/localizations.dart);
+         este arquivo, sem qualificador, é o padrão para português e para
+         qualquer idioma do aparelho que a build não traduz. -->
+    <string name="app_name">Cotação Direta</string>
+</resources>

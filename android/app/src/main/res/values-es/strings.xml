@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mesmo texto para as duas normas do espanhol (es-ES e es-419, ver
+         lib/util/localizations.dart): a tradução do nome não muda entre elas,
+         então um único qualificador "es" cobre as duas. -->
+    <string name="app_name">Cotización Directa</string>
+</resources>
