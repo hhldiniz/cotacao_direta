@@ -7,7 +7,11 @@ project(runner LANGUAGES CXX)
 set(BINARY_NAME "cotacao_direta")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "com.example.cotacao_direta")
+#
+# Segue o padrão io.github.<usuário>.<repo> porque o projeto não tem domínio
+# próprio; é o mesmo id do pacote Flatpak (flatpak/io.github.hhldiniz.cotacao_direta.yml)
+# e do .desktop/metainfo em flatpak/ — os três precisam ficar em sincronia.
+set(APPLICATION_ID "io.github.hhldiniz.cotacao_direta")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

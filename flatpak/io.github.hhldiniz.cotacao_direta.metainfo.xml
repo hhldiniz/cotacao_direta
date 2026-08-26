@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.hhldiniz.cotacao_direta</id>
+  <name>Cotação Direta</name>
+  <name xml:lang="en">Direct Quote</name>
+  <name xml:lang="es">Cotización Directa</name>
+  <summary>Cotação das principais moedas frente ao real</summary>
+  <summary xml:lang="en">Exchange rates for the main currencies against the Brazilian real</summary>
+  <summary xml:lang="es">Cotización de las principales monedas frente al real brasileño</summary>
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+
+  <developer id="io.github.hhldiniz">
+    <name>hhldiniz</name>
+  </developer>
+
+  <url type="homepage">https://github.com/hhldiniz/cotacao_direta</url>
+  <url type="bugtracker">https://github.com/hhldiniz/cotacao_direta/issues</url>
+  <url type="vcs-browser">https://github.com/hhldiniz/cotacao_direta</url>
+
+  <description>
+    <p>
+      O Cotação Direta mostra a cotação das principais moedas frente ao real,
+      com histórico, conversão entre moedas e alertas de câmbio.
+    </p>
+    <p xml:lang="en">
+      Direct Quote shows exchange rates for the main currencies against the
+      Brazilian real, with history, currency conversion and exchange rate
+      alerts.
+    </p>
+    <p xml:lang="es">
+      Cotización Directa muestra la cotización de las principales monedas
+      frente al real brasileño, con historial, conversión entre monedas y
+      alertas de cambio.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.hhldiniz.cotacao_direta.desktop</launchable>
+
+  <!-- TODO: capturas de tela reais antes de submeter ao Flathub; o Flathub
+       exige ao menos uma. -->
+  <!--
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/hhldiniz/cotacao_direta/master/flatpak/screenshots/home.png</image>
+      <caption>Tela inicial com as cotações do dia</caption>
+    </screenshot>
+  </screenshots>
+  -->
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="1.0.0" date="2026-08-26">
+      <description>
+        <p>Primeira versão empacotada para o Flatpak.</p>
+      </description>
+    </release>
+  </releases>
+</component>
