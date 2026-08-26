@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Cotação Direta
+Name[en]=Direct Quote
+Name[es]=Cotización Directa
+Comment=Cotação das principais moedas frente ao real
+Comment[en]=Exchange rates for the main currencies against the Brazilian real
+Comment[es]=Cotización de las principales monedas frente al real brasileño
+Icon=io.github.hhldiniz.cotacao_direta
+Exec=cotacao_direta
+Terminal=false
+Categories=Finance;Utility;
+StartupWMClass=io.github.hhldiniz.cotacao_direta

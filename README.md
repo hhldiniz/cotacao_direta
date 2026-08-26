@@ -280,6 +280,61 @@ não pelo `flutter_launcher_icons` (a configuração dele só cobre o Android):
   marca precisa caber na zona segura;
 - `favicon.png` — o quadrado arredondado em 32x32.
 
+## Empacotamento Linux (Flatpak)
+
+O app Linux está preparado para ser empacotado como Flatpak, com a intenção de
+publicar no Flathub. Os arquivos ficam em `flatpak/`:
+
+- `io.github.hhldiniz.cotacao_direta.desktop` — arquivo `.desktop`, com nome e
+  descrição em pt-BR/en/es;
+- `io.github.hhldiniz.cotacao_direta.metainfo.xml` — metadados AppStream que o
+  Flathub exibe na loja (nome, descrição, licença, changelog);
+- `icons/` — o ícone do app (mesma arte de `assets/launcher/icon.png`, ver
+  [Ícone do app](#ícone-do-app)) exportado em 128/256/512px para o tema de
+  ícones `hicolor`;
+- `io.github.hhldiniz.cotacao_direta.yml` — o manifesto do Flatpak.
+
+O identificador `io.github.hhldiniz.cotacao_direta` segue o padrão
+`io.github.<usuário>.<repo>` do Flathub para projetos sem domínio próprio, e
+precisa continuar igual nos quatro lugares onde aparece: nos três arquivos
+acima e em `APPLICATION_ID`, no `linux/CMakeLists.txt` (é ele que o app usa em
+tempo de execução como application ID do GTK, via `-DAPPLICATION_ID` — ver
+`linux/runner/my_application.cc`).
+
+### Testar localmente
+
+Com `flatpak` e `flatpak-builder` instalados:
+
+```sh
+flatpak install flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
+flatpak-builder --user --install --force-clean \
+  build-dir flatpak/io.github.hhldiniz.cotacao_direta.yml
+flatpak run io.github.hhldiniz.cotacao_direta
+```
+
+Esse manifesto builda com a rede liberada (`pub get` busca os pacotes do
+pub.dev, e o primeiro `flutter build linux` baixa os artefatos do engine Linux
+direto do Google) — suficiente para testar o pacote localmente, mas não é o
+que o Flathub aceita: lá o build roda em sandbox sem rede, e cada fonte
+precisa vir pré-baixada e com hash fixado no manifesto.
+
+### O que falta antes de submeter ao Flathub
+
+- **Fixar as fontes para build offline**, com o pré-processador da comunidade
+  Flutter [flatpak-flutter](https://github.com/TheAppgineer/flatpak-flutter):
+  ele baixa e fixa (com hash) os pacotes do pub.dev e os artefatos do engine,
+  gerando um `pubspec-sources.json` e a versão offline deste manifesto;
+- **Capturas de tela**, que o Flathub exige — o bloco `<screenshots>` já está
+  no `metainfo.xml`, só comentado;
+- Ao abrir o repositório em `flathub/flathub` para revisão, apontar o
+  `source` do manifesto para uma tag de release fixa (o manifesto atual usa o
+  commit da `master` no momento em que foi escrito) e atualizar o `commit` a
+  cada nova versão publicada.
+
+A licença do projeto é MIT (`LICENSE`), declarada também como
+`project_license` no `metainfo.xml` — o Flathub exige que o app tenha uma
+licença open source.
+
 ## Assinatura do release (Android)
 
 O Android não instala APK sem assinatura, e o build de release precisa de um
