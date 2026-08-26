@@ -1,0 +1,73 @@
+# Manifesto de entrada do Flatpak, mantido à mão.
+#
+# Este arquivo é o que se edita: aponta para o repositório do app com a rede
+# liberada (`pub get` busca os pacotes do pub.dev, e o `flutter build linux`
+# baixa o SDK/engine do Flutter direto do Google), o que é suficiente para
+# testar localmente mas não é o que o Flathub aceita — lá o build roda em
+# sandbox sem rede, e cada fonte precisa vir pré-baixada e com hash fixado.
+#
+# `io.github.hhldiniz.cotacao_direta.yml`, o manifesto submetível ao Flathub,
+# é *gerado* a partir deste arquivo pelo pré-processador da comunidade
+# Flutter flatpak-flutter (https://github.com/TheAppgineer/flatpak-flutter):
+# ele baixa e fixa (com hash) tanto os pacotes do pub.dev quanto os artefatos
+# do engine, gravando o resultado em `generated/`. Ver a seção "Empacotamento
+# Linux (Flatpak)" do README para o passo a passo de regeneração.
+
+app-id: io.github.hhldiniz.cotacao_direta
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: cotacao_direta
+
+finish-args:
+  # Renderização (Skia via GTK/EGL) e integração com a área de trabalho.
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  # Busca das cotações (ver lib/repository/).
+  - --share=network
+  # flutter_local_notifications fala direto com o barramento de sessão
+  # (pacote `dbus`, sem passar pelo portal), para os alertas de câmbio (ver
+  # lib/util/notification_service_io.dart).
+  - --talk-name=org.freedesktop.Notifications
+
+modules:
+  - name: cotacao_direta
+    buildsystem: simple
+    build-options:
+      append-path: /run/build/cotacao_direta/flutter/bin
+      build-args:
+        - --share=network
+    build-commands:
+      - flutter config --no-analytics --enable-linux-desktop
+      - flutter pub get
+      - flutter build linux --release
+      - install -d /app/lib/cotacao_direta
+      - cp -r build/linux/x64/release/bundle/. /app/lib/cotacao_direta/
+      - install -d /app/bin
+      - ln -s /app/lib/cotacao_direta/cotacao_direta /app/bin/cotacao_direta
+      - install -Dm644 flatpak/io.github.hhldiniz.cotacao_direta.desktop
+        /app/share/applications/io.github.hhldiniz.cotacao_direta.desktop
+      - install -Dm644 flatpak/io.github.hhldiniz.cotacao_direta.metainfo.xml
+        /app/share/metainfo/io.github.hhldiniz.cotacao_direta.metainfo.xml
+      - install -Dm644 flatpak/icons/io.github.hhldiniz.cotacao_direta-128.png
+        /app/share/icons/hicolor/128x128/apps/io.github.hhldiniz.cotacao_direta.png
+      - install -Dm644 flatpak/icons/io.github.hhldiniz.cotacao_direta-256.png
+        /app/share/icons/hicolor/256x256/apps/io.github.hhldiniz.cotacao_direta.png
+      - install -Dm644 flatpak/icons/io.github.hhldiniz.cotacao_direta-512.png
+        /app/share/icons/hicolor/512x512/apps/io.github.hhldiniz.cotacao_direta.png
+    sources:
+      # Repositório do próprio app. Aponta para um commit fixo (não uma
+      # branch) porque é o que o Flathub exige; atualize o commit a cada
+      # release antes de regenerar e reenviar o manifesto para lá.
+      - type: git
+        url: https://github.com/hhldiniz/cotacao_direta.git
+        commit: 17b62e5acf240a520f38b3b9ae1e3a4a85b6fe82
+      # SDK do Flutter, na mesma versão fixada em .github/workflows/ci.yml
+      # (FLUTTER_VERSION) e em pubspec.lock. Ao atualizar essa versão,
+      # atualize também aqui.
+      - type: git
+        url: https://github.com/flutter/flutter.git
+        tag: 3.44.8
+        dest: flutter

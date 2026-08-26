@@ -296,42 +296,77 @@ publicar no Flathub. Os arquivos ficam em `flatpak/`:
   `metainfo.xml`, tiradas do build Linux de release rodando com dados de
   exemplo (o app real busca as cotações em
   `economia.awesomeapi.com.br`, ver `lib/repository/`);
-- `io.github.hhldiniz.cotacao_direta.yml` — o manifesto do Flatpak.
+- `flatpak-flutter.yml` — o manifesto de entrada, **mantido à mão**: builda
+  com a rede liberada (`pub get` busca os pacotes do pub.dev, e o
+  `flutter build linux` baixa o SDK/engine do Flutter direto do Google), o
+  que é suficiente para testar localmente mas não é o que o Flathub aceita;
+- `io.github.hhldiniz.cotacao_direta.yml` — o manifesto **gerado** a partir do
+  anterior, pronto para o Flathub: builda 100% offline, com cada fonte
+  pré-baixada e fixada por hash. Não editar à mão (o cabeçalho do próprio
+  arquivo avisa isso) — reflete sempre o `flatpak-flutter.yml` no momento em
+  que foi gerado;
+- `generated/` — as fontes e o módulo do SDK do Flutter que o manifesto
+  offline referencia (`pubspec.json` com os pacotes do pub.dev, o módulo
+  `flutter-sdk-*.json` com os artefatos do engine, e os patches que os
+  acompanham). Também gerado, também não editar à mão.
 
 O identificador `io.github.hhldiniz.cotacao_direta` segue o padrão
 `io.github.<usuário>.<repo>` do Flathub para projetos sem domínio próprio, e
-precisa continuar igual nos quatro lugares onde aparece: nos três arquivos
-acima e em `APPLICATION_ID`, no `linux/CMakeLists.txt` (é ele que o app usa em
-tempo de execução como application ID do GTK, via `-DAPPLICATION_ID` — ver
+precisa continuar igual nos quatro lugares onde aparece: no `.desktop`, no
+`metainfo.xml`, nos dois manifestos acima e em `APPLICATION_ID`, no
+`linux/CMakeLists.txt` (é ele que o app usa em tempo de execução como
+application ID do GTK, via `-DAPPLICATION_ID` — ver
 `linux/runner/my_application.cc`).
 
 ### Testar localmente
 
-Com `flatpak` e `flatpak-builder` instalados:
+Com `flatpak` e `flatpak-builder` instalados, o manifesto offline (o mesmo
+que o Flathub builda) é testado com:
 
 ```sh
 flatpak install flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
-flatpak-builder --user --install --force-clean \
-  build-dir flatpak/io.github.hhldiniz.cotacao_direta.yml
+flatpak-builder --repo=repo --force-clean --sandbox --user --install \
+  --install-deps-from=flathub build-dir \
+  flatpak/io.github.hhldiniz.cotacao_direta.yml
 flatpak run io.github.hhldiniz.cotacao_direta
 ```
 
-Esse manifesto builda com a rede liberada (`pub get` busca os pacotes do
-pub.dev, e o primeiro `flutter build linux` baixa os artefatos do engine Linux
-direto do Google) — suficiente para testar o pacote localmente, mas não é o
-que o Flathub aceita: lá o build roda em sandbox sem rede, e cada fonte
-precisa vir pré-baixada e com hash fixado no manifesto.
+A flag `--sandbox` reproduz o isolamento de rede que o Flathub usa: se o
+build passar aqui, não deve haver surpresa lá. Para depurar um problema com
+mais liberdade (rede disponível), builde o `flatpak-flutter.yml` em vez do
+gerado, sem `--sandbox`:
+
+```sh
+flatpak-builder --user --install --force-clean \
+  build-dir flatpak/flatpak-flutter.yml
+```
+
+### Regenerar o manifesto offline
+
+Sempre que o `flatpak-flutter.yml`, o `pubspec.lock` ou a versão do Flutter
+mudarem, `io.github.hhldiniz.cotacao_direta.yml` e `generated/` precisam ser
+regenerados com o [flatpak-flutter](https://github.com/TheAppgineer/flatpak-flutter):
+
+```sh
+git clone https://github.com/TheAppgineer/flatpak-flutter
+pip install -r flatpak-flutter/requirements.txt
+
+cd flatpak
+python3 ../flatpak-flutter/flatpak-flutter.py flatpak-flutter.yml
+```
+
+Isso baixa e fixa (com hash) tanto os pacotes do pub.dev quanto os artefatos
+do engine do Flutter, sobrescrevendo `io.github.hhldiniz.cotacao_direta.yml`
+e `generated/`. Antes de rodar, atualize no `flatpak-flutter.yml` o `commit`
+da fonte do app (para o commit da release sendo empacotada) e a `tag` do
+Flutter (para acompanhar o `FLUTTER_VERSION` de `.github/workflows/ci.yml`).
 
 ### O que falta antes de submeter ao Flathub
 
-- **Fixar as fontes para build offline**, com o pré-processador da comunidade
-  Flutter [flatpak-flutter](https://github.com/TheAppgineer/flatpak-flutter):
-  ele baixa e fixa (com hash) os pacotes do pub.dev e os artefatos do engine,
-  gerando um `pubspec-sources.json` e a versão offline deste manifesto;
 - Ao abrir o repositório em `flathub/flathub` para revisão, apontar o
-  `source` do manifesto para uma tag de release fixa (o manifesto atual usa o
-  commit da `master` no momento em que foi escrito) e atualizar o `commit` a
-  cada nova versão publicada.
+  `commit` da fonte do app no `flatpak-flutter.yml` para uma tag de release
+  fixa (hoje ele aponta para o commit da `master` na última regeneração) e
+  regerar o manifesto offline antes de enviar.
 
 A licença do projeto é MIT (`LICENSE`), declarada também como
 `project_license` no `metainfo.xml` — o Flathub exige que o app tenha uma
