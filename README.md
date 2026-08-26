@@ -292,6 +292,10 @@ publicar no Flathub. Os arquivos ficam em `flatpak/`:
 - `icons/` — o ícone do app (mesma arte de `assets/launcher/icon.png`, ver
   [Ícone do app](#ícone-do-app)) exportado em 128/256/512px para o tema de
   ícones `hicolor`;
+- `screenshots/` — capturas de tela referenciadas pelo `<screenshots>` do
+  `metainfo.xml`, tiradas do build Linux de release rodando com dados de
+  exemplo (o app real busca as cotações em
+  `economia.awesomeapi.com.br`, ver `lib/repository/`);
 - `io.github.hhldiniz.cotacao_direta.yml` — o manifesto do Flatpak.
 
 O identificador `io.github.hhldiniz.cotacao_direta` segue o padrão
@@ -324,8 +328,6 @@ precisa vir pré-baixada e com hash fixado no manifesto.
   Flutter [flatpak-flutter](https://github.com/TheAppgineer/flatpak-flutter):
   ele baixa e fixa (com hash) os pacotes do pub.dev e os artefatos do engine,
   gerando um `pubspec-sources.json` e a versão offline deste manifesto;
-- **Capturas de tela**, que o Flathub exige — o bloco `<screenshots>` já está
-  no `metainfo.xml`, só comentado;
 - Ao abrir o repositório em `flathub/flathub` para revisão, apontar o
   `source` do manifesto para uma tag de release fixa (o manifesto atual usa o
   commit da `master` no momento em que foi escrito) e atualizar o `commit` a

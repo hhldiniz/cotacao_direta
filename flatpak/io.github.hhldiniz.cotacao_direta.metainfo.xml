@@ -38,16 +38,38 @@
 
   <launchable type="desktop-id">io.github.hhldiniz.cotacao_direta.desktop</launchable>
 
-  <!-- TODO: capturas de tela reais antes de submeter ao Flathub; o Flathub
-       exige ao menos uma. -->
-  <!--
   <screenshots>
     <screenshot type="default">
       <image>https://raw.githubusercontent.com/hhldiniz/cotacao_direta/master/flatpak/screenshots/home.png</image>
       <caption>Tela inicial com as cotações do dia</caption>
+      <caption xml:lang="en">Home screen with the day's exchange rates</caption>
+      <caption xml:lang="es">Pantalla inicial con la cotización del día</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/hhldiniz/cotacao_direta/master/flatpak/screenshots/conversion.png</image>
+      <caption>Conversão entre moedas</caption>
+      <caption xml:lang="en">Currency conversion</caption>
+      <caption xml:lang="es">Conversión entre monedas</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/hhldiniz/cotacao_direta/master/flatpak/screenshots/alerts.png</image>
+      <caption>Alertas de câmbio</caption>
+      <caption xml:lang="en">Exchange rate alerts</caption>
+      <caption xml:lang="es">Alertas de cambio</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/hhldiniz/cotacao_direta/master/flatpak/screenshots/history.png</image>
+      <caption>Histórico por moeda</caption>
+      <caption xml:lang="en">History by currency</caption>
+      <caption xml:lang="es">Historial por moneda</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/hhldiniz/cotacao_direta/master/flatpak/screenshots/settings.png</image>
+      <caption>Configurações do app</caption>
+      <caption xml:lang="en">App settings</caption>
+      <caption xml:lang="es">Configuración de la app</caption>
     </screenshot>
   </screenshots>
-  -->
 
   <content_rating type="oars-1.1"/>
 
