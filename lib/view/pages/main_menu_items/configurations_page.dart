@@ -7,7 +7,6 @@ import 'package:cotacao_direta/util/responsive.dart';
 import 'package:cotacao_direta/util/string_utils.dart';
 import 'package:cotacao_direta/view/widgets/animated_list_entry.dart';
 import 'package:cotacao_direta/view/widgets/bento_card.dart';
-import 'package:cotacao_direta/view/widgets/home_currencies_picker_sheet.dart';
 import 'package:cotacao_direta/view/widgets/pwa_install_card.dart';
 import 'package:flutter/material.dart';
 
@@ -161,69 +160,10 @@ class ConfigurationsPage extends StatelessWidget {
             ),
             SizedBox(height: 12 * _scale),
 
-            // As bolhas da tela inicial eram quatro moedas fixas; aqui o
-            // usuário escolhe quais quer ver, e em que ordem.
-            AnimatedListEntry(
-              index: 2,
-              child: StreamBuilder<List<String>>(
-                stream: _bloc.homeCurrenciesStream,
-                initialData: _bloc.homeCurrencyCodes,
-                builder: (BuildContext context, snapshot) {
-                  final codes = snapshot.data!;
-                  return BentoCard(
-                    padding: EdgeInsets.all(12 * _scale),
-                    onTap: () async {
-                      final chosen = await showHomeCurrenciesPicker(
-                        context,
-                        selectedCurrencyCodes: codes,
-                      );
-                      if (chosen != null) _bloc.updateHomeCurrencies(chosen);
-                    },
-                    child: Row(
-                      children: [
-                        _SettingBadge(
-                          icon: Icons.bubble_chart,
-                          color: CurrencyColors.jpy,
-                          scale: _scale,
-                        ),
-                        SizedBox(width: 14 * _scale),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _localization.homeCurrenciesSettingLabel!,
-                                style: TextStyle(fontSize: 16 * _scale),
-                              ),
-                              SizedBox(height: 4 * _scale),
-                              Text(
-                                codes.join(" · "),
-                                style: TextStyle(
-                                  fontSize: 13 * _scale,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(Icons.chevron_right, size: 24 * _scale),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: 12 * _scale),
-
             // O app seguia o idioma do aparelho e pronto; aqui o usuário pode
             // fixar um dos idiomas que existem nesta build.
             AnimatedListEntry(
-              index: 3,
+              index: 2,
               child: StreamBuilder<String>(
                 stream: _bloc.languageStream,
                 initialData: _bloc.languageCode,

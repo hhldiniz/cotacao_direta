@@ -16,13 +16,23 @@ typedef BentoTileBuilder = Widget Function(
 /// sobre outro cartão põe o arrastado naquela posição e empurra o resto,
 /// exatamente como uma lista reordenável. Arrastar um cartão até a primeira
 /// posição é o que promove uma moeda ao destaque — antes isso só era possível
-/// refazendo a escolha inteira na aba de opções.
+/// refazendo a escolha inteira.
 ///
 /// A reordenação não é gravada aqui: [onReorder] avisa quem monta a grade, que
 /// é quem conhece a lista de moedas e o que fazer com a ordem nova.
 class ReorderableBentoGrid extends StatelessWidget {
   final int itemCount;
   final BentoTileBuilder itemBuilder;
+
+  /// Cartão fixo que fecha a grade, depois dos [itemCount] cartões
+  /// reordenáveis — na tela inicial, o de acrescentar uma moeda.
+  ///
+  /// Ele ocupa a posição seguinte no mesmo fluxo (destaque quando não há
+  /// nenhum outro cartão, meia largura no resto do tempo), mas fica de fora do
+  /// arrasto: não é arrastável, não aceita outro cartão solto sobre ele e não
+  /// ganha as ações de mover do leitor de tela. É sempre o último, e nada pode
+  /// tomar o lugar dele.
+  final BentoTileBuilder? footerBuilder;
 
   /// Chamado quando um cartão é solto sobre outro: o cartão de [oldIndex] deve
   /// passar a ocupar [newIndex], empurrando os demais.
@@ -43,14 +53,20 @@ class ReorderableBentoGrid extends StatelessWidget {
     required this.itemCount,
     required this.itemBuilder,
     required this.onReorder,
+    this.footerBuilder,
     this.spacing = 12,
     this.moveEarlierSemanticsLabel,
     this.moveLaterSemanticsLabel,
   });
 
+  /// Quantas posições a grade desenha: os cartões reordenáveis mais o cartão
+  /// fixo do fim, quando ele existe.
+  int get _slotCount => itemCount + (footerBuilder == null ? 0 : 1);
+
   @override
   Widget build(BuildContext context) {
-    if (itemCount <= 0) return const SizedBox.shrink();
+    final slotCount = _slotCount;
+    if (slotCount <= 0) return const SizedBox.shrink();
     // A largura de cada cartão é necessária para o cartão que segue o dedo:
     // ele é montado no Overlay, fora da grade, onde nada o limitaria e ele
     // ficaria com a largura da tela inteira.
@@ -59,10 +75,10 @@ class ReorderableBentoGrid extends StatelessWidget {
         final heroWidth = constraints.maxWidth;
         final pairedWidth = (constraints.maxWidth - spacing) / 2;
         final rows = <Widget>[
-          _tile(context, 0, hero: true, width: heroWidth),
+          _slot(context, 0, hero: true, width: heroWidth),
         ];
 
-        for (var first = 1; first < itemCount; first += 2) {
+        for (var first = 1; first < slotCount; first += 2) {
           final second = first + 1;
           rows.add(SizedBox(height: spacing));
           // O IntrinsicHeight é obrigatório aqui: a Row usa
@@ -76,15 +92,15 @@ class ReorderableBentoGrid extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: _tile(context, first, hero: false, width: pairedWidth),
+                  child: _slot(context, first, hero: false, width: pairedWidth),
                 ),
                 SizedBox(width: spacing),
                 // Numa linha ímpar o espaço vazio à direita fica reservado,
                 // para o cartão sozinho ter a mesma largura dos das outras
                 // linhas.
                 Expanded(
-                  child: second < itemCount
-                      ? _tile(context, second, hero: false, width: pairedWidth)
+                  child: second < slotCount
+                      ? _slot(context, second, hero: false, width: pairedWidth)
                       : const SizedBox.shrink(),
                 ),
               ],
@@ -98,6 +114,15 @@ class ReorderableBentoGrid extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Uma posição da grade. Até [itemCount] é um cartão reordenável; a posição
+  /// seguinte, quando existe, é o cartão fixo do fim, desenhado como está —
+  /// sem arrasto, sem alvo de soltura e sem as ações de mover.
+  Widget _slot(BuildContext context, int index,
+      {required bool hero, required double width}) {
+    if (index >= itemCount) return footerBuilder!(context, index, hero);
+    return _tile(context, index, hero: hero, width: width);
   }
 
   /// Um cartão da grade: alvo de soltura para os outros cartões e, ele mesmo,

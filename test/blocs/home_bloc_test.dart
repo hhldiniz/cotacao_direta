@@ -121,8 +121,8 @@ void main() {
   });
 
   group('HomeBloc.saveHomeCurrencies', () {
-    // A ordem arrastada na grade da tela inicial vai para a mesma configuração
-    // que a aba de opções escreve.
+    // A ordem arrastada na grade da tela inicial e a escolha feita no cartão
+    // de acrescentar vão para a mesma configuração.
     test('grava os códigos na ordem recebida', () async {
       var configurationRepository = FakeConfigurationRepository(
           configuration: Configuration(1, homeCurrencyCodes: ["USD", "EUR"]));

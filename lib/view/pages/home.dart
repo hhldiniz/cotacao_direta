@@ -18,9 +18,11 @@ import 'package:cotacao_direta/view/pages/main_menu_items/about_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/ai_insights_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/configurations_page.dart';
 import 'package:cotacao_direta/view/pages/main_menu_items/currency_alerts_page.dart';
+import 'package:cotacao_direta/view/widgets/add_currency_card.dart';
 import 'package:cotacao_direta/view/widgets/currency_exchange_rate.dart';
 import 'package:cotacao_direta/view/widgets/currency_rate_card.dart';
 import 'package:cotacao_direta/view/widgets/currency_refresh_scope.dart';
+import 'package:cotacao_direta/view/widgets/home_currencies_picker_sheet.dart';
 import 'package:cotacao_direta/view/widgets/reorderable_bento_grid.dart';
 // listEquals: o material.dart não reexporta tudo do foundation.
 import 'package:flutter/foundation.dart';
@@ -64,9 +66,10 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   // build() roda de novo a cada troca de aba e não deve refazer a busca.
   var _initialFetchScheduled = false;
 
-  // Moedas mostradas em bolha, escolhidas nas configurações. Começa nas moedas
-  // padrão para a tela ter o que mostrar enquanto a leitura do banco não
-  // termina — é a mesma lista que o app abria antes de a opção existir.
+  // Moedas mostradas em bolha, escolhidas no cartão que fecha a grade. Começa
+  // nas moedas padrão para a tela ter o que mostrar enquanto a leitura do
+  // banco não termina — é a mesma lista que o app abria antes de a escolha
+  // existir.
   var _homeCurrencies = HomeBloc.defaultHomeCurrencies;
 
   // Moeda em que as bolhas expressam suas cotações. Guardada aqui para o toque
@@ -234,10 +237,11 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     setState(() => _ratesRevision++);
   }
 
-  /// Lê as moedas escolhidas nas configurações para a grade de bolhas.
+  /// Lê as moedas escolhidas para a grade de bolhas.
   ///
-  /// É relida ao voltar para esta aba porque a escolha pode ter mudado na aba
-  /// de opções, que fica montada ao lado desta no IndexedStack.
+  /// É relida ao voltar para esta aba e a cada atualização das cotações, para
+  /// a grade mostrar o que está gravado mesmo quando a escolha do usuário e a
+  /// leitura inicial do banco se cruzam.
   Future<void> _loadHomeCurrencies() async {
     var currencies = await _bloc.loadHomeCurrencies();
     if (!mounted) return;
@@ -265,9 +269,9 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
       {required bool hero, required double scale}) {
     final color = currencyAccentColor(currency);
     return CurrencyRateCard(
-      // A chave é a moeda, e não a posição: ao mudar a escolha nas opções, é
-      // ela que impede o cartão de uma moeda de reaproveitar o estado (e a
-      // cotação já buscada) do cartão de outra.
+      // A chave é a moeda, e não a posição: ao mudar a escolha, é ela que
+      // impede o cartão de uma moeda de reaproveitar o estado (e a cotação já
+      // buscada) do cartão de outra.
       key: ValueKey(currency),
       // Tocar na bolha leva à conversão dessa moeda: ver a cotação e querer
       // saber quanto dá numa quantidade qualquer é o passo seguinte natural,
@@ -290,7 +294,8 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   /// A grade de bolhas: a primeira moeda escolhida em destaque, ocupando a
-  /// largura toda, e as demais em pares.
+  /// largura toda, e as demais em pares. O último cartão é sempre o de
+  /// acrescentar uma moeda.
   ///
   /// Cada bolha leva à conversão da sua moeda; o botão flutuante continua
   /// abrindo a mesma tela no par padrão, para quem quer converter sem partir
@@ -315,16 +320,51 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
           _currencyCard(context, _homeCurrencies[index],
               hero: hero, scale: scale),
         ),
+        // O cartão de acrescentar entra pela porta do rodapé da grade, e não
+        // pela lista de moedas: é assim que ele fica sempre no fim e fora do
+        // arrasto que reordena as bolhas.
+        footerBuilder: (BuildContext context, int index, bool hero) =>
+            _animatedTile(
+          index,
+          AddCurrencyCard(
+            hero: hero,
+            label: localization.homeAddCurrencyCardLabel!,
+            onTap: () => _editHomeCurrencies(context),
+          ),
+        ),
       ),
     );
+  }
+
+  /// Abre a escolha das moedas em bolha, que antes só existia na aba de
+  /// opções, e guarda o que o usuário escolher.
+  ///
+  /// Como na reordenação por arrasto, a grade muda na hora e a gravação vem
+  /// depois: a escolha é o que o usuário acabou de confirmar, não faz sentido
+  /// esperar o banco para mostrá-la.
+  Future<void> _editHomeCurrencies(BuildContext context) async {
+    var chosen = await showHomeCurrenciesPicker(
+      context,
+      selectedCurrencyCodes: _homeCurrencies.map(currencyCode).toList(),
+    );
+    // Nulo é a folha fechada sem confirmar. A folha não deixa confirmar uma
+    // escolha vazia, mas um código que esta versão não conhece some aqui, e
+    // gravar a lista vazia que sobrasse traria de volta as moedas padrão sem o
+    // usuário ter pedido.
+    if (chosen == null || !mounted) return;
+    var currencies =
+        chosen.map(currencyForCode).whereType<Currencies>().toList();
+    if (currencies.isEmpty || listEquals(currencies, _homeCurrencies)) return;
+    setState(() => _homeCurrencies = currencies);
+    await _bloc.saveHomeCurrencies(currencies);
   }
 
   /// Põe a bolha de [oldIndex] na posição [newIndex] e empurra as demais.
   ///
   /// A tela muda na hora e a gravação vem depois: a ordem nova é o que o
   /// usuário acabou de fazer com o dedo, não faz sentido esperar o banco para
-  /// mostrá-la. A mesma configuração alimenta a lista da aba de opções, então
-  /// arrastar aqui é a mesma escolha, feita pelo outro lado.
+  /// mostrá-la. É a mesma configuração que o cartão de acrescentar escreve —
+  /// arrastar é a mesma escolha, mexida pelo outro lado.
   void _reorderHomeCurrencies(int oldIndex, int newIndex) {
     if (oldIndex == newIndex) return;
     if (oldIndex < 0 || oldIndex >= _homeCurrencies.length) return;

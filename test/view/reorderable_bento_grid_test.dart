@@ -13,7 +13,13 @@ class _GridHarness extends StatefulWidget {
   final List<List<int>> reorders;
   final void Function(String label)? onTapItem;
 
-  const _GridHarness(this.items, this.reorders, {this.onTapItem});
+  /// Rótulo do cartão fixo do fim da grade — na tela inicial, o de acrescentar
+  /// uma moeda. Nulo monta a grade sem ele.
+  final String? footerLabel;
+  final VoidCallback? onTapFooter;
+
+  const _GridHarness(this.items, this.reorders,
+      {this.onTapItem, this.footerLabel, this.onTapFooter});
 
   @override
   State<_GridHarness> createState() => _GridHarnessState();
@@ -31,6 +37,20 @@ class _GridHarnessState extends State<_GridHarness> {
             itemCount: _items.length,
             moveEarlierSemanticsLabel: "Mover para trás",
             moveLaterSemanticsLabel: "Mover para frente",
+            footerBuilder: widget.footerLabel == null
+                ? null
+                : (BuildContext context, int index, bool hero) =>
+                    GestureDetector(
+                      onTap: widget.onTapFooter,
+                      child: Container(
+                        height: hero ? 90 : 60,
+                        color: Colors.grey,
+                        alignment: Alignment.center,
+                        child: Text(hero
+                            ? "${widget.footerLabel!} (destaque)"
+                            : widget.footerLabel!),
+                      ),
+                    ),
             onReorder: (oldIndex, newIndex) {
               widget.reorders.add([oldIndex, newIndex]);
               setState(() {
@@ -160,6 +180,66 @@ void main() {
 
     // Arrastar não existe para quem navega pelo leitor de tela: as mesmas
     // reordenações precisam estar disponíveis como ação de acessibilidade.
+    // A grade da tela inicial fecha com o cartão de acrescentar uma moeda, que
+    // fica sempre no fim e fora do arrasto que reordena as bolhas.
+    testWidgets('o cartão do fim vem depois dos outros',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+          _GridHarness(const ["A", "B", "C"], [], footerLabel: "Adicionar"));
+
+      expect(_renderedOrder(tester), ["A", "B", "C", "Adicionar"]);
+    });
+
+    testWidgets('o cartão do fim não é arrastável', (WidgetTester tester) async {
+      await tester.pumpWidget(
+          _GridHarness(const ["A", "B", "C"], [], footerLabel: "Adicionar"));
+
+      expect(find.byType(LongPressDraggable<int>), findsNWidgets(3),
+          reason: "um arrastável por cartão de moeda, e nenhum para o do fim");
+
+      final center = tester.getCenter(find.text("Adicionar"));
+      await _dragTile(tester, from: center, to: tester.getCenter(find.text("B")));
+
+      expect(_renderedOrder(tester), ["A", "B", "C", "Adicionar"]);
+    });
+
+    testWidgets('soltar um cartão sobre o do fim não reordena nada',
+        (WidgetTester tester) async {
+      final reorders = <List<int>>[];
+      await tester.pumpWidget(_GridHarness(const ["A", "B", "C"], reorders,
+          footerLabel: "Adicionar"));
+
+      await _dragTile(tester,
+          from: tester.getCenter(find.text("B")),
+          to: tester.getCenter(find.text("Adicionar")));
+
+      expect(reorders, isEmpty,
+          reason: "nada pode tomar o lugar do cartão do fim");
+      expect(_renderedOrder(tester), ["A", "B", "C", "Adicionar"]);
+    });
+
+    testWidgets('o toque no cartão do fim chega a quem o montou',
+        (WidgetTester tester) async {
+      var taps = 0;
+      await tester.pumpWidget(_GridHarness(const ["A", "B"], [],
+          footerLabel: "Adicionar", onTapFooter: () => taps++));
+
+      await tester.tap(find.text("Adicionar"));
+      await tester.pumpAndSettle();
+
+      expect(taps, 1);
+    });
+
+    // Sem nenhum cartão de moeda, o de acrescentar é o único da grade: fica na
+    // posição de destaque, senão a grade abriria com meia linha vazia.
+    testWidgets('sem cartões, o do fim assume o destaque',
+        (WidgetTester tester) async {
+      await tester
+          .pumpWidget(_GridHarness(const [], [], footerLabel: "Adicionar"));
+
+      expect(find.text("Adicionar (destaque)"), findsOneWidget);
+    });
+
     testWidgets('oferece as ações de mover ao leitor de tela',
         (WidgetTester tester) async {
       final reorders = <List<int>>[];
@@ -185,6 +265,24 @@ void main() {
         [2, 1]
       ]);
       expect(_renderedOrder(tester), ["A", "C", "B"]);
+    });
+
+    // Mover o cartão do fim não significa nada: ele não tem posição na lista
+    // de moedas para trocar com ninguém.
+    testWidgets('o cartão do fim não ganha as ações de mover',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+          _GridHarness(const ["A", "B", "C"], [], footerLabel: "Adicionar"));
+
+      final actions = tester
+          .widgetList<Semantics>(find.byType(Semantics))
+          .map((widget) => widget.properties.customSemanticsActions)
+          .whereType<Map<CustomSemanticsAction, VoidCallback>>()
+          .where((actions) => actions.isNotEmpty)
+          .toList();
+
+      expect(actions.length, 3,
+          reason: "uma ação por cartão de moeda, nenhuma para o do fim");
     });
   });
 }
