@@ -304,6 +304,13 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
   /// A ordem das bolhas é a da configuração, mas pode ser mudada aqui mesmo:
   /// segurar o dedo sobre uma bolha e soltá-la sobre outra põe a arrastada
   /// naquela posição, empurrando as demais (ver [ReorderableBentoGrid]).
+  ///
+  /// O mesmo arrasto também tira uma bolha da tela: enquanto ela está presa ao
+  /// dedo, uma faixa com uma lixeira aparece no rodapé, e soltá-la ali remove
+  /// a moeda. A remoção só é oferecida com mais de uma bolha na grade: a lista
+  /// vazia significa "o usuário nunca escolheu" e traria de volta as moedas
+  /// padrão, então a tela inicial sem nenhuma cotação não é um estado que dê
+  /// para gravar.
   Widget _buildBentoGrid(BuildContext context, double scale) {
     final localization = MyAppLocalizations.of(context)!;
     return Padding(
@@ -312,8 +319,11 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
         itemCount: _homeCurrencies.length,
         spacing: 12 * scale,
         onReorder: _reorderHomeCurrencies,
+        onDelete: _homeCurrencies.length > 1 ? _removeHomeCurrency : null,
         moveEarlierSemanticsLabel: localization.homeReorderMoveEarlierLabel,
         moveLaterSemanticsLabel: localization.homeReorderMoveLaterLabel,
+        deleteZoneLabel: localization.homeRemoveDropZoneLabel,
+        deleteSemanticsLabel: localization.homeRemoveCardLabel,
         itemBuilder: (BuildContext context, int index, bool hero) =>
             _animatedTile(
           index,
@@ -371,6 +381,25 @@ class HomeState extends State<Home> with TickerProviderStateMixin {
     if (newIndex < 0 || newIndex >= _homeCurrencies.length) return;
     final currencies = List.of(_homeCurrencies);
     currencies.insert(newIndex, currencies.removeAt(oldIndex));
+    setState(() => _homeCurrencies = currencies);
+    _bloc.saveHomeCurrencies(currencies);
+  }
+
+  /// Tira a bolha de [index] da tela inicial: a moeda que foi solta sobre a
+  /// faixa de descarte da grade.
+  ///
+  /// Como na reordenação, a tela muda na hora e a gravação vem depois — é a
+  /// mesma lista de moedas escolhidas, mexida pelo arrasto em vez de pela
+  /// folha de escolha, e a moeda removida continua a um toque de distância no
+  /// cartão de acrescentar.
+  ///
+  /// A última bolha não é removida: a grade só oferece o descarte quando há
+  /// mais de uma, e a conferência se repete aqui porque a ação equivalente do
+  /// leitor de tela chega pelo mesmo caminho.
+  void _removeHomeCurrency(int index) {
+    if (index < 0 || index >= _homeCurrencies.length) return;
+    if (_homeCurrencies.length <= 1) return;
+    final currencies = List.of(_homeCurrencies)..removeAt(index);
     setState(() => _homeCurrencies = currencies);
     _bloc.saveHomeCurrencies(currencies);
   }

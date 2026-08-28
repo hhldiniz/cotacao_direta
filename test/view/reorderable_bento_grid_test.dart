@@ -18,8 +18,12 @@ class _GridHarness extends StatefulWidget {
   final String? footerLabel;
   final VoidCallback? onTapFooter;
 
+  /// Posições soltas sobre a faixa de descarte. Nulo monta a grade sem
+  /// remoção — a faixa nem chega a aparecer.
+  final List<int>? deletions;
+
   const _GridHarness(this.items, this.reorders,
-      {this.onTapItem, this.footerLabel, this.onTapFooter});
+      {this.onTapItem, this.footerLabel, this.onTapFooter, this.deletions});
 
   @override
   State<_GridHarness> createState() => _GridHarnessState();
@@ -37,6 +41,14 @@ class _GridHarnessState extends State<_GridHarness> {
             itemCount: _items.length,
             moveEarlierSemanticsLabel: "Mover para trás",
             moveLaterSemanticsLabel: "Mover para frente",
+            deleteZoneLabel: "Solte aqui para remover",
+            deleteSemanticsLabel: "Remover",
+            onDelete: widget.deletions == null
+                ? null
+                : (index) {
+                    widget.deletions!.add(index);
+                    setState(() => _items.removeAt(index));
+                  },
             footerBuilder: widget.footerLabel == null
                 ? null
                 : (BuildContext context, int index, bool hero) =>
@@ -238,6 +250,115 @@ void main() {
           .pumpWidget(_GridHarness(const [], [], footerLabel: "Adicionar"));
 
       expect(find.text("Adicionar (destaque)"), findsOneWidget);
+    });
+
+    // A faixa de descarte só existe enquanto um cartão está no ar: fora do
+    // arrasto ela tomaria o rodapé da tela sem ter o que receber.
+    testWidgets('a faixa de descarte só aparece durante o arrasto',
+        (WidgetTester tester) async {
+      await tester
+          .pumpWidget(_GridHarness(const ["A", "B", "C"], [], deletions: []));
+
+      expect(find.text("Solte aqui para remover"), findsNothing);
+
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text("B")));
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      await tester.pump();
+
+      expect(find.text("Solte aqui para remover"), findsOneWidget);
+      expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text("Solte aqui para remover"), findsNothing);
+    });
+
+    testWidgets('soltar o cartão sobre a faixa o tira da grade',
+        (WidgetTester tester) async {
+      final deletions = <int>[];
+      final reorders = <List<int>>[];
+      await tester.pumpWidget(
+          _GridHarness(const ["A", "B", "C"], reorders, deletions: deletions));
+
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text("B")));
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      await gesture
+          .moveTo(tester.getCenter(find.text("Solte aqui para remover")));
+      await tester.pump();
+      // Em cima da faixa o ícone muda: é o aviso de que levantar o dedo ali
+      // remove o cartão.
+      expect(find.byIcon(Icons.delete_forever), findsOneWidget);
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(deletions, [1]);
+      expect(reorders, isEmpty,
+          reason: "soltar na faixa remove o cartão, não o reordena");
+      expect(_renderedOrder(tester), ["A", "C"]);
+      expect(find.text("Solte aqui para remover"), findsNothing,
+          reason: "a faixa some junto com o cartão removido");
+    });
+
+    // Sem retorno de remoção o arrasto continua sendo só o que era: uma
+    // reordenação.
+    testWidgets('sem onDelete a faixa não aparece',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_GridHarness(const ["A", "B", "C"], []));
+
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text("B")));
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      await tester.pump();
+
+      expect(find.text("Solte aqui para remover"), findsNothing);
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('soltar um cartão sobre outro continua reordenando',
+        (WidgetTester tester) async {
+      final deletions = <int>[];
+      final reorders = <List<int>>[];
+      await tester.pumpWidget(
+          _GridHarness(const ["A", "B", "C"], reorders, deletions: deletions));
+
+      await _dragTile(tester,
+          from: tester.getCenter(find.text("C")),
+          to: tester.getCenter(find.text("A (destaque)")));
+
+      expect(deletions, isEmpty);
+      expect(reorders, [
+        [2, 0]
+      ]);
+    });
+
+    // Arrastar até a faixa não existe para quem navega pelo leitor de tela: a
+    // remoção precisa estar disponível como ação.
+    testWidgets('oferece a ação de remover ao leitor de tela',
+        (WidgetTester tester) async {
+      final deletions = <int>[];
+      await tester.pumpWidget(
+          _GridHarness(const ["A", "B", "C"], [], deletions: deletions));
+
+      final actions = tester
+          .widgetList<Semantics>(find.byType(Semantics))
+          .map((widget) => widget.properties.customSemanticsActions)
+          .whereType<Map<CustomSemanticsAction, VoidCallback>>()
+          .where((actions) => actions.isNotEmpty)
+          .toList();
+
+      // A ação de remover do último cartão o tira da grade.
+      final remove =
+          actions.last.entries.firstWhere((entry) => entry.key.label == "Remover");
+      remove.value();
+      await tester.pumpAndSettle();
+
+      expect(deletions, [2]);
+      expect(_renderedOrder(tester), ["A", "B"]);
     });
 
     testWidgets('oferece as ações de mover ao leitor de tela',

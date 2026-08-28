@@ -147,9 +147,12 @@ class MyAppLocalizations {
       'conversionButtonLabel': 'Conversions',
       'conversionPageTitle': "Currency Conversion",
       'homePageHeadsUpText': 'Exchange rates in %s',
-      'homeReorderHintLabel': 'Press and hold a quote to rearrange the grid.',
+      'homeReorderHintLabel': 'Press and hold a quote to rearrange the grid, '
+          'or drag it onto the bin to remove it.',
       'homeReorderMoveEarlierLabel': 'Move one position back',
       'homeReorderMoveLaterLabel': 'Move one position forward',
+      'homeRemoveDropZoneLabel': 'Drop here to remove',
+      'homeRemoveCardLabel': 'Remove from the home screen',
       'homeAddCurrencyCardLabel': 'Add currency',
       'conversionMultiplierHint': 'Amount',
       'conversionPageExplanationText': 'Insert the amount value of the currency '
@@ -321,10 +324,12 @@ class MyAppLocalizations {
       'conversionButtonLabel': "Conversões",
       'conversionPageTitle': "Conversão de Moedas",
       'homePageHeadsUpText': "Cotações em %s",
-      'homeReorderHintLabel':
-          'Segure uma cotação para reorganizar a grade.',
+      'homeReorderHintLabel': 'Segure uma cotação para reorganizar a grade '
+          'ou arraste-a até a lixeira para removê-la.',
       'homeReorderMoveEarlierLabel': 'Mover uma posição para trás',
       'homeReorderMoveLaterLabel': 'Mover uma posição para frente',
+      'homeRemoveDropZoneLabel': 'Solte aqui para remover',
+      'homeRemoveCardLabel': 'Remover da tela inicial',
       'homeAddCurrencyCardLabel': 'Adicionar moeda',
       'conversionMultiplierHint': 'Quantidade',
       'conversionPageExplanationText': 'Insira a quantidade da moeda que será '
@@ -501,10 +506,12 @@ class MyAppLocalizations {
       'conversionButtonLabel': 'Conversiones',
       'conversionPageTitle': 'Conversión de divisas',
       'homePageHeadsUpText': 'Cotizaciones en %s',
-      'homeReorderHintLabel':
-          'Mantén pulsada una cotización para reorganizar la cuadrícula.',
+      'homeReorderHintLabel': 'Mantén pulsada una cotización para reorganizar '
+          'la cuadrícula o arrástrala a la papelera para quitarla.',
       'homeReorderMoveEarlierLabel': 'Mover una posición hacia atrás',
       'homeReorderMoveLaterLabel': 'Mover una posición hacia delante',
+      'homeRemoveDropZoneLabel': 'Suelta aquí para quitar',
+      'homeRemoveCardLabel': 'Quitar de la pantalla de inicio',
       'homeAddCurrencyCardLabel': 'Añadir divisa',
       'conversionMultiplierHint': 'Cantidad',
       'conversionPageExplanationText': 'Introduce la cantidad de la divisa que '
@@ -686,10 +693,13 @@ class MyAppLocalizations {
       'conversionButtonLabel': 'Conversiones',
       'conversionPageTitle': 'Conversión de monedas',
       'homePageHeadsUpText': 'Cotizaciones en %s',
-      'homeReorderHintLabel':
-          'Mantén presionada una cotización para reorganizar la cuadrícula.',
+      'homeReorderHintLabel': 'Mantén presionada una cotización para '
+          'reorganizar la cuadrícula o arrástrala al bote de basura para '
+          'quitarla.',
       'homeReorderMoveEarlierLabel': 'Mover una posición hacia atrás',
       'homeReorderMoveLaterLabel': 'Mover una posición hacia adelante',
+      'homeRemoveDropZoneLabel': 'Suelta aquí para quitar',
+      'homeRemoveCardLabel': 'Quitar de la pantalla de inicio',
       'homeAddCurrencyCardLabel': 'Agregar moneda',
       'conversionMultiplierHint': 'Cantidad',
       'conversionPageExplanationText': 'Ingresa la cantidad de la moneda que '
@@ -892,6 +902,18 @@ class MyAppLocalizations {
 
   String? get homeReorderMoveLaterLabel {
     return _values['homeReorderMoveLaterLabel'];
+  }
+
+  /// Texto da faixa que aparece no rodapé enquanto uma bolha está sendo
+  /// arrastada: soltá-la ali tira a moeda da tela inicial.
+  String? get homeRemoveDropZoneLabel {
+    return _values['homeRemoveDropZoneLabel'];
+  }
+
+  /// A mesma remoção, oferecida ao leitor de tela como ação — arrastar até a
+  /// faixa não é um gesto disponível para quem navega por ele.
+  String? get homeRemoveCardLabel {
+    return _values['homeRemoveCardLabel'];
   }
 
   /// Rótulo do cartão que fecha a grade da tela inicial e abre a escolha das
