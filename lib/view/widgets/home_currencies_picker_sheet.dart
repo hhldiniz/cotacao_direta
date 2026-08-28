@@ -11,6 +11,8 @@ import 'package:sprintf/sprintf.dart';
 /// os códigos escolhidos, na ordem em que foram marcados — a primeira é a
 /// bolha de destaque. Devolve nulo se o usuário fechar sem confirmar.
 ///
+/// Quem a abre é o cartão de acrescentar, no fim da própria grade de bolhas.
+///
 /// É a mesma lista rolável com busca do seletor de moeda da conversão, só que
 /// com marcação múltipla: são mais de trinta moedas, e escolher várias em um
 /// menu suspenso não funcionaria.

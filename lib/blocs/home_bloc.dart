@@ -29,8 +29,8 @@ class HomeBloc extends BaseBloc {
   static List<Currencies> _currenciesForCodes(List<String> codes) =>
       codes.map(currencyForCode).whereType<Currencies>().toList();
 
-  /// Moedas escolhidas nas configurações para aparecer em bolha na tela
-  /// inicial, na ordem em que devem aparecer.
+  /// Moedas escolhidas para aparecer em bolha na tela inicial, na ordem em que
+  /// devem aparecer.
   ///
   /// Uma escolha que não sobrou nenhuma moeda conhecida vira as moedas padrão:
   /// a tela sem bolha nenhuma não diria ao usuário o que aconteceu.
@@ -42,14 +42,12 @@ class HomeBloc extends BaseBloc {
 
   /// Grava a ordem em que as moedas aparecem em bolha na tela inicial.
   ///
-  /// É a mesma configuração que a aba de opções escreve: reordenar a grade
-  /// arrastando as bolhas e refazer a escolha nas opções são dois caminhos
-  /// para a mesma lista, então a ordem arrastada continua valendo na próxima
-  /// vez que o app abrir.
+  /// Arrastar as bolhas e refazer a escolha no cartão que fecha a grade são
+  /// dois caminhos para a mesma lista, então a ordem arrastada continua
+  /// valendo na próxima vez que o app abrir.
   ///
-  /// Uma lista vazia é ignorada, como nas opções: a coluna vazia significa
-  /// "o usuário nunca escolheu", e traria de volta as moedas padrão sem ele
-  /// ter pedido.
+  /// Uma lista vazia é ignorada: a coluna vazia significa "o usuário nunca
+  /// escolheu", e traria de volta as moedas padrão sem ele ter pedido.
   Future<void> saveHomeCurrencies(List<Currencies> currencies) async {
     if (currencies.isEmpty) return;
     var configuration = await _configurationRepository.getConfiguration();

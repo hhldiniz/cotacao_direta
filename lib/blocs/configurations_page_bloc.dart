@@ -30,14 +30,6 @@ class ConfigurationsPageBloc extends BaseBloc {
 
   StreamController _selectedCurrencyCodeStreamController = StreamController();
 
-  // Moedas que a tela inicial mostra em bolha. A lista é curta e sempre lida
-  // inteira, então a tela recebe os códigos como estão gravados.
-  StreamController<List<String>> _homeCurrenciesStreamController =
-      StreamController<List<String>>.broadcast();
-
-  List<String> _homeCurrencyCodes =
-      List.of(Configuration.defaultHomeCurrencyCodes);
-
   // Idioma da interface escolhido pelo usuário. Vazio é "seguir o aparelho".
   StreamController<String> _languageStreamController =
       StreamController<String>.broadcast();
@@ -45,13 +37,6 @@ class ConfigurationsPageBloc extends BaseBloc {
   String _languageCode = "";
 
   Stream get currencyOptionsStream => _currencyOptionsStreamController.stream;
-
-  Stream<List<String>> get homeCurrenciesStream =>
-      _homeCurrenciesStreamController.stream;
-
-  /// Última lista conhecida, para a tela ter o que mostrar antes de a leitura
-  /// do banco terminar.
-  List<String> get homeCurrencyCodes => _homeCurrencyCodes;
 
   Stream<String> get languageStream => _languageStreamController.stream;
 
@@ -77,26 +62,9 @@ class ConfigurationsPageBloc extends BaseBloc {
       _overrideCurrencyStateHelper.enableCurrencyOverride =
           configuration.overrideDefaultCurrency;
       overrideDefaultCurrencyValueSink.add(_overrideCurrencyStateHelper);
-      _homeCurrencyCodes = List.of(configuration.homeCurrencyCodes);
-      _homeCurrenciesStreamController.sink.add(_homeCurrencyCodes);
       _languageCode = configuration.languageCode;
       _languageStreamController.sink.add(_languageCode);
     });
-  }
-
-  /// Grava as moedas que aparecem em bolha na tela inicial, na ordem escolhida
-  /// — a primeira é a bolha de destaque.
-  ///
-  /// Uma lista vazia é ignorada: a tela inicial ficaria sem nenhuma cotação, e
-  /// a coluna vazia significa "nunca escolheu", o que traria de volta as
-  /// moedas padrão sem o usuário ter pedido.
-  Future<void> updateHomeCurrencies(List<String> currencyCodes) async {
-    if (currencyCodes.isEmpty) return;
-    _homeCurrencyCodes = List.of(currencyCodes);
-    _homeCurrenciesStreamController.sink.add(_homeCurrencyCodes);
-    var configuration = await _configurationRepository.getConfiguration();
-    configuration.homeCurrencyCodes = List.of(currencyCodes);
-    await _configurationRepository.insert(configuration);
   }
 
   /// Grava o idioma da interface e o aplica na hora.
@@ -159,7 +127,6 @@ class ConfigurationsPageBloc extends BaseBloc {
     _currencyOptionsStreamController.close();
     _overrideDefaultCurrencyValueStreamController.close();
     _selectedCurrencyCodeStreamController.close();
-    _homeCurrenciesStreamController.close();
     _languageStreamController.close();
   }
 }

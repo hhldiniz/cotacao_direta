@@ -52,98 +52,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// Abre a folha de escolha das moedas da tela inicial.
-  Future<void> openPicker(WidgetTester tester) async {
-    await tester.tap(find.text("Cotações na tela inicial"));
-    await tester.pumpAndSettle();
-  }
+  // A escolha das moedas mudou para o cartão de adicionar da grade da tela
+  // inicial; deixá-la também aqui seriam dois caminhos para a mesma lista,
+  // cada um com a sua cópia do que está gravado.
+  testWidgets('não oferece mais a escolha das moedas da tela inicial',
+      (WidgetTester tester) async {
+    repository.configuration =
+        Configuration(1, homeCurrencyCodes: ["GBP", "CHF"]);
 
-  /// Filtra a lista pelo código e marca (ou desmarca) a moeda encontrada.
-  Future<void> toggleCurrency(WidgetTester tester, String code) async {
-    await tester.enterText(find.byType(TextField), code);
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ListTile, code));
-    await tester.pumpAndSettle();
-  }
+    await pumpPage(tester);
 
-  group('ConfigurationsPage e as moedas da tela inicial', () {
-    testWidgets('mostra as moedas gravadas', (WidgetTester tester) async {
-      repository.configuration =
-          Configuration(1, homeCurrencyCodes: ["GBP", "CHF"]);
-
-      await pumpPage(tester);
-
-      expect(find.text("Cotações na tela inicial"), findsOneWidget);
-      expect(find.text("GBP · CHF"), findsOneWidget);
-    });
-
-    testWidgets('abre a folha de escolha ao tocar na opção',
-        (WidgetTester tester) async {
-      await pumpPage(tester);
-
-      await openPicker(tester);
-
-      expect(find.text("Cotações mostradas em bolhas"), findsOneWidget);
-      expect(find.text("Salvar"), findsOneWidget);
-    });
-
-    testWidgets('acrescenta a moeda escolhida às bolhas',
-        (WidgetTester tester) async {
-      await pumpPage(tester);
-      await openPicker(tester);
-
-      await toggleCurrency(tester, "CHF");
-      await tester.tap(find.text("Salvar"));
-      await tester.pumpAndSettle();
-
-      expect(bloc.homeCurrencyCodes,
-          [...Configuration.defaultHomeCurrencyCodes, "CHF"]);
-      expect(repository.configuration.homeCurrencyCodes,
-          [...Configuration.defaultHomeCurrencyCodes, "CHF"]);
-    });
-
-    testWidgets('desmarcar tira a moeda das bolhas',
-        (WidgetTester tester) async {
-      await pumpPage(tester);
-      await openPicker(tester);
-
-      await toggleCurrency(tester, "JPY");
-      await tester.tap(find.text("Salvar"));
-      await tester.pumpAndSettle();
-
-      expect(bloc.homeCurrencyCodes, ["USD", "EUR", "CAD"]);
-      expect(find.text("USD · EUR · CAD"), findsOneWidget);
-    });
-
-    // Sem nenhuma moeda a tela inicial ficaria sem cotação nenhuma.
-    testWidgets('não deixa gravar uma escolha vazia',
-        (WidgetTester tester) async {
-      await pumpPage(tester);
-      await openPicker(tester);
-
-      for (var code in Configuration.defaultHomeCurrencyCodes) {
-        await toggleCurrency(tester, code);
-      }
-
-      expect(find.text("Escolha pelo menos uma moeda"), findsOneWidget);
-      expect(
-          tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-          isNull,
-          reason: "o botão de salvar fica desabilitado sem nenhuma moeda");
-    });
-
-    testWidgets('fechar sem confirmar não muda nada',
-        (WidgetTester tester) async {
-      await pumpPage(tester);
-      await openPicker(tester);
-
-      await toggleCurrency(tester, "CHF");
-      // Fecha a folha como o toque fora dela faria.
-      Navigator.of(tester.element(find.byType(FilledButton))).pop();
-      await tester.pumpAndSettle();
-
-      expect(bloc.homeCurrencyCodes, Configuration.defaultHomeCurrencyCodes);
-    });
+    expect(find.text("GBP · CHF"), findsNothing);
   });
 
   group('ConfigurationsPage e o idioma da interface', () {

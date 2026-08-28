@@ -150,6 +150,7 @@ class MyAppLocalizations {
       'homeReorderHintLabel': 'Press and hold a quote to rearrange the grid.',
       'homeReorderMoveEarlierLabel': 'Move one position back',
       'homeReorderMoveLaterLabel': 'Move one position forward',
+      'homeAddCurrencyCardLabel': 'Add currency',
       'conversionMultiplierHint': 'Amount',
       'conversionPageExplanationText': 'Insert the amount value of the currency '
           'that will be converted, selected a currency to be converted and the '
@@ -182,7 +183,6 @@ class MyAppLocalizations {
       'currencyHistoryPeriodOptionLabel': '%s days',
       'overrideDefaultCurrencySwitchLabel': 'Override default currency',
       'selectedOverrideCurrencyLabel': 'Currency',
-      'homeCurrenciesSettingLabel': 'Quotes on the home screen',
       'homeCurrenciesPickerTitle': 'Quotes shown as bubbles',
       'homeCurrenciesPickerDescription':
           'The first currency chosen gets the big bubble.',
@@ -325,6 +325,7 @@ class MyAppLocalizations {
           'Segure uma cotação para reorganizar a grade.',
       'homeReorderMoveEarlierLabel': 'Mover uma posição para trás',
       'homeReorderMoveLaterLabel': 'Mover uma posição para frente',
+      'homeAddCurrencyCardLabel': 'Adicionar moeda',
       'conversionMultiplierHint': 'Quantidade',
       'conversionPageExplanationText': 'Insira a quantidade da moeda que será '
           'convertida, selecionada a moeda que será convertida e a moeda para '
@@ -357,7 +358,6 @@ class MyAppLocalizations {
       'currencyHistoryPeriodOptionLabel': '%s dias',
       'overrideDefaultCurrencySwitchLabel': 'Sobrescrever moeda padrão',
       'selectedOverrideCurrencyLabel': 'Moeda',
-      'homeCurrenciesSettingLabel': 'Cotações na tela inicial',
       'homeCurrenciesPickerTitle': 'Cotações mostradas em bolhas',
       'homeCurrenciesPickerDescription':
           'A primeira moeda escolhida fica na bolha de destaque.',
@@ -505,6 +505,7 @@ class MyAppLocalizations {
           'Mantén pulsada una cotización para reorganizar la cuadrícula.',
       'homeReorderMoveEarlierLabel': 'Mover una posición hacia atrás',
       'homeReorderMoveLaterLabel': 'Mover una posición hacia delante',
+      'homeAddCurrencyCardLabel': 'Añadir divisa',
       'conversionMultiplierHint': 'Cantidad',
       'conversionPageExplanationText': 'Introduce la cantidad de la divisa que '
           'se va a convertir, elige esa divisa y la divisa a la que quieres '
@@ -537,7 +538,6 @@ class MyAppLocalizations {
       'currencyHistoryPeriodOptionLabel': '%s días',
       'overrideDefaultCurrencySwitchLabel': 'Sustituir la divisa por defecto',
       'selectedOverrideCurrencyLabel': 'Divisa',
-      'homeCurrenciesSettingLabel': 'Cotizaciones en la pantalla de inicio',
       'homeCurrenciesPickerTitle': 'Cotizaciones mostradas en burbujas',
       'homeCurrenciesPickerDescription':
           'La primera divisa elegida ocupa la burbuja destacada.',
@@ -690,6 +690,7 @@ class MyAppLocalizations {
           'Mantén presionada una cotización para reorganizar la cuadrícula.',
       'homeReorderMoveEarlierLabel': 'Mover una posición hacia atrás',
       'homeReorderMoveLaterLabel': 'Mover una posición hacia adelante',
+      'homeAddCurrencyCardLabel': 'Agregar moneda',
       'conversionMultiplierHint': 'Cantidad',
       'conversionPageExplanationText': 'Ingresa la cantidad de la moneda que '
           'vas a convertir, selecciona esa moneda y la moneda a la que quieres '
@@ -723,7 +724,6 @@ class MyAppLocalizations {
       'overrideDefaultCurrencySwitchLabel':
           'Reemplazar la moneda predeterminada',
       'selectedOverrideCurrencyLabel': 'Moneda',
-      'homeCurrenciesSettingLabel': 'Cotizaciones en la pantalla de inicio',
       'homeCurrenciesPickerTitle': 'Cotizaciones mostradas en burbujas',
       'homeCurrenciesPickerDescription':
           'La primera moneda seleccionada ocupa la burbuja destacada.',
@@ -894,6 +894,12 @@ class MyAppLocalizations {
     return _values['homeReorderMoveLaterLabel'];
   }
 
+  /// Rótulo do cartão que fecha a grade da tela inicial e abre a escolha das
+  /// moedas mostradas.
+  String? get homeAddCurrencyCardLabel {
+    return _values['homeAddCurrencyCardLabel'];
+  }
+
   String? get conversionMultiplierHint {
     return _values['conversionMultiplierHint'];
   }
@@ -1020,10 +1026,6 @@ class MyAppLocalizations {
 
   String? get selectedOverrideCurrencyLabel {
     return _values['selectedOverrideCurrencyLabel'];
-  }
-
-  String? get homeCurrenciesSettingLabel {
-    return _values['homeCurrenciesSettingLabel'];
   }
 
   String? get homeCurrenciesPickerTitle {
