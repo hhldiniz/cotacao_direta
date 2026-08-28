@@ -12,6 +12,8 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.homeReorderHintLabel,
       localizations.homeReorderMoveEarlierLabel,
       localizations.homeReorderMoveLaterLabel,
+      localizations.homeRemoveDropZoneLabel,
+      localizations.homeRemoveCardLabel,
       localizations.homeAddCurrencyCardLabel,
       localizations.conversionMultiplierHint,
       localizations.conversionPageExplanationText,

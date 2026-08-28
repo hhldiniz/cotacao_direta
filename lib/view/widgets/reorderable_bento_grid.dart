@@ -18,9 +18,16 @@ typedef BentoTileBuilder = Widget Function(
 /// posição é o que promove uma moeda ao destaque — antes isso só era possível
 /// refazendo a escolha inteira.
 ///
-/// A reordenação não é gravada aqui: [onReorder] avisa quem monta a grade, que
-/// é quem conhece a lista de moedas e o que fazer com a ordem nova.
-class ReorderableBentoGrid extends StatelessWidget {
+/// Enquanto um cartão está preso ao dedo, uma faixa com um ícone de lixeira
+/// aparece no rodapé da tela: soltar o cartão em cima dela tira aquele cartão
+/// da grade. É o mesmo arrasto que reordena — a área de descarte só dá ao
+/// gesto um segundo destino, e só existe quando quem monta a grade informa
+/// [onDelete].
+///
+/// Nem a reordenação nem a remoção são gravadas aqui: [onReorder] e [onDelete]
+/// avisam quem monta a grade, que é quem conhece a lista de moedas e o que
+/// fazer com ela.
+class ReorderableBentoGrid extends StatefulWidget {
   final int itemCount;
   final BentoTileBuilder itemBuilder;
 
@@ -38,6 +45,14 @@ class ReorderableBentoGrid extends StatelessWidget {
   /// passar a ocupar [newIndex], empurrando os demais.
   final void Function(int oldIndex, int newIndex) onReorder;
 
+  /// Chamado quando um cartão é solto sobre a área de descarte: o cartão de
+  /// [index] deve sair da grade.
+  ///
+  /// Nulo desliga a remoção por arrasto — a faixa nem chega a aparecer. É
+  /// assim que quem monta a grade impede que ela fique sem nenhum cartão:
+  /// basta não informar o retorno enquanto sobrar um só.
+  final void Function(int index)? onDelete;
+
   /// Espaço entre cartões, na horizontal e na vertical.
   final double spacing;
 
@@ -48,20 +63,53 @@ class ReorderableBentoGrid extends StatelessWidget {
   final String? moveEarlierSemanticsLabel;
   final String? moveLaterSemanticsLabel;
 
+  /// Texto da faixa de descarte, que diz o que soltar o cartão ali faz. Sem
+  /// ele a faixa mostra só o ícone de lixeira.
+  final String? deleteZoneLabel;
+
+  /// Rótulo da ação de remover oferecida ao leitor de tela, no lugar do
+  /// arrasto até a faixa. Só entra quando [onDelete] existe.
+  final String? deleteSemanticsLabel;
+
   const ReorderableBentoGrid({
     super.key,
     required this.itemCount,
     required this.itemBuilder,
     required this.onReorder,
+    this.onDelete,
     this.footerBuilder,
     this.spacing = 12,
     this.moveEarlierSemanticsLabel,
     this.moveLaterSemanticsLabel,
+    this.deleteZoneLabel,
+    this.deleteSemanticsLabel,
   });
+
+  @override
+  State<ReorderableBentoGrid> createState() => _ReorderableBentoGridState();
+}
+
+class _ReorderableBentoGridState extends State<ReorderableBentoGrid> {
+  /// A faixa de descarte, enquanto um cartão está no ar.
+  ///
+  /// Ela vive no Overlay, e não dentro da grade: a grade mora num
+  /// SingleChildScrollView e pode estar rolada para qualquer altura, então uma
+  /// faixa desenhada nela poderia nascer fora da tela. No Overlay ela fica
+  /// presa ao rodapé, sempre alcançável pelo dedo que está segurando o cartão,
+  /// e por cima da grade — o que também faz dela o primeiro alvo a ser
+  /// consultado quando o cartão é solto sobre a região que ela ocupa.
+  OverlayEntry? _deleteZone;
+
+  @override
+  void dispose() {
+    _hideDeleteZone();
+    super.dispose();
+  }
 
   /// Quantas posições a grade desenha: os cartões reordenáveis mais o cartão
   /// fixo do fim, quando ele existe.
-  int get _slotCount => itemCount + (footerBuilder == null ? 0 : 1);
+  int get _slotCount =>
+      widget.itemCount + (widget.footerBuilder == null ? 0 : 1);
 
   @override
   Widget build(BuildContext context) {
@@ -73,14 +121,14 @@ class ReorderableBentoGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final heroWidth = constraints.maxWidth;
-        final pairedWidth = (constraints.maxWidth - spacing) / 2;
+        final pairedWidth = (constraints.maxWidth - widget.spacing) / 2;
         final rows = <Widget>[
           _slot(context, 0, hero: true, width: heroWidth),
         ];
 
         for (var first = 1; first < slotCount; first += 2) {
           final second = first + 1;
-          rows.add(SizedBox(height: spacing));
+          rows.add(SizedBox(height: widget.spacing));
           // O IntrinsicHeight é obrigatório aqui: a Row usa
           // CrossAxisAlignment.stretch para os dois cartões terminarem com a
           // mesma altura, mas o eixo transversal de uma Row é o vertical, que
@@ -94,7 +142,7 @@ class ReorderableBentoGrid extends StatelessWidget {
                 Expanded(
                   child: _slot(context, first, hero: false, width: pairedWidth),
                 ),
-                SizedBox(width: spacing),
+                SizedBox(width: widget.spacing),
                 // Numa linha ímpar o espaço vazio à direita fica reservado,
                 // para o cartão sozinho ter a mesma largura dos das outras
                 // linhas.
@@ -116,12 +164,15 @@ class ReorderableBentoGrid extends StatelessWidget {
     );
   }
 
-  /// Uma posição da grade. Até [itemCount] é um cartão reordenável; a posição
-  /// seguinte, quando existe, é o cartão fixo do fim, desenhado como está —
-  /// sem arrasto, sem alvo de soltura e sem as ações de mover.
+  /// Uma posição da grade. Até [ReorderableBentoGrid.itemCount] é um cartão
+  /// reordenável; a posição seguinte, quando existe, é o cartão fixo do fim,
+  /// desenhado como está — sem arrasto, sem alvo de soltura e sem as ações de
+  /// mover.
   Widget _slot(BuildContext context, int index,
       {required bool hero, required double width}) {
-    if (index >= itemCount) return footerBuilder!(context, index, hero);
+    if (index >= widget.itemCount) {
+      return widget.footerBuilder!(context, index, hero);
+    }
     return _tile(context, index, hero: hero, width: width);
   }
 
@@ -130,7 +181,7 @@ class ReorderableBentoGrid extends StatelessWidget {
   Widget _tile(BuildContext context, int index,
       {required bool hero, required double width}) {
     final radius = hero ? BentoRadius.hero : BentoRadius.standard;
-    final child = itemBuilder(context, index, hero);
+    final child = widget.itemBuilder(context, index, hero);
 
     final draggable = LongPressDraggable<int>(
       data: index,
@@ -141,7 +192,14 @@ class ReorderableBentoGrid extends StatelessWidget {
       childWhenDragging: _emptySlot(context, child, radius),
       // O mesmo retorno tátil de quem já arrastou um ícone na tela inicial do
       // aparelho: sem ele não fica claro que o toque longo pegou o cartão.
-      onDragStarted: () => HapticFeedback.mediumImpact(),
+      onDragStarted: () {
+        HapticFeedback.mediumImpact();
+        _showDeleteZone(index);
+      },
+      // A faixa acompanha o dedo: existe enquanto o cartão está no ar e some
+      // assim que ele é solto, tenha caído onde tiver caído.
+      onDragEnd: (_) => _hideDeleteZone(),
+      onDraggableCanceled: (_, __) => _hideDeleteZone(),
       child: child,
     );
 
@@ -150,7 +208,7 @@ class ReorderableBentoGrid extends StatelessWidget {
       onWillAcceptWithDetails: (details) => details.data != index,
       onAcceptWithDetails: (details) {
         HapticFeedback.selectionClick();
-        onReorder(details.data, index);
+        widget.onReorder(details.data, index);
       },
       builder: (BuildContext context, List<int?> candidateData, _) {
         final isTarget = candidateData.isNotEmpty;
@@ -181,22 +239,28 @@ class ReorderableBentoGrid extends StatelessWidget {
     );
   }
 
-  /// Ações de reordenação para o leitor de tela, quando os rótulos foram
-  /// informados. Sem elas, a grade seria reordenável só por arrasto — um gesto
-  /// que não existe para quem usa TalkBack ou VoiceOver.
+  /// Ações de reordenação e de remoção para o leitor de tela, quando os
+  /// rótulos foram informados. Sem elas, a grade seria reordenável (e o cartão,
+  /// removível) só por arrasto — um gesto que não existe para quem usa TalkBack
+  /// ou VoiceOver.
   Widget _semantics(int index, Widget child) {
-    final moveEarlier = moveEarlierSemanticsLabel;
-    final moveLater = moveLaterSemanticsLabel;
-    if (moveEarlier == null && moveLater == null) return child;
+    final moveEarlier = widget.moveEarlierSemanticsLabel;
+    final moveLater = widget.moveLaterSemanticsLabel;
+    final onDelete = widget.onDelete;
+    final delete = widget.deleteSemanticsLabel;
+    final hasDelete = onDelete != null && delete != null;
+    if (moveEarlier == null && moveLater == null && !hasDelete) return child;
     return Semantics(
       container: true,
       customSemanticsActions: {
         if (moveEarlier != null && index > 0)
           CustomSemanticsAction(label: moveEarlier): () =>
-              onReorder(index, index - 1),
-        if (moveLater != null && index < itemCount - 1)
+              widget.onReorder(index, index - 1),
+        if (moveLater != null && index < widget.itemCount - 1)
           CustomSemanticsAction(label: moveLater): () =>
-              onReorder(index, index + 1),
+              widget.onReorder(index, index + 1),
+        if (hasDelete)
+          CustomSemanticsAction(label: delete): () => onDelete(index),
       },
       child: child,
     );
@@ -217,7 +281,7 @@ class ReorderableBentoGrid extends StatelessWidget {
           width: width,
           child: Opacity(
             opacity: 0.92,
-            child: itemBuilder(context, index, hero),
+            child: widget.itemBuilder(context, index, hero),
           ),
         ),
       ),
@@ -240,5 +304,117 @@ class ReorderableBentoGrid extends StatelessWidget {
         child: IgnorePointer(child: child),
       ),
     );
+  }
+
+  /// Põe a faixa de descarte no rodapé da tela, para o cartão que acabou de
+  /// sair da grade. Sem [ReorderableBentoGrid.onDelete] não há o que a faixa
+  /// faça, então ela não aparece.
+  void _showDeleteZone(int index) {
+    if (widget.onDelete == null) return;
+    if (_deleteZone != null) return;
+    final overlay = Overlay.maybeOf(context);
+    if (overlay == null) return;
+    final entry = OverlayEntry(builder: _buildDeleteZone);
+    _deleteZone = entry;
+    overlay.insert(entry);
+  }
+
+  /// Tira a faixa da tela. Chamada tanto ao fim do arrasto quanto na hora da
+  /// remoção: quando o cartão arrastado sai da grade, o arrastável que
+  /// avisaria o fim do gesto já não existe mais.
+  void _hideDeleteZone() {
+    _deleteZone?.remove();
+    _deleteZone = null;
+  }
+
+  /// A faixa: um alvo de soltura que ocupa o rodapé da tela, com o ícone de
+  /// lixeira e o texto do que soltar ali faz. Fica vermelha e cresce quando o
+  /// cartão está em cima dela, para não haver dúvida do que vai acontecer se o
+  /// dedo levantar naquele ponto.
+  Widget _buildDeleteZone(BuildContext overlayContext) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final label = widget.deleteZoneLabel;
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: DragTarget<int>(
+            onWillAcceptWithDetails: (_) => true,
+            onAcceptWithDetails: (details) => _deleteDragged(details.data),
+            builder: (BuildContext context, List<int?> candidateData, _) {
+              final isTarget = candidateData.isNotEmpty;
+              final background = isTarget
+                  ? colorScheme.error
+                  : colorScheme.errorContainer.withValues(alpha: 0.92);
+              final foreground = isTarget
+                  ? colorScheme.onError
+                  : colorScheme.onErrorContainer;
+              return AnimatedScale(
+                scale: isTarget ? 1.04 : 1.0,
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeOut,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: background,
+                    borderRadius: BorderRadius.circular(BentoRadius.hero),
+                    border: Border.all(
+                      color: isTarget ? foreground : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isTarget ? Icons.delete_forever : Icons.delete_outline,
+                        color: foreground,
+                      ),
+                      if (label != null) ...[
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            label,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: foreground,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Solta o cartão de [index] fora da grade: tira a faixa da tela e avisa
+  /// quem monta a grade, que é quem sabe remover a moeda da lista.
+  void _deleteDragged(int index) {
+    final onDelete = widget.onDelete;
+    // A faixa some antes da remoção: depois dela a grade é reconstruída sem o
+    // cartão arrastado, e o arrastável que avisaria o fim do gesto some junto.
+    _hideDeleteZone();
+    if (onDelete == null) return;
+    // Um retorno mais forte que o da reordenação: remover é a ação que não se
+    // desfaz com outro arrasto.
+    HapticFeedback.heavyImpact();
+    onDelete(index);
   }
 }
