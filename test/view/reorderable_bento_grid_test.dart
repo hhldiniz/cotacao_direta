@@ -275,6 +275,32 @@ void main() {
       expect(find.text("Solte aqui para remover"), findsNothing);
     });
 
+    // Sem um Material por perto, o texto e o ícone da faixa levariam o
+    // sublinhado amarelo e preto que o Flutter desenha em debug por faltar um
+    // DefaultTextStyle — o Overlay em que a faixa vive não tem um por conta
+    // própria.
+    testWidgets('a faixa de descarte tem um Material por perto',
+        (WidgetTester tester) async {
+      await tester
+          .pumpWidget(_GridHarness(const ["A", "B", "C"], [], deletions: []));
+
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text("B")));
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      await tester.pump();
+
+      expect(
+        find.ancestor(
+          of: find.text("Solte aqui para remover"),
+          matching: find.byType(Material),
+        ),
+        findsWidgets,
+      );
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+    });
+
     testWidgets('soltar o cartão sobre a faixa o tira da grade',
         (WidgetTester tester) async {
       final deletions = <int>[];

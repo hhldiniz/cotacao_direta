@@ -338,66 +338,76 @@ class _ReorderableBentoGridState extends State<ReorderableBentoGrid> {
       left: 0,
       right: 0,
       bottom: 0,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: DragTarget<int>(
-            onWillAcceptWithDetails: (_) => true,
-            onAcceptWithDetails: (details) => _deleteDragged(details.data),
-            builder: (BuildContext context, List<int?> candidateData, _) {
-              final isTarget = candidateData.isNotEmpty;
-              final background = isTarget
-                  ? colorScheme.error
-                  : colorScheme.errorContainer.withValues(alpha: 0.92);
-              final foreground = isTarget
-                  ? colorScheme.onError
-                  : colorScheme.onErrorContainer;
-              return AnimatedScale(
-                scale: isTarget ? 1.04 : 1.0,
-                duration: const Duration(milliseconds: 150),
-                curve: Curves.easeOut,
-                child: AnimatedContainer(
+      // O Overlay não tem Material, e sem um o texto e o ícone da faixa
+      // seriam pintados com o sublinhado amarelo e preto que o Flutter usa
+      // em debug para avisar da falta de um DefaultTextStyle — o mesmo motivo
+      // por trás do Material em _dragFeedback. Transparente para o fundo
+      // continuar sendo só o da própria faixa.
+      child: Material(
+        type: MaterialType.transparency,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: DragTarget<int>(
+              onWillAcceptWithDetails: (_) => true,
+              onAcceptWithDetails: (details) => _deleteDragged(details.data),
+              builder: (BuildContext context, List<int?> candidateData, _) {
+                final isTarget = candidateData.isNotEmpty;
+                final background = isTarget
+                    ? colorScheme.error
+                    : colorScheme.errorContainer.withValues(alpha: 0.92);
+                final foreground = isTarget
+                    ? colorScheme.onError
+                    : colorScheme.onErrorContainer;
+                return AnimatedScale(
+                  scale: isTarget ? 1.04 : 1.0,
                   duration: const Duration(milliseconds: 150),
                   curve: Curves.easeOut,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: background,
-                    borderRadius: BorderRadius.circular(BentoRadius.hero),
-                    border: Border.all(
-                      color: isTarget ? foreground : Colors.transparent,
-                      width: 2,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    curve: Curves.easeOut,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isTarget ? Icons.delete_forever : Icons.delete_outline,
-                        color: foreground,
+                    decoration: BoxDecoration(
+                      color: background,
+                      borderRadius: BorderRadius.circular(BentoRadius.hero),
+                      border: Border.all(
+                        color: isTarget ? foreground : Colors.transparent,
+                        width: 2,
                       ),
-                      if (label != null) ...[
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(
-                            label,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: foreground,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          isTarget
+                              ? Icons.delete_forever
+                              : Icons.delete_outline,
+                          color: foreground,
+                        ),
+                        if (label != null) ...[
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              label,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: foreground,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),
