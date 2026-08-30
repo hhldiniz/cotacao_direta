@@ -424,17 +424,20 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
         _metric(context, localizations.aiInsightsMonthlyChangeLabel!,
             formatter.signedPercent(statistics.monthlyChange!), scale),
       _metric(context, localizations.aiInsightsVolatilityLabel!,
-          formatter.percent(statistics.annualizedVolatility), scale),
+          formatter.percent(statistics.annualizedVolatility), scale,
+          hint: localizations.aiInsightsVolatilityHint),
       if (statistics.relativeStrengthIndex != null)
         _metric(context, localizations.aiInsightsRsiLabel!,
             formatter.decimal(statistics.relativeStrengthIndex!, digits: 0),
-            scale),
+            scale,
+            hint: localizations.aiInsightsRsiHint),
       _metric(context, localizations.aiInsightsDrawdownLabel!,
           formatter.percent(statistics.maxDrawdown), scale),
       _metric(context, localizations.aiInsightsTrendLabel!,
           formatter.signedPercent(statistics.compoundAnnualGrowthRate), scale),
       _metric(context, localizations.aiInsightsTrendFitLabel!,
-          formatter.decimal(statistics.trendRSquared, digits: 2), scale),
+          formatter.decimal(statistics.trendRSquared, digits: 2), scale,
+          hint: localizations.aiInsightsTrendFitHint),
     ]);
   }
 
@@ -592,7 +595,8 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
       _metric(context, localizations.aiInsightsModelSamplesLabel!,
           "${diagnostics.trainingSamples}", scale),
       _metric(context, localizations.aiInsightsModelSkillLabel!,
-          formatter.percent(diagnostics.skill), scale),
+          formatter.percent(diagnostics.skill), scale,
+          hint: localizations.aiInsightsModelSkillHint),
       _metric(context, localizations.aiInsightsModelEpochsLabel!,
           "${diagnostics.epochs}", scale),
     ]);

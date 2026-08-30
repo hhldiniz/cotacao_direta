@@ -81,13 +81,28 @@ void main() {
 
       expect(find.text(localizations.aiInsightsSummarySectionLabel!),
           findsOneWidget);
-      // "Projeção" aparece duas vezes: no título da seção e na legenda do
-      // gráfico.
       expect(find.text(localizations.aiInsightsProjectionSectionLabel!),
-          findsWidgets);
+          findsOneWidget);
       expect(find.text(localizations.aiInsightsInsightsSectionLabel!),
           findsOneWidget);
       expect(find.byType(ForecastChart), findsOneWidget);
+    });
+
+    testWidgets('explica a escala dos números menos óbvios do resumo',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+
+      await tester.tap(find.text(localizations.aiInsightsAnalyzeBtnLabel!));
+      await tester.pumpAndSettle();
+
+      // Uma volatilidade anualizada, um IFR ou um R² não dizem nada a quem
+      // nunca os viu: a dica embaixo do número conta em que escala lê-lo.
+      expect(
+          find.text(localizations.aiInsightsVolatilityHint!), findsOneWidget);
+      expect(find.text(localizations.aiInsightsRsiHint!), findsOneWidget);
+      expect(find.text(localizations.aiInsightsTrendFitHint!), findsOneWidget);
+      expect(
+          find.text(localizations.aiInsightsModelSkillHint!), findsOneWidget);
     });
 
     testWidgets('a análise roda no idioma da tela', (WidgetTester tester) async {

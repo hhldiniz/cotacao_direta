@@ -251,74 +251,85 @@ class MyAppLocalizations {
       'notificationPermissionGrantedLabel': 'Notifications enabled',
       'notificationPermissionRefusedLabel': 'Notifications not enabled',
       'aiInsightsBottomNavItemLabel': 'AI',
-      'aiInsightsSectionLabel': 'On-device AI insights',
-      'aiInsightsDescription': 'A small neural network is trained on this '
-          'device, over the quotes the app already downloaded, to summarise the '
-          'market and project the coming days. No data leaves your phone.',
+      'aiInsightsSectionLabel': 'AI analysis on your phone',
+      'aiInsightsDescription': 'The app goes over the quotes it has already '
+          'downloaded to show how the asset has been doing and what may come '
+          'next. Everything is worked out on your phone, and nothing is sent '
+          'anywhere.',
       'aiInsightsAssetLabel': 'Asset',
       'aiInsightsAssetPickerTitle': 'Choose an asset',
       'aiInsightsAssetNotFoundLabel': 'No asset found',
-      'aiInsightsHorizonLabel': 'Projection horizon',
+      'aiInsightsHorizonLabel': 'How far ahead to look',
       'aiInsightsHorizonOptionLabel': '%s days',
-      'aiInsightsAmountLabel': 'Amount to simulate (optional)',
-      'aiInsightsAnalyzeBtnLabel': 'Analyse on device',
-      'aiInsightsRunningLabel': 'Training the local model…',
-      'aiInsightsEmptyLabel': 'Choose an asset and run the analysis.',
+      'aiInsightsAmountLabel': 'How much you would put in (optional)',
+      'aiInsightsAnalyzeBtnLabel': 'Analyse',
+      'aiInsightsRunningLabel': 'Going over the quotes…',
+      'aiInsightsEmptyLabel': 'Pick an asset and tap Analyse.',
       'aiInsightsNoDataError': 'No quotes found for this asset.',
       'aiInsightsInsufficientDataError':
-          'Not enough history to analyse this asset.',
+          'There are not enough past quotes for this asset yet.',
       'aiInsightsFailureError': 'The analysis could not be completed.',
-      'aiInsightsSummarySectionLabel': 'Market summary',
-      'aiInsightsProjectionSectionLabel': 'Projection',
-      'aiInsightsInsightsSectionLabel': 'Insights',
-      'aiInsightsModelSectionLabel': 'Local model',
-      'aiInsightsLastPriceLabel': 'Latest quote',
-      'aiInsightsWeeklyChangeLabel': '7-day change',
-      'aiInsightsMonthlyChangeLabel': '30-day change',
-      'aiInsightsVolatilityLabel': 'Annualised volatility',
-      'aiInsightsRsiLabel': 'Momentum (RSI 14)',
-      'aiInsightsDrawdownLabel': 'Largest drop',
-      'aiInsightsTrendLabel': 'Annualised trend',
-      'aiInsightsTrendFitLabel': 'Trend fit (R²)',
-      'aiInsightsProjectedPriceLabel': 'Projected quote in %s days',
-      'aiInsightsProjectedChangeLabel': 'Projected change',
-      'aiInsightsConfidenceBandLabel': 'Range at %s confidence',
-      'aiInsightsAmountProjectionLabel': 'Simulated amount',
-      'aiInsightsAmountProjectionHint': '%s invested today',
-      'aiInsightsModelSamplesLabel': 'Training windows',
-      'aiInsightsModelSkillLabel': 'Edge over random walk',
-      'aiInsightsModelEpochsLabel': 'Epochs',
-      'aiInsightsModelUntrainedLabel':
-          'Short history: the projection uses the statistical baseline only.',
-      'aiInsightsDisclaimerLabel': 'Estimates calculated on your device from '
-          'past quotes. Not investment advice.',
-      'aiInsightsChartHistoryLabel': 'History',
-      'aiInsightsChartProjectionLabel': 'Projection',
-      'aiInsightTrendUp': 'Uptrend: %s over the last %s days.',
-      'aiInsightTrendDown': 'Downtrend: %s over the last %s days.',
-      'aiInsightTrendSideways': 'No clear trend: %s over the last %s days.',
-      'aiInsightMomentumOverbought':
-          'Stretched momentum: RSI at %s, in overbought territory.',
-      'aiInsightMomentumOversold':
-          'Pressured momentum: RSI at %s, in oversold territory.',
-      'aiInsightMomentumNeutral': 'Balanced momentum: RSI at %s.',
-      'aiInsightVolatilityHigh':
-          'High volatility: %s a year, so the projection carries a wide range.',
-      'aiInsightVolatilityLow': 'Low volatility: %s a year.',
+      'aiInsightsSummarySectionLabel': 'How it has been going',
+      'aiInsightsProjectionSectionLabel': 'What may come next',
+      'aiInsightsInsightsSectionLabel': 'What this means',
+      'aiInsightsModelSectionLabel': 'How much to trust this',
+      'aiInsightsLastPriceLabel': 'Price today',
+      'aiInsightsWeeklyChangeLabel': 'Last 7 days',
+      'aiInsightsMonthlyChangeLabel': 'Last 30 days',
+      'aiInsightsVolatilityLabel': 'How much it swings',
+      'aiInsightsVolatilityHint': 'over a year; the bigger, the bumpier',
+      'aiInsightsRsiLabel': 'Recent strength',
+      'aiInsightsRsiHint':
+          'from 0 to 100; over 70 is pricey, under 30 is cheap',
+      'aiInsightsDrawdownLabel': 'Biggest fall from a peak',
+      'aiInsightsTrendLabel': 'Pace over a year',
+      'aiInsightsTrendFitLabel': 'How steady that pace is',
+      'aiInsightsTrendFitHint':
+          'from 0 to 1; the bigger, the straighter the line',
+      'aiInsightsProjectedPriceLabel': 'Price in %s days',
+      'aiInsightsProjectedChangeLabel': 'Difference from today',
+      'aiInsightsConfidenceBandLabel': 'Likely range (%s of the time)',
+      'aiInsightsAmountProjectionLabel': 'What you would have',
+      'aiInsightsAmountProjectionHint': 'putting in %s today',
+      'aiInsightsModelSamplesLabel': 'Examples studied',
+      'aiInsightsModelSkillLabel': 'Better than a plain guess',
+      'aiInsightsModelSkillHint': 'zero means it added nothing',
+      'aiInsightsModelEpochsLabel': 'Practice rounds',
+      'aiInsightsModelUntrainedLabel': 'There is little history here, so what '
+          'you see is a simple estimate from the past quotes.',
+      'aiInsightsDisclaimerLabel': 'These are estimates worked out on your '
+          'phone from past prices. Nobody can know the future, so do not take '
+          'them as investment advice.',
+      'aiInsightsChartHistoryLabel': 'So far',
+      'aiInsightsChartProjectionLabel': 'What may come',
+      'aiInsightTrendUp': 'It has been going up: %s in the last %s days.',
+      'aiInsightTrendDown': 'It has been going down: %s in the last %s days.',
+      'aiInsightTrendSideways':
+          'It has been holding steady: %s in the last %s days.',
+      'aiInsightMomentumOverbought': 'It has climbed fast lately and may be '
+          'getting expensive (strength at %s out of 100).',
+      'aiInsightMomentumOversold': 'It has dropped fast lately and may be '
+          'getting cheap (strength at %s out of 100).',
+      'aiInsightMomentumNeutral':
+          'Rises and falls are balanced right now (strength at %s out of 100).',
+      'aiInsightVolatilityHigh': 'The price moves a lot (%s over a year), so '
+          'what comes next is harder to pin down.',
+      'aiInsightVolatilityLow': 'The price moves little (%s over a year), so '
+          'big surprises are less likely.',
       'aiInsightProjectionUp':
-          'The model projects a %s rise in %s days, to %s.',
+          'The app expects a rise of %s in %s days, to around %s.',
       'aiInsightProjectionDown':
-          'The model projects a %s drop in %s days, to %s.',
+          'The app expects a fall of %s in %s days, to around %s.',
       'aiInsightProjectionStable':
-          'The model projects stability over %s days, around %s.',
+          'The app expects little change in %s days, staying around %s.',
       'aiInsightDrawdown':
-          'The asset fell %s from its peak in the analysed period.',
-      'aiInsightConfidenceGood':
-          'The network beat the random walk by %s in validation.',
-      'aiInsightConfidenceLow': 'The network did not beat the random walk on '
-          'this history, so the projection follows the statistical baseline.',
-      'aiInsightDataLimited': 'Short history (%s windows): the projection uses '
-          'the statistical baseline only.',
+          'At its worst it lost %s from the highest price of the period.',
+      'aiInsightConfidenceGood': 'In testing, the app came %s closer to the '
+          'real prices than a plain guess.',
+      'aiInsightConfidenceLow': 'In testing, the app did no better than a '
+          'plain guess, so read what comes next with care.',
+      'aiInsightDataLimited': 'There is little history here (%s examples), so '
+          'what comes next is a simple estimate.',
     },
     'pt': {
       'conversionButtonLabel': "Conversões",
@@ -430,74 +441,84 @@ class MyAppLocalizations {
       'notificationPermissionGrantedLabel': 'Notificações ativadas',
       'notificationPermissionRefusedLabel': 'Notificações não ativadas',
       'aiInsightsBottomNavItemLabel': 'IA',
-      'aiInsightsSectionLabel': 'Insights com IA no aparelho',
-      'aiInsightsDescription': 'Uma rede neural pequena é treinada neste '
-          'aparelho, sobre as cotações que o app já baixou, para resumir o '
-          'mercado e projetar os próximos dias. Nenhum dado sai do seu celular.',
+      'aiInsightsSectionLabel': 'Análise com IA no seu aparelho',
+      'aiInsightsDescription': 'O app olha as cotações que já baixou para '
+          'mostrar como o ativo vem se comportando e o que pode vir pela '
+          'frente. Tudo é calculado no seu celular, e nada é enviado para '
+          'lugar nenhum.',
       'aiInsightsAssetLabel': 'Ativo',
       'aiInsightsAssetPickerTitle': 'Escolha o ativo',
       'aiInsightsAssetNotFoundLabel': 'Nenhum ativo encontrado',
-      'aiInsightsHorizonLabel': 'Horizonte da projeção',
+      'aiInsightsHorizonLabel': 'Até quando olhar',
       'aiInsightsHorizonOptionLabel': '%s dias',
-      'aiInsightsAmountLabel': 'Valor para simular (opcional)',
-      'aiInsightsAnalyzeBtnLabel': 'Analisar no aparelho',
-      'aiInsightsRunningLabel': 'Treinando o modelo local…',
-      'aiInsightsEmptyLabel': 'Escolha um ativo e rode a análise.',
+      'aiInsightsAmountLabel': 'Quanto você aplicaria (opcional)',
+      'aiInsightsAnalyzeBtnLabel': 'Analisar',
+      'aiInsightsRunningLabel': 'Olhando as cotações…',
+      'aiInsightsEmptyLabel': 'Escolha um ativo e toque em Analisar.',
       'aiInsightsNoDataError': 'Nenhuma cotação encontrada para este ativo.',
       'aiInsightsInsufficientDataError':
-          'Histórico insuficiente para analisar este ativo.',
+          'Ainda não há cotações passadas suficientes para este ativo.',
       'aiInsightsFailureError': 'Não foi possível concluir a análise.',
-      'aiInsightsSummarySectionLabel': 'Resumo do mercado',
-      'aiInsightsProjectionSectionLabel': 'Projeção',
-      'aiInsightsInsightsSectionLabel': 'Insights',
-      'aiInsightsModelSectionLabel': 'Modelo local',
-      'aiInsightsLastPriceLabel': 'Cotação atual',
-      'aiInsightsWeeklyChangeLabel': 'Variação em 7 dias',
-      'aiInsightsMonthlyChangeLabel': 'Variação em 30 dias',
-      'aiInsightsVolatilityLabel': 'Volatilidade anualizada',
-      'aiInsightsRsiLabel': 'Momento (IFR 14)',
-      'aiInsightsDrawdownLabel': 'Maior queda',
-      'aiInsightsTrendLabel': 'Tendência anualizada',
-      'aiInsightsTrendFitLabel': 'Aderência da tendência (R²)',
-      'aiInsightsProjectedPriceLabel': 'Cotação projetada em %s dias',
-      'aiInsightsProjectedChangeLabel': 'Variação projetada',
-      'aiInsightsConfidenceBandLabel': 'Faixa com %s de confiança',
-      'aiInsightsAmountProjectionLabel': 'Valor simulado',
-      'aiInsightsAmountProjectionHint': '%s aplicados hoje',
-      'aiInsightsModelSamplesLabel': 'Janelas de treino',
-      'aiInsightsModelSkillLabel': 'Vantagem sobre o passeio aleatório',
-      'aiInsightsModelEpochsLabel': 'Épocas',
-      'aiInsightsModelUntrainedLabel':
-          'Histórico curto: a projeção usa apenas a base estatística.',
-      'aiInsightsDisclaimerLabel': 'Estimativas calculadas no seu aparelho a '
-          'partir de cotações passadas. Não é recomendação de investimento.',
-      'aiInsightsChartHistoryLabel': 'Histórico',
-      'aiInsightsChartProjectionLabel': 'Projeção',
-      'aiInsightTrendUp': 'Tendência de alta: %s nos últimos %s dias.',
-      'aiInsightTrendDown': 'Tendência de baixa: %s nos últimos %s dias.',
-      'aiInsightTrendSideways':
-          'Sem tendência definida: %s nos últimos %s dias.',
-      'aiInsightMomentumOverbought':
-          'Momento esticado: IFR em %s, na faixa de sobrecompra.',
-      'aiInsightMomentumOversold':
-          'Momento pressionado: IFR em %s, na faixa de sobrevenda.',
-      'aiInsightMomentumNeutral': 'Momento equilibrado: IFR em %s.',
-      'aiInsightVolatilityHigh':
-          'Volatilidade alta: %s ao ano, então a projeção tem faixa larga.',
-      'aiInsightVolatilityLow': 'Volatilidade baixa: %s ao ano.',
+      'aiInsightsSummarySectionLabel': 'Como vem se comportando',
+      'aiInsightsProjectionSectionLabel': 'O que pode vir pela frente',
+      'aiInsightsInsightsSectionLabel': 'O que isso quer dizer',
+      'aiInsightsModelSectionLabel': 'O quanto confiar nisso',
+      'aiInsightsLastPriceLabel': 'Preço hoje',
+      'aiInsightsWeeklyChangeLabel': 'Últimos 7 dias',
+      'aiInsightsMonthlyChangeLabel': 'Últimos 30 dias',
+      'aiInsightsVolatilityLabel': 'O quanto balança',
+      'aiInsightsVolatilityHint': 'no ano; quanto maior, mais sobe e desce',
+      'aiInsightsRsiLabel': 'Força recente',
+      'aiInsightsRsiHint':
+          'de 0 a 100; acima de 70 está caro, abaixo de 30 está barato',
+      'aiInsightsDrawdownLabel': 'Maior queda a partir de um topo',
+      'aiInsightsTrendLabel': 'Ritmo no ano',
+      'aiInsightsTrendFitLabel': 'O quanto esse ritmo é firme',
+      'aiInsightsTrendFitHint':
+          'de 0 a 1; quanto maior, mais parecido com uma reta',
+      'aiInsightsProjectedPriceLabel': 'Preço em %s dias',
+      'aiInsightsProjectedChangeLabel': 'Diferença para hoje',
+      'aiInsightsConfidenceBandLabel': 'Faixa provável (%s das vezes)',
+      'aiInsightsAmountProjectionLabel': 'Quanto você teria',
+      'aiInsightsAmountProjectionHint': 'aplicando %s hoje',
+      'aiInsightsModelSamplesLabel': 'Exemplos estudados',
+      'aiInsightsModelSkillLabel': 'Melhor que um palpite simples',
+      'aiInsightsModelSkillHint': 'zero quer dizer que não acrescentou nada',
+      'aiInsightsModelEpochsLabel': 'Rodadas de treino',
+      'aiInsightsModelUntrainedLabel': 'Há pouco histórico aqui, então o que '
+          'aparece é uma estimativa simples das cotações passadas.',
+      'aiInsightsDisclaimerLabel': 'São estimativas calculadas no seu aparelho '
+          'a partir de preços passados. Ninguém consegue saber o futuro, então '
+          'não tome isso como recomendação de investimento.',
+      'aiInsightsChartHistoryLabel': 'Até agora',
+      'aiInsightsChartProjectionLabel': 'O que pode vir',
+      'aiInsightTrendUp': 'Vem subindo: %s nos últimos %s dias.',
+      'aiInsightTrendDown': 'Vem caindo: %s nos últimos %s dias.',
+      'aiInsightTrendSideways': 'Vem se mantendo: %s nos últimos %s dias.',
+      'aiInsightMomentumOverbought': 'Subiu rápido nos últimos dias e pode '
+          'estar ficando caro (força em %s de 100).',
+      'aiInsightMomentumOversold': 'Caiu rápido nos últimos dias e pode estar '
+          'ficando barato (força em %s de 100).',
+      'aiInsightMomentumNeutral':
+          'Altas e quedas estão equilibradas no momento (força em %s de 100).',
+      'aiInsightVolatilityHigh': 'O preço balança bastante (%s no ano), então '
+          'o que vem pela frente é mais difícil de cravar.',
+      'aiInsightVolatilityLow': 'O preço balança pouco (%s no ano), então '
+          'grandes surpresas são menos prováveis.',
       'aiInsightProjectionUp':
-          'O modelo projeta alta de %s em %s dias, para %s.',
+          'O app espera alta de %s em %s dias, para perto de %s.',
       'aiInsightProjectionDown':
-          'O modelo projeta queda de %s em %s dias, para %s.',
+          'O app espera queda de %s em %s dias, para perto de %s.',
       'aiInsightProjectionStable':
-          'O modelo projeta estabilidade em %s dias, em torno de %s.',
-      'aiInsightDrawdown': 'O ativo caiu %s do topo no período analisado.',
-      'aiInsightConfidenceGood':
-          'A rede superou o passeio aleatório em %s na validação.',
-      'aiInsightConfidenceLow': 'A rede não superou o passeio aleatório neste '
-          'histórico, então a projeção segue a base estatística.',
-      'aiInsightDataLimited': 'Histórico curto (%s janelas): a projeção usa '
-          'apenas a base estatística.',
+          'O app espera pouca mudança em %s dias, em torno de %s.',
+      'aiInsightDrawdown':
+          'No pior momento, chegou a perder %s do preço mais alto do período.',
+      'aiInsightConfidenceGood': 'Nos testes, o app chegou %s mais perto dos '
+          'preços reais do que um palpite simples.',
+      'aiInsightConfidenceLow': 'Nos testes, o app não foi melhor que um '
+          'palpite simples, então olhe o que vem pela frente com cautela.',
+      'aiInsightDataLimited': 'Há pouco histórico aqui (%s exemplos), então o '
+          'que vem pela frente é uma estimativa simples.',
     },
     // O espanhol da Espanha. A diferença para o de baixo é de vocabulário —
     // "ajustes" e "móvil" aqui, "configuración" e "celular" lá — e do tempo
@@ -613,78 +634,86 @@ class MyAppLocalizations {
       'notificationPermissionGrantedLabel': 'Notificaciones activadas',
       'notificationPermissionRefusedLabel': 'Notificaciones no activadas',
       'aiInsightsBottomNavItemLabel': 'IA',
-      'aiInsightsSectionLabel': 'Análisis con IA en el dispositivo',
-      'aiInsightsDescription': 'Una red neuronal pequeña se entrena en este '
-          'dispositivo, con las cotizaciones que la aplicación ya ha '
-          'descargado, para resumir el mercado y proyectar los próximos días. '
-          'Ningún dato sale de tu móvil.',
+      'aiInsightsSectionLabel': 'Análisis con IA en tu móvil',
+      'aiInsightsDescription': 'La app repasa las cotizaciones que ya ha '
+          'descargado para enseñarte cómo se ha comportado el activo y qué '
+          'puede venir. Todo se calcula en tu móvil, y no se envía nada a '
+          'ninguna parte.',
       'aiInsightsAssetLabel': 'Activo',
       'aiInsightsAssetPickerTitle': 'Elige un activo',
       'aiInsightsAssetNotFoundLabel': 'No se ha encontrado ningún activo',
-      'aiInsightsHorizonLabel': 'Horizonte de la proyección',
+      'aiInsightsHorizonLabel': 'Hasta cuándo mirar',
       'aiInsightsHorizonOptionLabel': '%s días',
-      'aiInsightsAmountLabel': 'Importe a simular (opcional)',
-      'aiInsightsAnalyzeBtnLabel': 'Analizar en el dispositivo',
-      'aiInsightsRunningLabel': 'Entrenando el modelo local…',
-      'aiInsightsEmptyLabel': 'Elige un activo y ejecuta el análisis.',
+      'aiInsightsAmountLabel': 'Cuánto invertirías (opcional)',
+      'aiInsightsAnalyzeBtnLabel': 'Analizar',
+      'aiInsightsRunningLabel': 'Repasando las cotizaciones…',
+      'aiInsightsEmptyLabel': 'Elige un activo y pulsa Analizar.',
       'aiInsightsNoDataError':
-          'No se han encontrado cotizaciones para este activo.',
+          'No se ha encontrado ninguna cotización de este activo.',
       'aiInsightsInsufficientDataError':
-          'No hay histórico suficiente para analizar este activo.',
+          'Todavía no hay suficientes cotizaciones pasadas de este activo.',
       'aiInsightsFailureError': 'No se ha podido completar el análisis.',
-      'aiInsightsSummarySectionLabel': 'Resumen del mercado',
-      'aiInsightsProjectionSectionLabel': 'Proyección',
-      'aiInsightsInsightsSectionLabel': 'Conclusiones',
-      'aiInsightsModelSectionLabel': 'Modelo local',
-      'aiInsightsLastPriceLabel': 'Cotización actual',
-      'aiInsightsWeeklyChangeLabel': 'Variación en 7 días',
-      'aiInsightsMonthlyChangeLabel': 'Variación en 30 días',
-      'aiInsightsVolatilityLabel': 'Volatilidad anualizada',
-      'aiInsightsRsiLabel': 'Momento (RSI 14)',
-      'aiInsightsDrawdownLabel': 'Mayor caída',
-      'aiInsightsTrendLabel': 'Tendencia anualizada',
-      'aiInsightsTrendFitLabel': 'Ajuste de la tendencia (R²)',
-      'aiInsightsProjectedPriceLabel': 'Cotización proyectada en %s días',
-      'aiInsightsProjectedChangeLabel': 'Variación proyectada',
-      'aiInsightsConfidenceBandLabel': 'Rango con %s de confianza',
-      'aiInsightsAmountProjectionLabel': 'Importe simulado',
-      'aiInsightsAmountProjectionHint': '%s invertidos hoy',
-      'aiInsightsModelSamplesLabel': 'Ventanas de entrenamiento',
-      'aiInsightsModelSkillLabel': 'Ventaja sobre el paseo aleatorio',
-      'aiInsightsModelEpochsLabel': 'Épocas',
-      'aiInsightsModelUntrainedLabel':
-          'Histórico corto: la proyección usa solo la base estadística.',
-      'aiInsightsDisclaimerLabel': 'Estimaciones calculadas en tu dispositivo '
-          'a partir de cotizaciones pasadas. No son una recomendación de '
-          'inversión.',
-      'aiInsightsChartHistoryLabel': 'Histórico',
-      'aiInsightsChartProjectionLabel': 'Proyección',
-      'aiInsightTrendUp': 'Tendencia alcista: %s en los últimos %s días.',
-      'aiInsightTrendDown': 'Tendencia bajista: %s en los últimos %s días.',
-      'aiInsightTrendSideways':
-          'Sin tendencia definida: %s en los últimos %s días.',
-      'aiInsightMomentumOverbought':
-          'Momento estirado: RSI en %s, en zona de sobrecompra.',
-      'aiInsightMomentumOversold':
-          'Momento presionado: RSI en %s, en zona de sobreventa.',
-      'aiInsightMomentumNeutral': 'Momento equilibrado: RSI en %s.',
-      'aiInsightVolatilityHigh': 'Volatilidad alta: %s al año, así que la '
-          'proyección tiene un rango amplio.',
-      'aiInsightVolatilityLow': 'Volatilidad baja: %s al año.',
+      'aiInsightsSummarySectionLabel': 'Cómo se ha comportado',
+      'aiInsightsProjectionSectionLabel': 'Qué puede venir',
+      'aiInsightsInsightsSectionLabel': 'Qué significa esto',
+      'aiInsightsModelSectionLabel': 'Cuánto fiarte de esto',
+      'aiInsightsLastPriceLabel': 'Precio de hoy',
+      'aiInsightsWeeklyChangeLabel': 'Últimos 7 días',
+      'aiInsightsMonthlyChangeLabel': 'Últimos 30 días',
+      'aiInsightsVolatilityLabel': 'Cuánto se mueve',
+      'aiInsightsVolatilityHint': 'en un año; cuanto mayor, más sube y baja',
+      'aiInsightsRsiLabel': 'Fuerza reciente',
+      'aiInsightsRsiHint': 'de 0 a 100; por encima de 70 está caro, por debajo '
+          'de 30 está barato',
+      'aiInsightsDrawdownLabel': 'Mayor caída desde un máximo',
+      'aiInsightsTrendLabel': 'Ritmo en un año',
+      'aiInsightsTrendFitLabel': 'Cuán firme es ese ritmo',
+      'aiInsightsTrendFitHint':
+          'de 0 a 1; cuanto mayor, más se parece a una recta',
+      'aiInsightsProjectedPriceLabel': 'Precio en %s días',
+      'aiInsightsProjectedChangeLabel': 'Diferencia con hoy',
+      'aiInsightsConfidenceBandLabel': 'Rango probable (%s de las veces)',
+      'aiInsightsAmountProjectionLabel': 'Cuánto tendrías',
+      'aiInsightsAmountProjectionHint': 'invirtiendo %s hoy',
+      'aiInsightsModelSamplesLabel': 'Ejemplos estudiados',
+      'aiInsightsModelSkillLabel': 'Mejor que una simple corazonada',
+      'aiInsightsModelSkillHint': 'cero significa que no ha aportado nada',
+      'aiInsightsModelEpochsLabel': 'Rondas de práctica',
+      'aiInsightsModelUntrainedLabel': 'Hay poco histórico aquí, así que lo '
+          'que ves es una estimación sencilla a partir de las cotizaciones '
+          'pasadas.',
+      'aiInsightsDisclaimerLabel': 'Son estimaciones calculadas en tu móvil a '
+          'partir de precios pasados. Nadie puede saber el futuro, así que no '
+          'lo tomes como una recomendación de inversión.',
+      'aiInsightsChartHistoryLabel': 'Hasta ahora',
+      'aiInsightsChartProjectionLabel': 'Lo que puede venir',
+      'aiInsightTrendUp': 'Viene subiendo: %s en los últimos %s días.',
+      'aiInsightTrendDown': 'Viene bajando: %s en los últimos %s días.',
+      'aiInsightTrendSideways': 'Se ha mantenido: %s en los últimos %s días.',
+      'aiInsightMomentumOverbought': 'Ha subido rápido estos días y puede '
+          'estar poniéndose caro (fuerza en %s de 100).',
+      'aiInsightMomentumOversold': 'Ha bajado rápido estos días y puede estar '
+          'poniéndose barato (fuerza en %s de 100).',
+      'aiInsightMomentumNeutral': 'Subidas y bajadas están equilibradas ahora '
+          'mismo (fuerza en %s de 100).',
+      'aiInsightVolatilityHigh': 'El precio se mueve bastante (%s en un año), '
+          'así que lo que viene es más difícil de precisar.',
+      'aiInsightVolatilityLow': 'El precio se mueve poco (%s en un año), así '
+          'que las sorpresas grandes son menos probables.',
       'aiInsightProjectionUp':
-          'El modelo proyecta una subida del %s en %s días, hasta %s.',
+          'La app espera una subida de %s en %s días, hasta cerca de %s.',
       'aiInsightProjectionDown':
-          'El modelo proyecta una bajada del %s en %s días, hasta %s.',
+          'La app espera una bajada de %s en %s días, hasta cerca de %s.',
       'aiInsightProjectionStable':
-          'El modelo proyecta estabilidad en %s días, en torno a %s.',
-      'aiInsightDrawdown':
-          'El activo cayó un %s desde su máximo en el periodo analizado.',
-      'aiInsightConfidenceGood':
-          'La red superó al paseo aleatorio en un %s en la validación.',
-      'aiInsightConfidenceLow': 'La red no superó al paseo aleatorio con este '
-          'histórico, así que la proyección sigue la base estadística.',
-      'aiInsightDataLimited': 'Histórico corto (%s ventanas): la proyección '
-          'usa solo la base estadística.',
+          'La app espera pocos cambios en %s días, alrededor de %s.',
+      'aiInsightDrawdown': 'En su peor momento llegó a perder %s desde el '
+          'precio más alto del período.',
+      'aiInsightConfidenceGood': 'En las pruebas, la app se acercó %s más a '
+          'los precios reales que una simple corazonada.',
+      'aiInsightConfidenceLow': 'En las pruebas, la app no lo ha hecho mejor '
+          'que una simple corazonada, así que mira lo que viene con cautela.',
+      'aiInsightDataLimited': 'Hay poco histórico aquí (%s ejemplos), así que '
+          'lo que viene es una estimación sencilla.',
     },
     // O espanhol da América Latina, o es-419 do CLDR: uma tradução só para as
     // Américas, já que as diferenças entre os países de lá são menores do que
@@ -802,78 +831,85 @@ class MyAppLocalizations {
       'notificationPermissionGrantedLabel': 'Notificaciones activadas',
       'notificationPermissionRefusedLabel': 'Notificaciones no activadas',
       'aiInsightsBottomNavItemLabel': 'IA',
-      'aiInsightsSectionLabel': 'Análisis con IA en el dispositivo',
-      'aiInsightsDescription': 'Una red neuronal pequeña se entrena en este '
-          'dispositivo, con las cotizaciones que la aplicación ya descargó, '
-          'para resumir el mercado y proyectar los próximos días. Ningún dato '
-          'sale de tu celular.',
+      'aiInsightsSectionLabel': 'Análisis con IA en tu celular',
+      'aiInsightsDescription': 'La app repasa las cotizaciones que ya descargó '
+          'para mostrarte cómo se comportó el activo y qué puede venir. Todo '
+          'se calcula en tu celular, y no se envía nada a ninguna parte.',
       'aiInsightsAssetLabel': 'Activo',
       'aiInsightsAssetPickerTitle': 'Selecciona un activo',
       'aiInsightsAssetNotFoundLabel': 'No se encontró ningún activo',
-      'aiInsightsHorizonLabel': 'Horizonte de la proyección',
+      'aiInsightsHorizonLabel': 'Hasta cuándo mirar',
       'aiInsightsHorizonOptionLabel': '%s días',
-      'aiInsightsAmountLabel': 'Monto para simular (opcional)',
-      'aiInsightsAnalyzeBtnLabel': 'Analizar en el dispositivo',
-      'aiInsightsRunningLabel': 'Entrenando el modelo local…',
-      'aiInsightsEmptyLabel': 'Selecciona un activo y ejecuta el análisis.',
+      'aiInsightsAmountLabel': 'Cuánto invertirías (opcional)',
+      'aiInsightsAnalyzeBtnLabel': 'Analizar',
+      'aiInsightsRunningLabel': 'Repasando las cotizaciones…',
+      'aiInsightsEmptyLabel': 'Selecciona un activo y toca Analizar.',
       'aiInsightsNoDataError':
-          'No se encontraron cotizaciones para este activo.',
+          'No se encontró ninguna cotización de este activo.',
       'aiInsightsInsufficientDataError':
-          'No hay historial suficiente para analizar este activo.',
+          'Todavía no hay suficientes cotizaciones pasadas de este activo.',
       'aiInsightsFailureError': 'No se pudo completar el análisis.',
-      'aiInsightsSummarySectionLabel': 'Resumen del mercado',
-      'aiInsightsProjectionSectionLabel': 'Proyección',
-      'aiInsightsInsightsSectionLabel': 'Conclusiones',
-      'aiInsightsModelSectionLabel': 'Modelo local',
-      'aiInsightsLastPriceLabel': 'Cotización actual',
-      'aiInsightsWeeklyChangeLabel': 'Variación en 7 días',
-      'aiInsightsMonthlyChangeLabel': 'Variación en 30 días',
-      'aiInsightsVolatilityLabel': 'Volatilidad anualizada',
-      'aiInsightsRsiLabel': 'Momento (RSI 14)',
-      'aiInsightsDrawdownLabel': 'Mayor caída',
-      'aiInsightsTrendLabel': 'Tendencia anualizada',
-      'aiInsightsTrendFitLabel': 'Ajuste de la tendencia (R²)',
-      'aiInsightsProjectedPriceLabel': 'Cotización proyectada en %s días',
-      'aiInsightsProjectedChangeLabel': 'Variación proyectada',
-      'aiInsightsConfidenceBandLabel': 'Rango con %s de confianza',
-      'aiInsightsAmountProjectionLabel': 'Monto simulado',
-      'aiInsightsAmountProjectionHint': '%s invertidos hoy',
-      'aiInsightsModelSamplesLabel': 'Ventanas de entrenamiento',
-      'aiInsightsModelSkillLabel': 'Ventaja sobre la caminata aleatoria',
-      'aiInsightsModelEpochsLabel': 'Épocas',
-      'aiInsightsModelUntrainedLabel':
-          'Historial corto: la proyección usa solo la base estadística.',
-      'aiInsightsDisclaimerLabel': 'Estimaciones calculadas en tu dispositivo '
-          'a partir de cotizaciones pasadas. No son una recomendación de '
-          'inversión.',
-      'aiInsightsChartHistoryLabel': 'Historial',
-      'aiInsightsChartProjectionLabel': 'Proyección',
-      'aiInsightTrendUp': 'Tendencia alcista: %s en los últimos %s días.',
-      'aiInsightTrendDown': 'Tendencia bajista: %s en los últimos %s días.',
-      'aiInsightTrendSideways':
-          'Sin tendencia definida: %s en los últimos %s días.',
-      'aiInsightMomentumOverbought':
-          'Momento estirado: RSI en %s, en zona de sobrecompra.',
-      'aiInsightMomentumOversold':
-          'Momento presionado: RSI en %s, en zona de sobreventa.',
-      'aiInsightMomentumNeutral': 'Momento equilibrado: RSI en %s.',
-      'aiInsightVolatilityHigh': 'Volatilidad alta: %s al año, así que la '
-          'proyección tiene un rango amplio.',
-      'aiInsightVolatilityLow': 'Volatilidad baja: %s al año.',
+      'aiInsightsSummarySectionLabel': 'Cómo se comportó',
+      'aiInsightsProjectionSectionLabel': 'Qué puede venir',
+      'aiInsightsInsightsSectionLabel': 'Qué significa esto',
+      'aiInsightsModelSectionLabel': 'Cuánto confiar en esto',
+      'aiInsightsLastPriceLabel': 'Precio de hoy',
+      'aiInsightsWeeklyChangeLabel': 'Últimos 7 días',
+      'aiInsightsMonthlyChangeLabel': 'Últimos 30 días',
+      'aiInsightsVolatilityLabel': 'Cuánto se mueve',
+      'aiInsightsVolatilityHint': 'en un año; cuanto mayor, más sube y baja',
+      'aiInsightsRsiLabel': 'Fuerza reciente',
+      'aiInsightsRsiHint':
+          'de 0 a 100; arriba de 70 está caro, abajo de 30 está barato',
+      'aiInsightsDrawdownLabel': 'Mayor caída desde un máximo',
+      'aiInsightsTrendLabel': 'Ritmo en un año',
+      'aiInsightsTrendFitLabel': 'Qué tan firme es ese ritmo',
+      'aiInsightsTrendFitHint':
+          'de 0 a 1; cuanto mayor, más se parece a una recta',
+      'aiInsightsProjectedPriceLabel': 'Precio en %s días',
+      'aiInsightsProjectedChangeLabel': 'Diferencia con hoy',
+      'aiInsightsConfidenceBandLabel': 'Rango probable (%s de las veces)',
+      'aiInsightsAmountProjectionLabel': 'Cuánto tendrías',
+      'aiInsightsAmountProjectionHint': 'invirtiendo %s hoy',
+      'aiInsightsModelSamplesLabel': 'Ejemplos estudiados',
+      'aiInsightsModelSkillLabel': 'Mejor que una simple corazonada',
+      'aiInsightsModelSkillHint': 'cero significa que no aportó nada',
+      'aiInsightsModelEpochsLabel': 'Rondas de práctica',
+      'aiInsightsModelUntrainedLabel': 'Hay poco historial aquí, así que lo '
+          'que ves es una estimación sencilla a partir de las cotizaciones '
+          'pasadas.',
+      'aiInsightsDisclaimerLabel': 'Son estimaciones calculadas en tu celular '
+          'a partir de precios pasados. Nadie puede saber el futuro, así que '
+          'no lo tomes como una recomendación de inversión.',
+      'aiInsightsChartHistoryLabel': 'Hasta ahora',
+      'aiInsightsChartProjectionLabel': 'Lo que puede venir',
+      'aiInsightTrendUp': 'Viene subiendo: %s en los últimos %s días.',
+      'aiInsightTrendDown': 'Viene bajando: %s en los últimos %s días.',
+      'aiInsightTrendSideways': 'Se mantuvo: %s en los últimos %s días.',
+      'aiInsightMomentumOverbought': 'Subió rápido estos días y puede estar '
+          'poniéndose caro (fuerza en %s de 100).',
+      'aiInsightMomentumOversold': 'Bajó rápido estos días y puede estar '
+          'poniéndose barato (fuerza en %s de 100).',
+      'aiInsightMomentumNeutral': 'Subidas y bajadas están equilibradas en '
+          'este momento (fuerza en %s de 100).',
+      'aiInsightVolatilityHigh': 'El precio se mueve bastante (%s en un año), '
+          'así que lo que viene es más difícil de precisar.',
+      'aiInsightVolatilityLow': 'El precio se mueve poco (%s en un año), así '
+          'que las sorpresas grandes son menos probables.',
       'aiInsightProjectionUp':
-          'El modelo proyecta un alza de %s en %s días, hasta %s.',
+          'La app espera una subida de %s en %s días, hasta cerca de %s.',
       'aiInsightProjectionDown':
-          'El modelo proyecta una baja de %s en %s días, hasta %s.',
+          'La app espera una baja de %s en %s días, hasta cerca de %s.',
       'aiInsightProjectionStable':
-          'El modelo proyecta estabilidad en %s días, alrededor de %s.',
-      'aiInsightDrawdown':
-          'El activo cayó %s desde su máximo en el período analizado.',
-      'aiInsightConfidenceGood':
-          'La red superó a la caminata aleatoria en %s en la validación.',
-      'aiInsightConfidenceLow': 'La red no superó a la caminata aleatoria con '
-          'este historial, así que la proyección sigue la base estadística.',
-      'aiInsightDataLimited': 'Historial corto (%s ventanas): la proyección '
-          'usa solo la base estadística.',
+          'La app espera pocos cambios en %s días, alrededor de %s.',
+      'aiInsightDrawdown': 'En su peor momento llegó a perder %s desde el '
+          'precio más alto del período.',
+      'aiInsightConfidenceGood': 'En las pruebas, la app se acercó %s más a '
+          'los precios reales que una simple corazonada.',
+      'aiInsightConfidenceLow': 'En las pruebas, la app no lo hizo mejor que '
+          'una simple corazonada, así que mira lo que viene con cuidado.',
+      'aiInsightDataLimited': 'Hay poco historial aquí (%s ejemplos), así que '
+          'lo que viene es una estimación sencilla.',
     }
   };
 
@@ -1334,8 +1370,19 @@ class MyAppLocalizations {
     return _values['aiInsightsVolatilityLabel'];
   }
 
+  /// Dica embaixo do número: em que prazo a oscilação foi medida.
+  String? get aiInsightsVolatilityHint {
+    return _values['aiInsightsVolatilityHint'];
+  }
+
   String? get aiInsightsRsiLabel {
     return _values['aiInsightsRsiLabel'];
+  }
+
+  /// Dica embaixo do número: a escala da força recente e o que é caro
+  /// ou barato dentro dela.
+  String? get aiInsightsRsiHint {
+    return _values['aiInsightsRsiHint'];
   }
 
   String? get aiInsightsDrawdownLabel {
@@ -1348,6 +1395,12 @@ class MyAppLocalizations {
 
   String? get aiInsightsTrendFitLabel {
     return _values['aiInsightsTrendFitLabel'];
+  }
+
+  /// Dica embaixo do número: a escala em que o ritmo é firme ou
+  /// irregular.
+  String? get aiInsightsTrendFitHint {
+    return _values['aiInsightsTrendFitHint'];
   }
 
   String? get aiInsightsProjectedPriceLabel {
@@ -1376,6 +1429,11 @@ class MyAppLocalizations {
 
   String? get aiInsightsModelSkillLabel {
     return _values['aiInsightsModelSkillLabel'];
+  }
+
+  /// Dica embaixo do número: o que a ausência de vantagem quer dizer.
+  String? get aiInsightsModelSkillHint {
+    return _values['aiInsightsModelSkillHint'];
   }
 
   String? get aiInsightsModelEpochsLabel {
