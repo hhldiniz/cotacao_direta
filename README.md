@@ -432,6 +432,35 @@ O último passo do workflow roda o `apksigner verify --print-certs` e mostra a
 impressão digital do certificado que assinou o APK — é por ela que se confere
 qual chave foi usada.
 
+## Créditos de terceiros
+
+As licenças das dependências — MIT, BSD de duas e de três cláusulas, Apache
+2.0, MPL 2.0 — obrigam quem redistribui a manter o aviso de direito autoral, e
+publicar o app é redistribuir. Os créditos ficam em dois lugares:
+
+* na tela **Sobre** do app, em uma lista curada (dependências diretas, a fonte
+  Roboto, os desenhos das bandeiras, as APIs consultadas), montada a partir do
+  `lib/util/third_party_credits.dart`;
+* no [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), com a mesma lista fora
+  do app.
+
+A lista exaustiva, com o texto integral de cada licença, é a que o próprio
+Flutter monta a partir do `LicenseRegistry`, em **Sobre → Licenças completas**.
+Ela já traz o LICENSE de todo pacote do grafo de dependências; o
+`registerThirdPartyLicenses()`, em `lib/util/third_party_licenses.dart`,
+acrescenta as duas obras que o Flutter não enxerga sozinho:
+
+* a **Roboto**, embarcada em `fonts/` pelo próprio app — o `LICENSE.txt` dela
+  viaja como asset (ver a chave `assets:` do `pubspec.yaml`);
+* o **flag-icons**, de onde vêm os desenhos das bandeiras. O pacote `flag` os
+  redistribui trazendo só a própria licença, então o aviso que a MIT do
+  flag-icons exige precisa sair daqui.
+
+Ao acrescentar uma dependência ao `pubspec.yaml`, acrescente-a também ao
+`third_party_credits.dart`: o `test/view/about_page_test.dart` confere que toda
+dependência direta está creditada, então o esquecimento derruba a suíte em vez
+de passar despercebido.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

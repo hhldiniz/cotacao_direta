@@ -7,6 +7,7 @@ import 'package:cotacao_direta/util/background_alert_service.dart';
 import 'package:cotacao_direta/util/currency_colors.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/notification_service.dart';
+import 'package:cotacao_direta/util/third_party_licenses.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 // import 'package:flutter_stetho/flutter_stetho.dart';
@@ -16,6 +17,10 @@ import 'view/pages/home.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Stetho.initialize();
+  // As licenças que o Flutter não recolhe sozinho (a fonte e os desenhos das
+  // bandeiras). O registro é preguiçoso: nada é lido até alguém abrir a tela
+  // de licenças pela tela "Sobre".
+  registerThirdPartyLicenses();
   await NotificationService().initialize();
   // Agendar (ou reagendar) a checagem em segundo plano não pode atrasar a
   // abertura da tela, nem derrubá-la se o serviço do sistema recusar o

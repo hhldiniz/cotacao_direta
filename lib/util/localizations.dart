@@ -217,6 +217,17 @@ class MyAppLocalizations {
       'aboutVersionLabel': 'Version',
       'aboutDeveloperLabel': 'Developed by',
       'aboutSourceCodeLabel': 'Source code',
+      'aboutCreditsSectionLabel': 'Credits',
+      'aboutCreditsDescription':
+          'Cotação Direta is built on the work of other people. The licences '
+          'below require the copyright notice to be kept, so here it is, with '
+          'our thanks to every author.',
+      'aboutCreditsDataSourcesLabel': 'Data sources',
+      'aboutCreditsFontsAndIconsLabel': 'Fonts and icons',
+      'aboutCreditsSoftwareLabel': 'Open source software',
+      'aboutCreditsLicensesCardLabel': 'Full licences',
+      'aboutCreditsLicensesCardDescription':
+          'The complete licence text of every bundled package',
       'currencyAlertsBottomNavItemLabel': 'Alerts',
       'currencyAlertsSectionLabel': 'Exchange rate alerts',
       'currencyAlertEmptyListLabel':
@@ -406,6 +417,17 @@ class MyAppLocalizations {
       'aboutVersionLabel': 'Versão',
       'aboutDeveloperLabel': 'Desenvolvido por',
       'aboutSourceCodeLabel': 'Código fonte',
+      'aboutCreditsSectionLabel': 'Créditos',
+      'aboutCreditsDescription':
+          'O Cotação Direta é feito em cima do trabalho de outras pessoas. As '
+          'licenças abaixo pedem que o aviso de direito autoral seja mantido, '
+          'então aqui está ele, com o nosso agradecimento a cada autor.',
+      'aboutCreditsDataSourcesLabel': 'Fontes de dados',
+      'aboutCreditsFontsAndIconsLabel': 'Fontes e ícones',
+      'aboutCreditsSoftwareLabel': 'Software de código aberto',
+      'aboutCreditsLicensesCardLabel': 'Licenças completas',
+      'aboutCreditsLicensesCardDescription':
+          'O texto integral da licença de cada pacote embarcado',
       'currencyAlertsBottomNavItemLabel': 'Alertas',
       'currencyAlertsSectionLabel': 'Alertas de câmbio',
       'currencyAlertEmptyListLabel':
@@ -598,6 +620,18 @@ class MyAppLocalizations {
       'aboutVersionLabel': 'Versión',
       'aboutDeveloperLabel': 'Desarrollado por',
       'aboutSourceCodeLabel': 'Código fuente',
+      'aboutCreditsSectionLabel': 'Créditos',
+      'aboutCreditsDescription':
+          'Cotação Direta está construido sobre el trabajo de otras personas. '
+          'Las licencias de abajo piden que se conserve el aviso de derechos '
+          'de autor, así que aquí está, con nuestro agradecimiento a cada '
+          'autor.',
+      'aboutCreditsDataSourcesLabel': 'Fuentes de datos',
+      'aboutCreditsFontsAndIconsLabel': 'Tipografías e iconos',
+      'aboutCreditsSoftwareLabel': 'Software de código abierto',
+      'aboutCreditsLicensesCardLabel': 'Licencias completas',
+      'aboutCreditsLicensesCardDescription':
+          'El texto íntegro de la licencia de cada paquete incluido',
       'currencyAlertsBottomNavItemLabel': 'Alertas',
       'currencyAlertsSectionLabel': 'Alertas de cambio',
       'currencyAlertEmptyListLabel':
@@ -795,6 +829,18 @@ class MyAppLocalizations {
       'aboutVersionLabel': 'Versión',
       'aboutDeveloperLabel': 'Desarrollado por',
       'aboutSourceCodeLabel': 'Código fuente',
+      'aboutCreditsSectionLabel': 'Créditos',
+      'aboutCreditsDescription':
+          'Cotação Direta está construido sobre el trabajo de otras personas. '
+          'Las licencias de abajo piden que se conserve el aviso de derechos '
+          'de autor, así que aquí está, con nuestro agradecimiento a cada '
+          'autor.',
+      'aboutCreditsDataSourcesLabel': 'Fuentes de datos',
+      'aboutCreditsFontsAndIconsLabel': 'Tipografías e íconos',
+      'aboutCreditsSoftwareLabel': 'Software de código abierto',
+      'aboutCreditsLicensesCardLabel': 'Licencias completas',
+      'aboutCreditsLicensesCardDescription':
+          'El texto íntegro de la licencia de cada paquete incluido',
       'currencyAlertsBottomNavItemLabel': 'Alertas',
       'currencyAlertsSectionLabel': 'Alertas de cambio',
       'currencyAlertEmptyListLabel':
@@ -1176,6 +1222,34 @@ class MyAppLocalizations {
 
   String? get aboutSourceCodeLabel {
     return _values['aboutSourceCodeLabel'];
+  }
+
+  String? get aboutCreditsSectionLabel {
+    return _values['aboutCreditsSectionLabel'];
+  }
+
+  String? get aboutCreditsDescription {
+    return _values['aboutCreditsDescription'];
+  }
+
+  String? get aboutCreditsDataSourcesLabel {
+    return _values['aboutCreditsDataSourcesLabel'];
+  }
+
+  String? get aboutCreditsFontsAndIconsLabel {
+    return _values['aboutCreditsFontsAndIconsLabel'];
+  }
+
+  String? get aboutCreditsSoftwareLabel {
+    return _values['aboutCreditsSoftwareLabel'];
+  }
+
+  String? get aboutCreditsLicensesCardLabel {
+    return _values['aboutCreditsLicensesCardLabel'];
+  }
+
+  String? get aboutCreditsLicensesCardDescription {
+    return _values['aboutCreditsLicensesCardDescription'];
   }
 
   String? get currencyAlertsBottomNavItemLabel {
