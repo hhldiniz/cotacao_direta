@@ -71,6 +71,12 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
+  assets:
+    # A Apache 2.0 da Roboto viaja como asset para a tela de licenças poder
+    # mostrar o texto integral: o Flutter recolhe sozinho o LICENSE de cada
+    # pacote do grafo de dependências, mas não o das fontes que o próprio app
+    # embarca (ver lib/util/third_party_licenses.dart).
+    - fonts/Roboto/LICENSE.txt
   fonts:
     - family: Roboto
       fonts:
