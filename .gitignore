@@ -58,3 +58,9 @@ app.*.map.json
 /build-dir/
 /repo/
 *.flatpak
+
+# SDK do Flutter que o build do click baixa para dentro do projeto, por precisar
+# estar no bind mount do contêiner do Clickable (ver ubuntu_touch/build.sh e a
+# seção "Empacotamento Ubuntu Touch (click/OpenStore)" do README). Os pacotes
+# .click em si saem em /build/, já ignorado acima.
+/.flutter-sdk/

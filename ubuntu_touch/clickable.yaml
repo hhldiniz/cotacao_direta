@@ -1,0 +1,101 @@
+# Empacotamento para o Ubuntu Touch: gera o pacote .click que vai para a
+# OpenStore (https://open-store.io), a loja de apps do sistema. Quem lê este
+# arquivo é o Clickable (https://clickable-ut.dev), que builda tudo dentro de
+# um contêiner com o SDK do Ubuntu Touch.
+#
+# Ver a seção "Empacotamento Ubuntu Touch (click/OpenStore)" do README.
+clickable_minimum_required: "8.9.0"
+
+# O projeto do Flutter fica um nível acima deste arquivo.
+root_dir: ".."
+
+# Base Noble (Ubuntu 24.04), a do Ubuntu Touch 24.04: é contra as bibliotecas
+# dela que o bundle Linux do Flutter é linkado, então precisa bater com a
+# imagem do Clickable usada no build.
+framework: ubuntu-touch-24.04-1.x
+
+# O Clickable não tem builder para Flutter; o build é o script build.sh, que
+# baixa o SDK fixado e roda o `flutter build linux`.
+builder: custom
+build: ${ROOT}/ubuntu_touch/build.sh
+
+# Nome do processo, usado pelo `clickable launch` para derrubar a instância
+# anterior. É o BINARY_NAME do linux/CMakeLists.txt.
+kill: cotacao_direta
+
+env_vars:
+  # Versão do SDK que o build.sh baixa. Deve acompanhar o FLUTTER_VERSION de
+  # .github/workflows/ci.yml.
+  FLUTTER_VERSION: "3.44.8"
+
+# Ferramentas que rodam na arquitetura da máquina de build.
+dependencies_host:
+  - curl
+  - xz-utils
+  - zip
+  - unzip
+  - git
+  - clang
+  - cmake
+  - ninja-build
+  - pkg-config
+
+# Bibliotecas da arquitetura de destino, contra as quais o app é linkado. O
+# embedder Linux do Flutter é GTK3.
+dependencies_target:
+  - libgtk-3-dev
+
+# O rootfs do Ubuntu Touch é montado em torno do Lomiri (Qt) e não traz a pilha
+# do GTK3, então ela viaja dentro do click. O Clickable copia estes arquivos
+# para lib/${ARCH_TRIPLET}, que o sistema coloca no LD_LIBRARY_PATH do app.
+#
+# A lista saiu do `ldd` do bundle de release e é deliberadamente conservadora:
+# glibc, libstdc++, glib/gobject/gio, wayland, libxkbcommon, EGL/GLES, dbus,
+# freetype e fontconfig ficam de fora de propósito — o Lomiri usa todas elas, e
+# duplicá-las só aumentaria a chance de conflito.
+install_lib:
+  # GTK3 e a pilha de desenho em cima da qual o embedder do Flutter roda.
+  - /usr/lib/${ARCH_TRIPLET}/libgtk-3.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libgdk-3.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libgdk_pixbuf-2.0.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libcairo.so.2*
+  - /usr/lib/${ARCH_TRIPLET}/libcairo-gobject.so.2*
+  - /usr/lib/${ARCH_TRIPLET}/libpixman-1.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libepoxy.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libatk-1.0.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libatk-bridge-2.0.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libatspi.so.0*
+  # Texto: pango e o que ela carrega junto.
+  - /usr/lib/${ARCH_TRIPLET}/libpango-1.0.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libpangocairo-1.0.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libpangoft2-1.0.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libharfbuzz.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libgraphite2.so.3*
+  - /usr/lib/${ARCH_TRIPLET}/libfribidi.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libthai.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libdatrie.so.1*
+  # O GTK3 linka os clientes do X11 mesmo quando só o backend Wayland é usado,
+  # e o rootfs pode não ter todos (o X só aparece lá via Xwayland/Libertine).
+  - /usr/lib/${ARCH_TRIPLET}/libX11.so.6*
+  - /usr/lib/${ARCH_TRIPLET}/libXau.so.6*
+  - /usr/lib/${ARCH_TRIPLET}/libXdmcp.so.6*
+  - /usr/lib/${ARCH_TRIPLET}/libXcomposite.so.1*
+  - /usr/lib/${ARCH_TRIPLET}/libXcursor.so.1*
+  - /usr/lib/${ARCH_TRIPLET}/libXdamage.so.1*
+  - /usr/lib/${ARCH_TRIPLET}/libXext.so.6*
+  - /usr/lib/${ARCH_TRIPLET}/libXfixes.so.3*
+  - /usr/lib/${ARCH_TRIPLET}/libXi.so.6*
+  - /usr/lib/${ARCH_TRIPLET}/libXinerama.so.1*
+  - /usr/lib/${ARCH_TRIPLET}/libXrandr.so.2*
+  - /usr/lib/${ARCH_TRIPLET}/libXrender.so.1*
+  - /usr/lib/${ARCH_TRIPLET}/libxcb.so.1*
+  - /usr/lib/${ARCH_TRIPLET}/libxcb-render.so.0*
+  - /usr/lib/${ARCH_TRIPLET}/libxcb-shm.so.0*
+
+# Tudo que vai para a raiz do click. O que sai do build.sh (bundle/,
+# manifest.json e os esquemas do GSettings) está sob ${BUILD_DIR}/click.
+install_root_data:
+  - ${BUILD_DIR}/click/*
+  - ubuntu_touch/cotacaodireta.apparmor
+  - ubuntu_touch/cotacaodireta.desktop
+  - ubuntu_touch/cotacaodireta.sh

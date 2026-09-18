@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Cotação Direta
+Name[en]=Direct Quote
+Name[es]=Cotización Directa
+Comment=Cotação das principais moedas frente ao real
+Comment[en]=Exchange rates for the main currencies against the Brazilian real
+Comment[es]=Cotización de las principales monedas frente al real brasileño
+Exec=cotacaodireta.sh
+Icon=icon.png
+Terminal=false
+X-Lomiri-Touch=true
