@@ -1,0 +1,118 @@
+name: Build click
+
+# Sem gatilhos de push/pull_request: o build do click sobe um contêiner do SDK
+# do Ubuntu Touch e baixa o SDK do Flutter por dentro dele, o que é caro demais
+# para rodar a cada commit. Roda a pedido (aba Actions > Run workflow), que é
+# também quando um envio para a OpenStore faz sentido.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publicar os pacotes na OpenStore (exige o secret OPENSTORE_API_KEY)"
+        type: boolean
+        default: false
+      changelog:
+        description: "Mensagem que acompanha a versão no changelog da OpenStore"
+        type: string
+        default: ""
+
+jobs:
+  build:
+    name: Build click (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      # Uma arquitetura quebrada não deve esconder o resultado da outra.
+      fail-fast: false
+      matrix:
+        include:
+          # Cada click é compilado na própria arquitetura: o Flutter até
+          # cross-compila para arm64, mas nativo é o caminho menos sujeito a
+          # surpresa. armhf fica de fora porque o desktop Linux do Flutter não
+          # tem embedder de 32 bits.
+          - arch: arm64
+            triplet: aarch64-linux-gnu
+            runner: ubuntu-24.04-arm
+          - arch: amd64
+            triplet: x86_64-linux-gnu
+            runner: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instala o Clickable
+        run: pip install clickable-ut
+
+      # O SDK do Flutter é baixado pelo ubuntu_touch/build.sh para dentro do
+      # projeto, que é o diretório montado no contêiner. Guardá-lo aqui evita
+      # rebaixar ~700 MB a cada execução.
+      - name: Cache do SDK do Flutter
+        uses: actions/cache@v4
+        with:
+          path: .flutter-sdk
+          key: click-flutter-sdk-${{ matrix.arch }}-${{ hashFiles('ubuntu_touch/clickable.yaml') }}
+
+      # O `build` do Clickable já roda o click-review no pacote gerado, a mesma
+      # revisão automática que a OpenStore aplica no envio.
+      - name: Compila o click
+        run: clickable build --arch ${{ matrix.arch }} -c ubuntu_touch/clickable.yaml
+
+      - name: Publica o click como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: click-${{ matrix.arch }}
+          # O manifesto vai junto porque o `clickable publish` lê dele o nome
+          # do pacote e a versão.
+          path: |
+            build/${{ matrix.triplet }}/app/*.click
+            build/${{ matrix.triplet }}/app/install/manifest.json
+          if-no-files-found: error
+
+  publish:
+    name: Publica na OpenStore
+    needs: build
+    if: inputs.publish
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instala o Clickable
+        run: pip install clickable-ut
+
+      # Os artefatos voltam para o mesmo caminho em que o `clickable publish`
+      # procura o pacote (${ROOT}/build/${ARCH_TRIPLET}/app).
+      - name: Recupera o click de arm64
+        uses: actions/download-artifact@v4
+        with:
+          name: click-arm64
+          path: build/aarch64-linux-gnu/app
+
+      - name: Recupera o click de amd64
+        uses: actions/download-artifact@v4
+        with:
+          name: click-amd64
+          path: build/x86_64-linux-gnu/app
+
+      - name: Envia para a OpenStore
+        env:
+          OPENSTORE_API_KEY: ${{ secrets.OPENSTORE_API_KEY }}
+          CHANGELOG: ${{ inputs.changelog }}
+          # Nada aqui builda; sem isso o Clickable reclamaria do docker.
+          CLICKABLE_SKIP_DOCKER_CHECKS: "1"
+        run: |
+          set -euo pipefail
+          if [ -z "${OPENSTORE_API_KEY:-}" ]; then
+            echo "::error::O secret OPENSTORE_API_KEY não está cadastrado (Settings > Secrets and variables > Actions). Pegue a chave em https://open-store.io/manage."
+            exit 1
+          fi
+
+          # A mensagem de changelog vale para a versão, não para cada
+          # arquitetura: mandá-la uma vez só evita repetir a entrada na loja.
+          clickable publish --arch amd64 -c ubuntu_touch/clickable.yaml -- "$CHANGELOG"
+          clickable publish --arch arm64 -c ubuntu_touch/clickable.yaml

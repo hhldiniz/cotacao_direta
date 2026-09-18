@@ -33,7 +33,10 @@ assinado, sai do `.github/workflows/build-apk.yml`, disparado à mão — ver
 
 O app roda em Android, Linux desktop e Web (`flutter run -d chrome` ou
 `flutter build web`). Na web ele é instalável como PWA — ver a seção
-[Web como PWA](#web-como-pwa-instalável-no-aparelho).
+[Web como PWA](#web-como-pwa-instalável-no-aparelho). O build Linux é o mesmo
+que vira Flatpak e pacote `.click` do Ubuntu Touch — ver
+[Empacotamento Linux (Flatpak)](#empacotamento-linux-flatpak) e
+[Empacotamento Ubuntu Touch (click/OpenStore)](#empacotamento-ubuntu-touch-clickopenstore).
 
 Persistência local (sqflite) usa um backend diferente por plataforma,
 selecionado em tempo de execução por `lib/util/database.dart`:
@@ -371,6 +374,138 @@ Flutter (para acompanhar o `FLUTTER_VERSION` de `.github/workflows/ci.yml`).
 A licença do projeto é MIT (`LICENSE`), declarada também como
 `project_license` no `metainfo.xml` — o Flathub exige que o app tenha uma
 licença open source.
+
+## Empacotamento Ubuntu Touch (click/OpenStore)
+
+O mesmo build Linux que vira Flatpak também atende o Ubuntu Touch: lá o
+formato é o pacote `.click`, e a loja é a
+[OpenStore](https://open-store.io). Quem monta o pacote é o
+[Clickable](https://clickable-ut.dev), que roda o build dentro de um contêiner
+com o SDK do sistema. Os arquivos ficam em `ubuntu_touch/`:
+
+- `clickable.yaml` — a configuração do Clickable: qual framework, o que
+  instalar no contêiner de build, quais bibliotecas viajam dentro do pacote e
+  o que vai para a raiz dele;
+- `build.sh` — o build propriamente dito. O Clickable não tem builder para
+  Flutter, então este script baixa o SDK fixado (para `.flutter-sdk/`, que é
+  ignorado pelo git), roda o `flutter build linux --release` e monta em
+  `build/<triplet>/app/click` a raiz do pacote;
+- `manifest.json.in` — o manifesto do click. O `@VERSION@` é substituído pelo
+  `build.sh` a partir do `pubspec.yaml`; os `$ENV{...}` que sobram são
+  resolvidos pelo próprio Clickable na hora de empacotar;
+- `cotacaodireta.apparmor` — o perfil de confinamento. O único grupo pedido é
+  `networking`, para as chamadas a `economia.awesomeapi.com.br`;
+- `cotacaodireta.desktop` — o `.desktop` que o Lomiri lê, com nome e descrição
+  em pt-BR/en/es, como o do Flatpak;
+- `cotacaodireta.sh` — o lançador. É ele que força o backend Wayland do GDK,
+  aponta os esquemas do GSettings que viajam no pacote e entra num diretório
+  gravável antes de chamar o executável (ver abaixo).
+
+O ícone não é um arquivo novo: o `build.sh` copia `assets/launcher/icon.png`,
+a mesma arte do ícone do Android e da PWA (ver [Ícone do app](#ícone-do-app)).
+
+O nome do pacote na OpenStore é `cotacaodireta.hhldiniz`, e o hook dentro do
+manifesto se chama `cotacaodireta`. Os dois são sem `_` de propósito: o
+identificador que o Ubuntu Touch usa em tempo de execução é
+`<pacote>_<hook>_<versão>`, separado justamente por `_`. É por isso que eles
+não acompanham o `cotacao_direta` do binário (`BINARY_NAME`, em
+`linux/CMakeLists.txt`), que continua com underscore.
+
+### Arquiteturas
+
+A OpenStore aceita `armhf`, `arm64` e `amd64`, mas só as duas últimas são
+geradas: o desktop Linux do Flutter não tem embedder de 32 bits, então não há
+como compilar o `armhf`. `arm64` é o que interessa nos aparelhos; `amd64`
+serve para o emulador e para o Ubuntu Touch em desktop.
+
+### O que o pacote leva junto
+
+O rootfs do Ubuntu Touch é montado em torno do Lomiri, que é Qt, e não traz a
+pilha do GTK3 — que é justamente o embedder Linux do Flutter. Por isso o
+`install_lib` do `clickable.yaml` lista GTK3, GDK, pango, cairo, ATK e os
+clientes do X11 que o GTK linka mesmo rodando em Wayland. A lista saiu do
+`ldd` do bundle de release e deixa de fora, de propósito, o que o sistema já
+tem (glibc, glib, wayland, EGL/GLES, dbus, freetype, fontconfig): duplicar
+essas só aumentaria a chance de carregar duas cópias da mesma biblioteca no
+mesmo processo.
+
+Duas coisas que o lançador resolve e que não são óbvias:
+
+- **Wayland.** Não há servidor X no aparelho. Sem `GDK_BACKEND=wayland` o GDK
+  tentaria o backend X11 primeiro e o app não subiria.
+- **Diretório de trabalho.** O `sqflite_common_ffi` resolve o
+  `getDatabasesPath()` como `.dart_tool/sqflite_common_ffi/databases`
+  *relativo ao diretório atual*, e o diretório do click é somente leitura.
+  O lançador entra na área de dados do app (`$XDG_DATA_HOME`) antes de chamar
+  o executável, que é onde o AppArmor deixa escrever.
+
+### Buildar e instalar
+
+Com [o Clickable instalado](https://clickable-ut.dev/en/latest/install.html)
+e o Docker funcionando:
+
+```sh
+clickable build --arch arm64 -c ubuntu_touch/clickable.yaml
+```
+
+O pacote sai em `build/aarch64-linux-gnu/app/`. O próprio `build` roda o
+`click-review` no fim — a mesma revisão automática que a OpenStore aplica no
+envio. Com um aparelho conectado por USB (modo desenvolvedor ligado), dá para
+buildar, instalar e rodar de uma vez:
+
+```sh
+clickable --arch detect -c ubuntu_touch/clickable.yaml
+clickable logs -c ubuntu_touch/clickable.yaml
+```
+
+O `--arch detect` pergunta a arquitetura ao aparelho conectado, em vez de usar
+a da máquina de build.
+
+A primeira execução baixa o SDK do Flutter (~700 MB) para `.flutter-sdk/`; as
+seguintes reaproveitam. O diretório é oculto de propósito: o analisador do Dart
+pula diretórios que começam com ponto, e um SDK inteiro dentro da árvore faria
+o `flutter analyze` apontar dezenas de milhares de problemas que não são do
+app.
+
+### Publicar na OpenStore
+
+O workflow **Build click** (Actions > Build click > Run workflow) compila os
+dois pacotes e, se a caixa `publish` estiver marcada, envia os dois para a
+loja. Cada arquitetura é compilada na própria arquitetura — `arm64` num runner
+ARM, `amd64` num x86 — porque nativo é o caminho menos sujeito a surpresa que
+a cross-compilação do Flutter.
+
+Antes do primeiro envio:
+
+1. crie a conta na OpenStore (login com GitHub, GitLab ou Ubuntu One) e
+   registre o app em <https://open-store.io/submit>, com o `name` do
+   manifesto (`cotacaodireta.hhldiniz`) e o título. A API recusa o upload de
+   um app que ainda não existe;
+2. pegue a chave em <https://open-store.io/manage> e cadastre-a como o secret
+   `OPENSTORE_API_KEY` do repositório (Settings > Secrets and variables >
+   Actions). Sem ela o workflow falha com a mensagem apontando para lá.
+
+A versão enviada sai do `pubspec.yaml`, sem o build number (que é do Android):
+`version: 1.0.0+1` publica `1.0.0`. A OpenStore recusa reenviar uma versão que
+já existe, então cada publicação pede um `pubspec.yaml` com versão nova.
+
+### O que falta antes de publicar
+
+O `clickable build` termina rodando o `click-review`, mas passar nele só diz
+que o pacote está bem formado — não que o app sobe. Vale conferir, num Ubuntu
+Touch de verdade, antes do primeiro envio:
+
+- se a pilha do GTK3 que viaja no pacote é suficiente — é a parte mais
+  provável de precisar de ajuste, e o sintoma seria o app não abrir, com a
+  biblioteca faltante no `clickable logs`;
+- se o teclado virtual aparece nos campos de texto (conversão e alertas). O
+  Maliit fala com os apps Qt por um caminho próprio, e apps GTK dependem do
+  protocolo `text-input` do Wayland estar disponível no compositor;
+- se as notificações dos alertas de câmbio chegam. O
+  `flutter_local_notifications` fala `org.freedesktop.Notifications` por DBus,
+  que não é o caminho nativo do sistema; se não funcionar, o grupo
+  `push-notification-client` precisa entrar no `.apparmor` e o serviço, ganhar
+  uma implementação específica (ver `lib/util/notification_service_io.dart`).
 
 ## Assinatura do release (Android)
 

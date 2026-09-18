@@ -1,0 +1,15 @@
+{
+    "name": "cotacaodireta.hhldiniz",
+    "title": "Cotação Direta",
+    "description": "Cotação das principais moedas frente ao real",
+    "version": "@VERSION@",
+    "maintainer": "hhldiniz <hhldiniz@gmail.com>",
+    "architecture": "$ENV{ARCH}",
+    "framework": "$ENV{CLICK_FRAMEWORK}",
+    "hooks": {
+        "cotacaodireta": {
+            "apparmor": "cotacaodireta.apparmor",
+            "desktop": "cotacaodireta.desktop"
+        }
+    }
+}
