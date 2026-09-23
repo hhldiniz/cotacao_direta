@@ -436,8 +436,10 @@ Duas coisas que o lançador resolve e que não são óbvias:
 - **Diretório de trabalho.** O `sqflite_common_ffi` resolve o
   `getDatabasesPath()` como `.dart_tool/sqflite_common_ffi/databases`
   *relativo ao diretório atual*, e o diretório do click é somente leitura.
-  O lançador entra na área de dados do app (`$XDG_DATA_HOME`) antes de chamar
-  o executável, que é onde o AppArmor deixa escrever.
+  O lançador entra na área de dados do app antes de chamar o executável. Essa
+  área é o subdiretório com o nome do pacote
+  (`$XDG_DATA_HOME/cotacaodireta.hhldiniz`), não o `$XDG_DATA_HOME` inteiro:
+  é só ali que o AppArmor deixa um app confinado escrever.
 
 ### Buildar e instalar
 
