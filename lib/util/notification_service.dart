@@ -7,11 +7,13 @@ export 'notification_permission_status.dart';
 /// Notificações do sistema avisando que um alerta de câmbio foi atingido.
 ///
 /// Cada plataforma resolve isto de um jeito: Android e Linux pelo
-/// flutter_local_notifications, a web pela Notification API do navegador. O
-/// que muda de verdade entre elas é a permissão — nativamente ela é pedida uma
-/// vez na inicialização, e no navegador ela só pode ser pedida a partir de um
-/// toque do usuário, daí [permissionStatus] e [requestPermission] serem parte
-/// da interface e não um detalhe escondido do [initialize].
+/// flutter_local_notifications, a web pela Notification API do navegador e o
+/// Ubuntu Touch com um aviso dentro do próprio app (ver
+/// notification_service_io.dart). O que muda de verdade entre elas é a
+/// permissão — nativamente ela é pedida uma vez na inicialização, e no
+/// navegador ela só pode ser pedida a partir de um toque do usuário, daí
+/// [permissionStatus] e [requestPermission] serem parte da interface e não um
+/// detalhe escondido do [initialize].
 class NotificationService {
   static NotificationService? _instance;
 

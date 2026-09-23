@@ -5,6 +5,7 @@ import 'package:cotacao_direta/providers/home_bloc_provider.dart';
 import 'package:cotacao_direta/util/app_locale_controller.dart';
 import 'package:cotacao_direta/util/background_alert_service.dart';
 import 'package:cotacao_direta/util/currency_colors.dart';
+import 'package:cotacao_direta/util/in_app_notifications.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/notification_service.dart';
 import 'package:cotacao_direta/util/third_party_licenses.dart';
@@ -94,6 +95,9 @@ class MyApp extends StatelessWidget {
       // também para quem está no México.
       localeListResolutionCallback: AppLocales.resolveDeviceLocales,
       title: appName,
+      // Onde aparecem os avisos que não viram notificação do sistema (ver
+      // lib/util/in_app_notifications.dart).
+      scaffoldMessengerKey: inAppNotificationsKey,
       home: HomeBlocProvider(
         child: CurrencyAlertsBlocProvider(
           child: Home(appName),

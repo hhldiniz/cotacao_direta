@@ -520,11 +520,14 @@ Touch de verdade, antes do primeiro envio:
 - se o teclado virtual aparece nos campos de texto (conversão e alertas). O
   Maliit fala com os apps Qt por um caminho próprio, e apps GTK dependem do
   protocolo `text-input` do Wayland estar disponível no compositor;
-- se as notificações dos alertas de câmbio chegam. O
-  `flutter_local_notifications` fala `org.freedesktop.Notifications` por DBus,
-  que não é o caminho nativo do sistema; se não funcionar, o grupo
-  `push-notification-client` precisa entrar no `.apparmor` e o serviço, ganhar
-  uma implementação específica (ver `lib/util/notification_service_io.dart`).
+- se o aviso dos alertas de câmbio aparece. No Ubuntu Touch ele não é uma
+  notificação do sistema, e sim um aviso dentro do app (um `SnackBar`, ver
+  `lib/util/in_app_notifications.dart`): o `flutter_local_notifications` fala
+  `org.freedesktop.Notifications`, que o AppArmor nega a um app confinado, e o
+  caminho nativo (o Postal, do `lomiri-push-service`) descarta a notificação
+  quando o app está em primeiro plano. Como o Lomiri suspende o app assim que
+  ele sai da tela, e os alertas só são conferidos com ele rodando, o primeiro
+  plano é o único momento em que um alerta dispara por lá.
 
 ## Assinatura do release (Android)
 
