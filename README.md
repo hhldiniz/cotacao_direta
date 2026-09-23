@@ -439,6 +439,18 @@ Duas coisas que o lançador resolve e que não são óbvias:
   O lançador entra na área de dados do app (`$XDG_DATA_HOME`) antes de chamar
   o executável, que é onde o AppArmor deixa escrever.
 
+### Links
+
+O `url_launcher` do Linux abre links pelo `gtk_show_uri`, que procura um
+`.desktop` que trate `https:` — e um app confinado não enxerga nenhum. No Ubuntu
+Touch o caminho é o URL dispatcher do sistema (`com.lomiri.URLDispatcher`, por
+DBus, que o perfil padrão do AppArmor já libera). Quando o app percebe que roda
+no Lomiri (pelo `APP_ID` que ele exporta, ver `lib/util/ubuntu_touch.dart`), o
+`main` troca a implementação do `url_launcher` pela de
+`lib/util/ubuntu_touch_url_launcher.dart`, que repassa a URL ao runner nativo
+(`linux/runner/url_dispatcher.cc`), e é ele quem faz a chamada ao DBus. Os
+chamadores continuam usando o `launchUrl` de sempre.
+
 ### Buildar e instalar
 
 Com [o Clickable instalado](https://clickable-ut.dev/en/latest/install.html)
