@@ -47,9 +47,19 @@ static void my_application_activate(GApplication* application) {
   // If running on Wayland assume the header bar will work (may need changing
   // if future cases occur).
   gboolean use_header_bar = TRUE;
+  // No Ubuntu Touch quem cuida da janela é o Lomiri: no celular ela ocupa a
+  // tela toda, e no modo desktop as decorações são dele. A barra de título do
+  // GTK (header bar ou a decoração que o GTK desenha sozinho no Wayland) só
+  // roubaria espaço com um título e um botão de fechar redundantes. O APP_ID é
+  // exportado pelo Lomiri para os apps que ele lança.
+  gboolean lomiri = g_getenv("APP_ID") != nullptr;
+  if (lomiri) {
+    use_header_bar = FALSE;
+    gtk_window_set_decorated(window, FALSE);
+  }
 #ifdef GDK_WINDOWING_X11
   GdkScreen* screen = gtk_window_get_screen(window);
-  if (GDK_IS_X11_SCREEN(screen)) {
+  if (!lomiri && GDK_IS_X11_SCREEN(screen)) {
     const gchar* wm_name = gdk_x11_screen_get_window_manager_name(screen);
     if (g_strcmp0(wm_name, "GNOME Shell") != 0) {
       use_header_bar = FALSE;
