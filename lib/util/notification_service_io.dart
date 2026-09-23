@@ -2,9 +2,19 @@ import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import 'in_app_notifications.dart';
 import 'notification_permission_status.dart';
+import 'ubuntu_touch.dart';
 
 /// Notificações locais fora da web (Android e Linux Desktop).
+///
+/// No Ubuntu Touch o aviso fica dentro do app. O flutter_local_notifications
+/// fala org.freedesktop.Notifications, que o AppArmor nega a um app confinado,
+/// e o caminho nativo do sistema (o Postal, do lomiri-push-service) descarta a
+/// notificação quando o app está em primeiro plano. Como o Lomiri suspende o
+/// app assim que ele sai da tela, e os alertas só são conferidos com ele
+/// rodando, o primeiro plano é justamente o único momento em que um alerta
+/// dispara por lá: uma notificação do sistema nunca chegaria a aparecer.
 final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
 
 AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
@@ -12,6 +22,7 @@ AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
         AndroidFlutterLocalNotificationsPlugin>();
 
 Future<void> initializePlatformNotifications() async {
+  if (isUbuntuTouch) return;
   // O ícone pequeno da notificação é recortado pelo canal alfa, então usar
   // o @mipmap/ic_launcher (opaco) deixaria só um quadrado branco na barra
   // de status. A camada monocromática do ícone é a marca sobre fundo
@@ -49,6 +60,10 @@ Future<NotificationPermissionStatus> requestNotificationPermission() async {
 
 Future<void> showPlatformNotification(
     {required int id, required String title, required String body}) async {
+  if (isUbuntuTouch) {
+    showInAppNotification(title: title, body: body);
+    return;
+  }
   const androidDetails = AndroidNotificationDetails(
     'currency_alerts_channel',
     'Alertas de câmbio',
