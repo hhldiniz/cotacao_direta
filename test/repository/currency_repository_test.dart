@@ -372,6 +372,49 @@ void main() {
           requestedUris.map((uri) => uri.path), contains("/json/last/USD-BRL"));
     });
 
+    test('pedidos simultâneos do mesmo par fazem uma consulta só', () async {
+      currencyDao.latestCurrency = null;
+      var repository = buildRepository();
+
+      var results = await Future.wait([
+        repository.getLatestDataByCurrencyCode("USD"),
+        repository.getLatestDataByCurrencyCode("USD"),
+      ]);
+
+      expect(requestedUris.where((uri) => uri.path.contains("/last/")),
+          hasLength(1));
+      expect(identical(results[0], results[1]), isTrue);
+    });
+
+    test('pedidos simultâneos de pares diferentes consultam cada um', () async {
+      currencyDao.latestCurrency = null;
+      var repository = buildRepository();
+
+      await Future.wait([
+        repository.getLatestDataByCurrencyCode("USD"),
+        repository.getLatestDataByCurrencyCode("USD", counterCurrency: "EUR"),
+      ]);
+
+      expect(
+          requestedUris
+              .where((uri) => uri.path.contains("/last/"))
+              .map((uri) => uri.path),
+          unorderedEquals(["/json/last/USD-BRL", "/json/last/USD-EUR"]));
+    });
+
+    test('um pedido depois do anterior terminar consulta de novo', () async {
+      currencyDao.latestCurrency = null;
+      var repository = buildRepository();
+
+      await repository.getLatestDataByCurrencyCode("USD");
+      await repository.getLatestDataByCurrencyCode("USD");
+
+      // O DAO falso não devolve o que foi gravado: sem cotação salva, o
+      // segundo pedido vai à API, em vez de reaproveitar a busca encerrada.
+      expect(requestedUris.where((uri) => uri.path.contains("/last/")),
+          hasLength(2));
+    });
+
     test('sem rede e sem cotação salva, devolve null', () async {
       networkUtils.available = false;
       currencyDao.latestCurrency = null;

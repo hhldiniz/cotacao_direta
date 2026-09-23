@@ -33,6 +33,12 @@ class CurrencyRepository {
   /// Teto de registros por consulta ao histórico, imposto pela API.
   static const _maxHistoryRecords = 360;
 
+  /// Buscas da última cotação em andamento, por par. Na partida do app a
+  /// mesma cotação é pedida por mais de um lugar ao mesmo tempo (a bolha da
+  /// tela inicial, a conversão, os alertas); sem isto, cada pedido que chega
+  /// antes de o primeiro gravar o resultado faria a sua própria consulta à API.
+  final Map<String, Future<Currency?>> _pendingLatestData = {};
+
   final _enumValueAsStringUtil = EnumValueAsString();
   final _apiDateFormatter = DateFormat("yyyyMMdd");
 
@@ -139,13 +145,29 @@ class CurrencyRepository {
   /// sendo avaliado contra ela, mesmo depois de a referência do app mudar.
   Future<Currency?> getLatestDataByCurrencyCode(String? currencyCode,
       {String? counterCurrency}) async {
-    var networkAvailable = await _networkUtils.isNetworkAvailable();
     var pairCounterCurrency = counterCurrency ?? await resolveCounterCurrency();
+    var key = "$currencyCode-$pairCounterCurrency";
+    var pending = _pendingLatestData[key];
+    if (pending != null) return pending;
+    var lookup = _latestData(currencyCode, pairCounterCurrency);
+    _pendingLatestData[key] = lookup;
+    try {
+      return await lookup;
+    } finally {
+      _pendingLatestData.remove(key);
+    }
+  }
+
+  Future<Currency?> _latestData(
+      String? currencyCode, String pairCounterCurrency) async {
+    // A checagem de rede e a leitura do banco não dependem uma da outra.
+    var networkCheck = _networkUtils.isNetworkAvailable();
     // A busca é pelo par, e não só pela moeda cotada: trocar a contrapartida
     // nas configurações precisa provocar uma consulta nova, mesmo que exista
     // uma cotação recente da mesma moeda frente à contrapartida anterior.
     var savedCurrency = await _currencyDao.getLatestDataByCurrencyCode(
         currencyCode, pairCounterCurrency);
+    var networkAvailable = await networkCheck;
     if (networkAvailable &&
         (savedCurrency == null ||
             !_isCurrencyTimestampValid(savedCurrency.timestamp))) {
@@ -198,15 +220,16 @@ class CurrencyRepository {
       var counterCurrency = await resolveCounterCurrency();
       var start = _parseAppDate(initialDate);
       var end = _parseAppDate(finalDate);
-      var currencyListToSave = <Currency>[];
-      // A API atende um par por consulta; o app costuma pedir uma moeda só.
-      for (var currencyCode in currencyCodeList) {
-        if (currencyCode == counterCurrency) continue;
+      // A API atende um par por consulta; quando o app pede mais de uma
+      // moeda, as consultas saem juntas em vez de uma esperar a outra.
+      var histories = await Future.wait(currencyCodeList
+          .where((currencyCode) => currencyCode != counterCurrency)
+          .map((currencyCode) async {
         var response = await _httpClient
             .get(_historyUri(currencyCode, counterCurrency, start, end));
-        currencyListToSave.addAll(
-            _parseHistory(response.body, currencyCode, counterCurrency));
-      }
+        return _parseHistory(response.body, currencyCode, counterCurrency);
+      }));
+      var currencyListToSave = histories.expand((history) => history).toList();
 
       // Cada registro carrega sua data já convertida uma única vez, em vez de
       // reparsear a mesma string repetidamente no filtro e no comparador do
