@@ -30,6 +30,9 @@ dependencies:
   flag: ^7.0.2
   package_info_plus: ^8.1.2
   url_launcher: ^6.3.1
+  # Para trocar a implementação do url_launcher no Ubuntu Touch (ver
+  # lib/util/ubuntu_touch_url_launcher.dart).
+  url_launcher_platform_interface: ^2.3.2
   fl_chart: ^1.1.1
   # Notificações locais para os alertas de câmbio no Android e no Linux; na web
   # elas saem pela Notification API do navegador, sem pacote nenhum (ver

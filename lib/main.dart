@@ -8,6 +8,7 @@ import 'package:cotacao_direta/util/currency_colors.dart';
 import 'package:cotacao_direta/util/localizations.dart';
 import 'package:cotacao_direta/util/notification_service.dart';
 import 'package:cotacao_direta/util/third_party_licenses.dart';
+import 'package:cotacao_direta/util/ubuntu_touch_url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 // import 'package:flutter_stetho/flutter_stetho.dart';
@@ -21,6 +22,9 @@ void main() async {
   // bandeiras). O registro é preguiçoso: nada é lido até alguém abrir a tela
   // de licenças pela tela "Sobre".
   registerThirdPartyLicenses();
+  // No Ubuntu Touch os links saem pelo URL dispatcher do sistema, e não pelo
+  // url_launcher do Linux (ver lib/util/ubuntu_touch_url_launcher.dart).
+  UbuntuTouchUrlLauncher.registerIfNeeded();
   await NotificationService().initialize();
   // Agendar (ou reagendar) a checagem em segundo plano não pode atrasar a
   // abertura da tela, nem derrubá-la se o serviço do sistema recusar o
