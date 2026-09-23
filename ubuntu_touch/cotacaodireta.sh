@@ -30,7 +30,13 @@ fi
 # lib/util/database_platform_io.dart). O diretório do click é somente leitura,
 # então o processo precisa começar na área de dados do app — que é justamente
 # onde o AppArmor deixa escrever.
-data_dir="${XDG_DATA_HOME:-$HOME/.local/share}"
+#
+# Essa área não é o $XDG_DATA_HOME inteiro, e sim o subdiretório com o nome do
+# pacote (~/.local/share/cotacaodireta.hhldiniz): fora dele o perfil de
+# confinamento nega a escrita. O nome sai do APP_ID que o Lomiri exporta
+# (<pacote>_<hook>_<versão>); fora dele vale o `name` do manifest.json.
+app_id="${APP_ID:-cotacaodireta.hhldiniz}"
+data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/${app_id%%_*}"
 mkdir -p "$data_dir"
 cd "$data_dir"
 
