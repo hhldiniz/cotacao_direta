@@ -246,9 +246,32 @@ class ConversionPageBloc extends BaseBloc {
 
   /// Quantidade a converter. Um texto vazio ou inválido na tela vira zero, que
   /// converte para zero em vez de deixar o resultado anterior no lugar.
+  ///
+  /// A taxa do par não depende da quantidade: com uma conversão já pronta para
+  /// o mesmo par, o resultado novo é só a conta, sem voltar ao banco e à rede a
+  /// cada tecla digitada. Buscar a cotação de novo continua a cargo de
+  /// [updateResult], que a tela chama ao abrir e ao pedir atualização.
   void updateAmount(double? value) {
     _amount = value ?? 0;
     _amountController.add(_amount);
+    var rate = _result.unitRate;
+    if (_result.status == ConversionStatus.success &&
+        rate != null &&
+        _result.from == _fromCurrency &&
+        _result.to == _toCurrency) {
+      // Invalida uma busca que ainda esteja em andamento, para ela não trocar
+      // este resultado pelo de uma quantidade anterior.
+      ++_lastRequestId;
+      _emit(ConversionResult(
+        status: ConversionStatus.success,
+        amount: _amount,
+        from: _fromCurrency,
+        to: _toCurrency,
+        unitRate: rate,
+        convertedAmount: _amount * rate,
+      ));
+      return;
+    }
     updateResult();
   }
 
@@ -355,10 +378,13 @@ class ConversionPageBloc extends BaseBloc {
         .format(today.subtract(const Duration(days: historyWindowInDays - 1)));
     var finalDate = _apiDateFormatter.format(today);
 
-    var fromSeries =
-        await _dailyValues(from, counterCurrency, initialDate, finalDate);
-    var toSeries =
-        await _dailyValues(to, counterCurrency, initialDate, finalDate);
+    // Uma consulta à API por moeda, independentes entre si: em paralelo.
+    var series = await Future.wait([
+      _dailyValues(from, counterCurrency, initialDate, finalDate),
+      _dailyValues(to, counterCurrency, initialDate, finalDate),
+    ]);
+    var fromSeries = series[0];
+    var toSeries = series[1];
 
     // Só os dias em que as duas moedas têm cotação: inventar o valor que falta
     // desenharia uma variação que não houve. Uma série nula é a da própria
@@ -417,8 +443,14 @@ class ConversionPageBloc extends BaseBloc {
     // existe.
     if (from == to) return 1;
     try {
-      var fromValue = await _exchangeValueBloc.retrieveCurrencyValue(from);
-      var toValue = await _exchangeValueBloc.retrieveCurrencyValue(to);
+      // As duas cotações são independentes: buscá-las juntas corta pela metade
+      // a espera quando alguma precisa ir à rede.
+      var values = await Future.wait([
+        _exchangeValueBloc.retrieveCurrencyValue(from),
+        _exchangeValueBloc.retrieveCurrencyValue(to),
+      ]);
+      var fromValue = values[0];
+      var toValue = values[1];
       // As cotações guardadas dizem quantas unidades da moeda valem uma
       // unidade da contrapartida (ver CurrencyRepository), então a taxa entre
       // duas moedas é a razão entre elas.

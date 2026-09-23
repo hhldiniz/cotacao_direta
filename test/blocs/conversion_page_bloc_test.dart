@@ -102,6 +102,50 @@ void main() {
       expect(bloc.result.convertedAmount, closeTo(0.6, 0.000001));
     });
 
+    test('mudar a quantidade reaproveita a taxa do par, sem nova busca',
+        () async {
+      await bloc.updateResult();
+      exchangeValueBloc.requestedCurrencies.clear();
+
+      bloc.updateAmount(7);
+
+      expect(exchangeValueBloc.requestedCurrencies, isEmpty);
+      expect(bloc.result.status, ConversionStatus.success);
+      expect(bloc.result.amount, 7);
+      expect(bloc.result.convertedAmount, closeTo(1.4, 0.000001));
+    });
+
+    test('a quantidade digitada durante a busca não é sobrescrita por ela',
+        () async {
+      await bloc.updateResult();
+      exchangeValueBloc.holdLookups = true;
+      var refresh = bloc.updateResult();
+
+      // Ainda carregando: a quantidade nova também espera a busca.
+      bloc.updateAmount(4);
+      exchangeValueBloc.holdLookups = false;
+      for (var lookup in exchangeValueBloc.pendingLookups) {
+        lookup.complete();
+      }
+      await refresh;
+      await pumpEventQueue();
+
+      expect(bloc.result.amount, 4);
+      expect(bloc.result.convertedAmount, closeTo(0.8, 0.000001));
+    });
+
+    test('trocar de moeda busca a taxa do par novo', () async {
+      await bloc.updateResult();
+      exchangeValueBloc.requestedCurrencies.clear();
+
+      bloc.updateToCurrency(Currencies.EUR);
+      await pumpEventQueue();
+
+      expect(exchangeValueBloc.requestedCurrencies,
+          containsAll([Currencies.BRL, Currencies.EUR]));
+      expect(bloc.result.unitRate, closeTo(0.1, 0.000001));
+    });
+
     test('sem cotação de uma das moedas não há conversão', () async {
       bloc.updateToCurrency(Currencies.JPY);
       await Future<void>.delayed(Duration.zero);
@@ -158,6 +202,8 @@ void main() {
       await bloc.updateResult();
 
       exchangeValueBloc.holdLookups = true;
+      // Uma atualização em andamento: a quantidade nova espera a cotação dela.
+      bloc.updateResult();
       bloc.updateAmount(7);
 
       expect(bloc.result.isLoading, isTrue);

@@ -151,6 +151,17 @@ void main() {
       expect(bloc.horizonInDays, 30);
     });
 
+    test('trocar o horizonte com resultado reaproveita o histórico', () async {
+      await bloc.analyze();
+      repository.historicalDataCalls.clear();
+
+      bloc.selectHorizon(7);
+      await bloc.stateStream.firstWhere((state) => state.hasAnalysis);
+
+      expect(repository.historicalDataCalls, isEmpty);
+      expect(bloc.currentState.analysis!.forecast.points.length, 7);
+    });
+
     test('trocar o horizonte sem resultado não consulta o repositório', () {
       bloc.selectHorizon(7);
 

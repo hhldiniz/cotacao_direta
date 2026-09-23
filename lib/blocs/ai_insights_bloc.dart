@@ -127,10 +127,22 @@ class AiInsightsBloc extends BaseBloc {
   void selectHorizon(int days) {
     if (_horizonInDays == days) return;
     _horizonInDays = days;
-    // The horizon only changes the projection; redoing the analysis is cheap
-    // and needs no network, so the screen answers right away when a result is
-    // already there.
-    if (_state.hasAnalysis) analyze(localeName: _localeName);
+    // The horizon only changes the projection: the series on screen is run
+    // through the model again, with no new history request, so the screen
+    // answers right away when a result is already there.
+    final analysis = _state.analysis;
+    if (analysis != null) _reanalyze(analysis.series);
+  }
+
+  Future<void> _reanalyze(AssetSeries series) async {
+    final requestId = ++_requestId;
+    _emit(const AiInsightsState.loading());
+    try {
+      await _runModel(series, requestId);
+    } catch (exception) {
+      if (requestId != _requestId) return;
+      _emit(const AiInsightsState.failed(AiInsightsError.failure));
+    }
   }
 
   /// Amount typed for the simulation, or null when the field is empty or
@@ -186,20 +198,24 @@ class AiInsightsBloc extends BaseBloc {
         return;
       }
 
-      // Hands control back to the event loop before training: training is
-      // short (milliseconds), but this way the loading indicator does get to
-      // show and the screen does not freeze on a slow device.
-      final analysis = await Future(() => _aiService.analyze(
-            series,
-            horizonInDays: _horizonInDays,
-            localeName: localeName,
-          ));
-      if (requestId != _requestId) return;
-      _emit(AiInsightsState.ready(analysis));
+      await _runModel(series, requestId);
     } catch (exception) {
       if (requestId != _requestId) return;
       _emit(const AiInsightsState.failed(AiInsightsError.failure));
     }
+  }
+
+  Future<void> _runModel(AssetSeries series, int requestId) async {
+    // Hands control back to the event loop before training: training is
+    // short (milliseconds), but this way the loading indicator does get to
+    // show and the screen does not freeze on a slow device.
+    final analysis = await Future(() => _aiService.analyze(
+          series,
+          horizonInDays: _horizonInDays,
+          localeName: _localeName,
+        ));
+    if (requestId != _requestId) return;
+    _emit(AiInsightsState.ready(analysis));
   }
 
   void _emit(AiInsightsState state) {
