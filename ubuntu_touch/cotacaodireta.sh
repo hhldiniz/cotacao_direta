@@ -10,6 +10,23 @@ app_dir="${APP_DIR:-$(cd "$(dirname "$0")" && pwd)}"
 # isso o GDK tentaria o backend X11 primeiro e o app não subiria.
 export GDK_BACKEND=wayland
 
+# O Lomiri informa a densidade da tela pelo GRID_UNIT_PX (8 px equivalem a 1x;
+# num celular costuma ficar entre 16 e 24). O GTK3 não lê essa variável, só o
+# GDK_SCALE, e é do fator de escala do GTK que o embedder do Flutter tira o
+# devicePixelRatio: sem isso o app seria desenhado em 1x, minúsculo. O
+# GDK_SCALE só aceita inteiros, então a sobra vai para o GDK_DPI_SCALE, que
+# ajusta o tamanho do texto (com 18 px, por exemplo, fica escala 2 e texto
+# 1.125x). Quem já definiu as duas por conta própria é respeitado.
+if [ -n "${GRID_UNIT_PX:-}" ] && [ "$GRID_UNIT_PX" -gt 0 ] 2>/dev/null; then
+  scale=$((GRID_UNIT_PX / 8))
+  [ "$scale" -ge 1 ] || scale=1
+  export GDK_SCALE="${GDK_SCALE:-$scale}"
+  # Conta em milésimos, só com aritmética do shell: o confinamento não garante
+  # acesso a awk/bc.
+  dpi=$((GRID_UNIT_PX * 1000 / (8 * GDK_SCALE)))
+  export GDK_DPI_SCALE="${GDK_DPI_SCALE:-$((dpi / 1000)).$(printf '%03d' $((dpi % 1000)))}"
+fi
+
 # O GTK3 lê ajustes em org.gtk.Settings.* pelo GSettings, e o rootfs do sistema
 # não tem esses esquemas: os compilados viajam no click (ver ubuntu_touch/build.sh).
 if [ -f "$app_dir/glib-2.0/schemas/gschemas.compiled" ]; then

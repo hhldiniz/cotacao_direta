@@ -429,10 +429,15 @@ tem (glibc, glib, wayland, EGL/GLES, dbus, freetype, fontconfig): duplicar
 essas só aumentaria a chance de carregar duas cópias da mesma biblioteca no
 mesmo processo.
 
-Duas coisas que o lançador resolve e que não são óbvias:
+Três coisas que o lançador resolve e que não são óbvias:
 
 - **Wayland.** Não há servidor X no aparelho. Sem `GDK_BACKEND=wayland` o GDK
   tentaria o backend X11 primeiro e o app não subiria.
+- **Escala da tela.** O Lomiri informa a densidade pelo `GRID_UNIT_PX` (8 px
+  equivalem a 1x), que o GTK3 ignora. O lançador converte esse valor em
+  `GDK_SCALE` (a parte inteira, de onde o Flutter tira o `devicePixelRatio`)
+  e `GDK_DPI_SCALE` (a sobra, aplicada ao texto). Sem isso o app seria
+  desenhado em 1x, minúsculo na tela do celular.
 - **Diretório de trabalho.** O `sqflite_common_ffi` resolve o
   `getDatabasesPath()` como `.dart_tool/sqflite_common_ffi/databases`
   *relativo ao diretório atual*, e o diretório do click é somente leitura.
