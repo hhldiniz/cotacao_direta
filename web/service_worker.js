@@ -24,8 +24,9 @@
 
 // Trocar a versão apaga os caches antigos. Só precisa mudar quando a
 // estratégia acima mudar: arquivo novo publicado é assunto das regras acima,
-// não do nome do cache.
-const CACHE_NAME = 'cotacao-direta-v1';
+// não do nome do cache. (A v2 veio com a mudança do app para /app/: o cache
+// da v1 guardava o app na raiz, onde agora fica o site estático.)
+const CACHE_NAME = 'cotacao-direta-v2';
 
 /// Endereços em que a versão publicada tem de ganhar da guardada.
 const NETWORK_FIRST_PATHS = [
@@ -40,7 +41,7 @@ const NETWORK_FIRST_PATHS = [
 ];
 
 // O escopo do service worker é a pasta em que ele está, que é a raiz do app
-// (`/` no servidor local, `/cotacao_direta/` no GitHub Pages).
+// (`/` no servidor local, `/cotacao_direta/app/` no GitHub Pages).
 const SCOPE = new URL('./', self.location.href);
 
 /// O mínimo para o app abrir. Entra em cache já na instalação, e não só quando

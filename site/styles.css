@@ -1,0 +1,133 @@
+/* Estilo do site público (páginas geradas por tool/build_site.dart). O app
+   Flutter, em /app/, não usa este arquivo. */
+
+:root {
+  --brand: #6c4dff;
+  --brand-strong: #5234e0;
+  --bg: #ffffff;
+  --surface: #f5f3ff;
+  --text: #1c1b22;
+  --muted: #5c5a66;
+  --border: #e3e0ef;
+  --up: #0a7d3b;
+  --down: #c62828;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --brand: #9d86ff;
+    --brand-strong: #b8a8ff;
+    --bg: #121118;
+    --surface: #1d1b26;
+    --text: #ecebf2;
+    --muted: #a9a6b8;
+    --border: #2e2b3a;
+    --up: #4cc38a;
+    --down: #ff7a7a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+a { color: var(--brand); }
+
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+
+h1 { font-size: clamp(1.75rem, 4vw, 2.5rem); line-height: 1.2; margin: 24px 0 12px; }
+h2 { font-size: 1.4rem; margin: 40px 0 12px; }
+h3 { font-size: 1.05rem; margin: 0 0 4px; }
+
+.muted { color: var(--muted); font-size: .9rem; }
+.lead { font-size: 1.15rem; color: var(--muted); max-width: 44em; }
+
+/* Cabeçalho e rodapé */
+
+.top { border-bottom: 1px solid var(--border); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; }
+.top nav { display: flex; align-items: center; gap: 16px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text); text-decoration: none; }
+.brand img { border-radius: 8px; }
+
+.bottom { margin-top: 64px; padding: 24px 0 40px; border-top: 1px solid var(--border); font-size: .9rem; }
+
+/* Botões */
+
+.button {
+  display: inline-block;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.button:hover { background: var(--brand-strong); }
+.button.secondary { background: transparent; color: var(--brand); box-shadow: inset 0 0 0 2px var(--brand); }
+.button.small { padding: 6px 14px; font-size: .9rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+
+@media (prefers-color-scheme: dark) {
+  .button { color: #121118; }
+  .button.secondary { color: var(--brand); }
+}
+
+/* Página inicial */
+
+.hero { background: var(--surface); padding: 24px 0 16px; }
+
+.features { list-style: none; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.features li { padding: 16px; border: 1px solid var(--border); border-radius: 12px; }
+.features p { margin: 0; color: var(--muted); }
+
+.shots { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.shots figure { margin: 0; }
+.shots img { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border); }
+.shots figcaption { color: var(--muted); font-size: .9rem; }
+
+.platforms { padding-left: 20px; }
+
+/* Tabelas */
+
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 600; font-size: .9rem; }
+td:not(:first-child), th:not(:first-child) { text-align: right; }
+.code { color: var(--muted); font-size: .8rem; }
+
+.columns { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+.change { font-weight: 600; white-space: nowrap; }
+.change.up { color: var(--up); }
+.change.down { color: var(--down); }
+
+/* Página de cada moeda */
+
+.crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 16px 0 0; font-size: .9rem; color: var(--muted); }
+.crumbs li + li::before { content: "›"; margin-right: 6px; }
+
+.quote { padding: 16px 20px; border-radius: 12px; background: var(--surface); }
+.quote p { margin: 4px 0; }
+.quote-main { font-size: 1.25rem; }
+.quote-main strong { font-size: 2rem; }
+
+.chart { margin: 0; }
+.chart svg { width: 100%; height: 180px; display: block; }
+.chart-line { fill: none; stroke: var(--brand); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.chart-area { fill: var(--brand); opacity: .12; }
+
+.callout { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin: 32px 0; padding: 20px; border-radius: 12px; border: 2px solid var(--brand); }
+.callout h2 { margin: 0 0 4px; font-size: 1.2rem; }
+.callout p { margin: 0; color: var(--muted); }
+
+.links { display: grid; gap: 4px 16px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); padding-left: 20px; }

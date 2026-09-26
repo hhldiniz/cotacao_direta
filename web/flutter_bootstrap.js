@@ -25,7 +25,7 @@ _flutter.loader.load();
   });
 
   // Endereços montados a partir do baseURI para o app continuar funcionando
-  // publicado num subcaminho (é o caso do GitHub Pages, em /cotacao_direta/).
+  // publicado num subcaminho (é o caso do GitHub Pages, em /cotacao_direta/app/).
   // O escopo é a pasta do app, e não a raiz do domínio.
   var serviceWorkerUrl = new URL('service_worker.js', document.baseURI);
   var scope = new URL('./', document.baseURI);
