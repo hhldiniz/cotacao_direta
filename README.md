@@ -151,9 +151,17 @@ landing pages, `BreadcrumbList` on the rest) and `hreflang`. Styles live in
 `site/styles.css`; screenshots come from `flatpak/screenshots/`.
 
 `.github/workflows/deploy-pages.yml` rebuilds and redeploys every hour (on top
-of every push to `master`), so the currency pages stay current. If the API
-does not return a rate for every currency, the generator fails and the
-previous deployment stays online.
+of every push to `master`), so the currency pages stay current.
+
+An AwesomeAPI failure never fails the deploy (which would also hold back app
+updates). Each build publishes the rates it used in `data.json`; when the API
+does not answer, the next build reuses that file, and a currency with no rate
+at all gets its page with an "unavailable" notice instead of the value.
+Without a key, AwesomeAPI rate-limits per IP, and GitHub's shared runners can
+hit HTTP 429 on the very first request. Create a free key at
+<https://awesomeapi.com.br> and store it as the repository **secret**
+`AWESOMEAPI_TOKEN` (Settings → Secrets and variables → Actions → Secrets); the
+generator sends it as the `token` query parameter.
 
 To add a currency page, add an entry to `tool/site/currencies.dart`.
 

@@ -41,6 +41,34 @@ class SiteData {
 
   const SiteData(
       {required this.generatedAt, required this.quotes, required this.history});
+
+  /// Formato do `data.json` publicado junto do site. É dele que um build
+  /// seguinte tira as cotações quando a API falha — ver tool/build_site.dart.
+  Map<String, Object?> toJson() => {
+        'generatedAt': generatedAt.toIso8601String(),
+        'quotes': {
+          for (var MapEntry(:key, :value) in quotes.entries)
+            key: value.toJson()
+        },
+        'history': {
+          for (var MapEntry(:key, :value) in history.entries)
+            key: [for (var day in value) day.toJson()]
+        },
+      };
+
+  static SiteData fromJson(Map json) => SiteData(
+        generatedAt: DateTime.parse(json['generatedAt'] as String),
+        quotes: {
+          for (var MapEntry(:key, :value) in (json['quotes'] as Map).entries)
+            key as String: Quote.fromJson(value as Map)
+        },
+        history: {
+          for (var MapEntry(:key, :value) in (json['history'] as Map).entries)
+            key as String: [
+              for (var day in value as List) DailyClose.fromJson(day as Map)
+            ]
+        },
+      );
 }
 
 /// Pasta, relativa à raiz do site, em que o app Flutter é publicado.
@@ -54,11 +82,11 @@ const ratesPath = 'cotacao/';
 /// Os arquivos binários (ícones, capturas de tela, imagem do Open Graph) e o
 /// app Flutter em [appPath] ficam a cargo de quem chama; ver
 /// tool/build_site.dart.
+///
+/// Uma moeda sem cotação em [SiteData.quotes] ainda ganha a página dela, com
+/// um aviso no lugar do valor: tirar a página do ar (e do sitemap) só porque a
+/// API falhou numa hora faria o buscador tratá-la como removida.
 Map<String, String> buildSite(SiteConfig config, SiteData data) {
-  for (var currency in siteCurrencies) {
-    if (!data.quotes.containsKey(currency.code))
-      throw ArgumentError('Sem cotação para ${currency.code}');
-  }
   var builder = _SiteBuilder(config, data);
   var files = <String, String>{};
   for (var strings in allStrings) {
@@ -108,7 +136,7 @@ class _SiteBuilder {
       ..write('<section class="wrap" id="cotacoes">')
       ..write('<h2>${_e(s.ratesTitle)}</h2>')
       ..write(_ratesTable(s, linkToPages: isPt))
-      ..write(_updatedAt(s, _latestQuoteTime))
+      ..write(_latestUpdate(s))
       ..write(isPt
           ? '<p><a href="{{root}}$ratesPath">${_e(s.allRates)} →</a></p>'
           : '')
@@ -187,7 +215,7 @@ class _SiteBuilder {
           'bitcoin e outras moedas em reais. Toque em uma moeda para ver a '
           'conversão, o histórico dos últimos 30 dias e o gráfico.</p>')
       ..write(_ratesTable(s, linkToPages: true))
-      ..write(_updatedAt(s, _latestQuoteTime))
+      ..write(_latestUpdate(s))
       ..write(_appCallout('Quer acompanhar em tempo real?',
           'No app você escolhe as moedas, converte valores, vê o histórico '
               'completo e cria alertas de preço.'))
@@ -208,7 +236,7 @@ class _SiteBuilder {
 
   String currency(SiteCurrency c) {
     var s = stringsPt;
-    var quote = data.quotes[c.code]!;
+    var quote = data.quotes[c.code];
     var history = data.history[c.code] ?? const <DailyClose>[];
     var path = _currencyPath(c);
     var name = c.shortNamePt;
@@ -219,20 +247,25 @@ class _SiteBuilder {
       ..write('<div class="wrap">')
       ..write(_breadcrumb(crumbs))
       ..write('<h1>Cotação ${c.ofPt} $name hoje</h1>')
-      ..write('<div class="quote">')
-      ..write('<p class="quote-main">1 ${_e(c.namePt)} (${c.code}) = '
+      ..write('<div class="quote">');
+    if (quote == null) {
+      body.write('<p class="quote-main">A cotação ${c.ofPt} $name está '
+          'indisponível no momento.</p><p class="muted">Abra o app para ver o '
+          'valor mais recente.</p>');
+    } else {
+      body.write('<p class="quote-main">1 ${_e(c.namePt)} (${c.code}) = '
           '<strong>${_brl(quote.bid, s)}</strong></p>');
-    if (quote.pctChange != null) {
-      body.write('<p>${_change(quote.pctChange!, s)} em relação ao '
-          'fechamento anterior</p>');
+      if (quote.pctChange != null) {
+        body.write('<p>${_change(quote.pctChange!, s)} em relação ao '
+            'fechamento anterior</p>');
+      }
+      if (quote.high != null && quote.low != null) {
+        body.write('<p class="muted">Máxima do dia: ${_brl(quote.high!, s)} · '
+            'Mínima do dia: ${_brl(quote.low!, s)}</p>');
+      }
+      body.write(_updatedAt(s, quote.time));
     }
-    if (quote.high != null && quote.low != null) {
-      body.write('<p class="muted">Máxima do dia: ${_brl(quote.high!, s)} · '
-          'Mínima do dia: ${_brl(quote.low!, s)}</p>');
-    }
-    body
-      ..write(_updatedAt(s, quote.time))
-      ..write('</div>');
+    body.write('</div>');
 
     if (history.length >= 2) {
       var first = history.first;
@@ -256,8 +289,10 @@ class _SiteBuilder {
       ..write(_appCallout('Acompanhe o $name em tempo real',
           'Crie um alerta e receba uma notificação quando o $name chegar ao '
               'valor que você quer. Grátis, no navegador ou no celular.'))
-      ..write('<h2>Conversão de ${_e(c.namePt)} para real</h2>')
-      ..write(_conversionTables(c, quote.bid, s));
+      ..write(quote == null
+          ? ''
+          : '<h2>Conversão de ${_e(c.namePt)} para real</h2>'
+              '${_conversionTables(c, quote.bid, s)}');
 
     if (history.length >= 2) {
       body
@@ -284,14 +319,14 @@ class _SiteBuilder {
     }
     body.write('</ul></div>');
 
-    var bid = _brl(quote.bid, s);
+    var bid = quote == null ? null : _brl(quote.bid, s);
     return _page(
       strings: s,
       path: path,
-      title: 'Cotação ${c.ofPt} $name hoje (${c.code}/BRL): $bid | '
-          'Cotação Direta',
-      description: 'Cotação ${c.ofPt} ${c.namePt} hoje: 1 ${c.code} = $bid. '
-          'Veja a variação do dia, o histórico dos últimos 30 dias, a '
+      title: 'Cotação ${c.ofPt} $name hoje (${c.code}/BRL)'
+          '${bid == null ? '' : ': $bid'} | Cotação Direta',
+      description: 'Cotação ${c.ofPt} ${c.namePt} hoje'
+          '${bid == null ? '' : ': 1 ${c.code} = $bid'}. Veja a variação do dia, o histórico dos últimos 30 dias, a '
           'conversão para real e crie alertas de preço.',
       body: body.toString(),
       jsonLd: [_breadcrumbJsonLd(crumbs)],
@@ -342,9 +377,14 @@ class _SiteBuilder {
   // ---------------------------------------------------------------------------
   // Pedaços das páginas
 
-  DateTime get _latestQuoteTime => data.quotes.values
-      .map((q) => q.time)
-      .reduce((a, b) => a.isAfter(b) ? a : b);
+  /// Horário da cotação mais recente, ou nada se não houver nenhuma.
+  String _latestUpdate(SiteStrings s) {
+    if (data.quotes.isEmpty) return '';
+    var latest = data.quotes.values
+        .map((q) => q.time)
+        .reduce((a, b) => a.isAfter(b) ? a : b);
+    return _updatedAt(s, latest);
+  }
 
   String _ratesTable(SiteStrings s, {required bool linkToPages}) {
     var buffer = StringBuffer()
@@ -352,14 +392,14 @@ class _SiteBuilder {
           '<th>${_e(s.currencyHeader)}</th><th>${_e(s.rateHeader)}</th>'
           '<th>${_e(s.changeHeader)}</th></tr></thead><tbody>');
     for (var c in siteCurrencies) {
-      var quote = data.quotes[c.code]!;
+      var quote = data.quotes[c.code];
       var name = _e(_capitalize(_nameFor(c, s)));
       var label = linkToPages
           ? '<a href="{{root}}${_currencyPath(c)}">$name</a>'
           : name;
       buffer.write('<tr><td>$label <span class="code">${c.code}</span></td>'
-          '<td>${_brl(quote.bid, s)}</td>'
-          '<td>${quote.pctChange == null ? '—' : _change(quote.pctChange!, s)}'
+          '<td>${quote == null ? '—' : _brl(quote.bid, s)}</td>'
+          '<td>${quote?.pctChange == null ? '—' : _change(quote!.pctChange!, s)}'
           '</td></tr>');
     }
     buffer.write('</tbody></table>');

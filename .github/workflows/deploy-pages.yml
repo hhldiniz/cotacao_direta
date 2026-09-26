@@ -69,11 +69,14 @@ jobs:
       # Páginas iniciais, uma página por moeda, sitemap e robots.txt, com as
       # cotações do momento. Ver a seção "Public website and SEO" do README.
       # As variáveis de verificação são opcionais (Settings → Secrets and
-      # variables → Actions → Variables).
+      # variables → Actions → Variables), assim como o segredo
+      # AWESOMEAPI_TOKEN: sem ele a AwesomeAPI pode recusar as requisições do
+      # runner (HTTP 429), e o gerador reaproveita as cotações publicadas antes.
       - name: Gera o site estático
         env:
           GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
           BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
+          AWESOMEAPI_TOKEN: ${{ secrets.AWESOMEAPI_TOKEN }}
         run: dart run tool/build_site.dart --out build/site --site-url "${{ steps.pages.outputs.base_url }}/"
 
       - name: Junta o app ao site
