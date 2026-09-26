@@ -5,6 +5,11 @@ on:
     branches: [master]
   # Permite disparar manualmente pela aba Actions, sem precisar de um push novo.
   workflow_dispatch:
+  # As páginas de cotação (/cotacao/...) mostram o valor do momento do build;
+  # republicar de hora em hora as mantém atuais para quem chega pela busca.
+  # Fora da hora cheia para não cair no pico de agendamentos do GitHub.
+  schedule:
+    - cron: '17 * * * *'
 
 env:
   # Deve acompanhar o FLUTTER_VERSION do ci.yml.
@@ -41,24 +46,43 @@ jobs:
       - name: Baixa as dependências
         run: flutter pub get
 
-      # --base-href precisa bater com o caminho do site de projeto no GitHub
-      # Pages (https://<usuário>.github.io/<repositório>/); sem isso os
-      # assets carregam com o caminho errado e a página fica em branco.
+      # Lê o endereço do site (https://<usuário>.github.io/<repositório>/, ou o
+      # domínio próprio, se um for configurado no Pages). Vem antes do build
+      # porque é dele que saem o --base-href do app e os endereços absolutos
+      # (canonical, sitemap, Open Graph) do site estático.
+      - name: Configura o GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      # O app vai para /app/; a raiz é do site estático gerado abaixo.
+      #
+      # --base-href precisa bater com esse caminho; sem isso os assets carregam
+      # com o caminho errado e a página fica em branco.
       #
       # --no-web-resources-cdn faz o CanvasKit ser servido junto do site, e não
       # pelo CDN do Google. É o que permite ao service worker guardá-lo em
       # cache: pelo CDN ele vem de outro domínio, e o app instalado não abriria
       # sem rede. Ver a seção "Web como PWA" do README.
       - name: Compila o app Web (release)
-        run: flutter build web --release --no-web-resources-cdn --base-href /cotacao_direta/
+        run: flutter build web --release --no-web-resources-cdn --base-href "${{ steps.pages.outputs.base_path }}/app/"
 
-      - name: Configura o GitHub Pages
-        uses: actions/configure-pages@v5
+      # Páginas iniciais, uma página por moeda, sitemap e robots.txt, com as
+      # cotações do momento. Ver a seção "Public website and SEO" do README.
+      # As variáveis de verificação são opcionais (Settings → Secrets and
+      # variables → Actions → Variables).
+      - name: Gera o site estático
+        env:
+          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+          BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION }}
+        run: dart run tool/build_site.dart --out build/site --site-url "${{ steps.pages.outputs.base_url }}/"
+
+      - name: Junta o app ao site
+        run: cp -r build/web build/site/app
 
       - name: Publica os arquivos como artefato do Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build/web
+          path: build/site
 
       - name: Publica no GitHub Pages
         id: deployment

@@ -20,6 +20,12 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Um aplicativo simples que mostra a cotação das principais moedas frente ao real">
 
+  <!-- O app é publicado em /app/, e esta página não tem texto que um
+       buscador consiga ler: o Flutter desenha tudo num canvas. Quem aparece
+       na busca é o site estático gerado por tool/build_site.dart, na raiz,
+       que aponta para cá. -->
+  <meta name="robots" content="noindex">
+
   <!--
     Sem esta linha o navegador do celular renderiza a página numa viewport de
     desktop e depois reduz tudo: o app abre com os textos ilegíveis e falha o
