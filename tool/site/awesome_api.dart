@@ -18,6 +18,21 @@ class Quote {
       this.high,
       this.low,
       this.pctChange});
+
+  Map<String, Object?> toJson() => {
+        'bid': bid,
+        'time': time.toIso8601String(),
+        'high': high,
+        'low': low,
+        'pctChange': pctChange,
+      };
+
+  static Quote fromJson(Map json) => Quote(
+      bid: (json['bid'] as num).toDouble(),
+      time: DateTime.parse(json['time'] as String),
+      high: (json['high'] as num?)?.toDouble(),
+      low: (json['low'] as num?)?.toDouble(),
+      pctChange: (json['pctChange'] as num?)?.toDouble());
 }
 
 /// Fechamento de um dia, para a tabela e o gráfico do histórico.
@@ -27,6 +42,14 @@ class DailyClose {
   final double? pctChange;
 
   const DailyClose({required this.time, required this.bid, this.pctChange});
+
+  Map<String, Object?> toJson() =>
+      {'time': time.toIso8601String(), 'bid': bid, 'pctChange': pctChange};
+
+  static DailyClose fromJson(Map json) => DailyClose(
+      time: DateTime.parse(json['time'] as String),
+      bid: (json['bid'] as num).toDouble(),
+      pctChange: (json['pctChange'] as num?)?.toDouble());
 }
 
 /// Leitura das respostas da AwesomeAPI (economia.awesomeapi.com.br) para o
@@ -36,39 +59,72 @@ class AwesomeApi {
 
   final http.Client _client;
 
-  AwesomeApi([http.Client? client]) : _client = client ?? http.Client();
+  /// Chave de API opcional. Sem ela a AwesomeAPI limita as requisições por IP,
+  /// e os IPs dos runners do GitHub Actions são compartilhados: o limite pode
+  /// já estar estourado antes da primeira requisição do build (HTTP 429).
+  final String? _token;
+
+  /// Espera entre as tentativas de uma requisição recusada.
+  final List<Duration> _retryDelays;
+
+  AwesomeApi(
+      {http.Client? client,
+      String? token,
+      List<Duration> retryDelays = const [
+        Duration(seconds: 5),
+        Duration(seconds: 20),
+        Duration(seconds: 45),
+      ]})
+      : _client = client ?? http.Client(),
+        _token = token,
+        _retryDelays = retryDelays;
 
   /// Última cotação de cada código, frente ao real, numa requisição só.
   Future<Map<String, Quote>> latest(List<String> codes) async {
     var pairs = codes.map((code) => '$code-BRL').join(',');
-    var body = await _get(Uri.https(_host, '/json/last/$pairs'));
+    var body = await _get(_uri('/json/last/$pairs'));
     return parseLatest(body);
   }
 
   /// Os últimos [days] fechamentos diários, do mais antigo para o mais novo.
   Future<List<DailyClose>> daily(String code, int days) async {
-    var body = await _get(Uri.https(_host, '/json/daily/$code-BRL/$days'));
+    var body = await _get(_uri('/json/daily/$code-BRL/$days'));
     return parseDaily(body);
   }
 
   void close() => _client.close();
 
-  /// A API às vezes recusa um pedido isolado (limite de requisições, um 5xx
-  /// passageiro); três tentativas espaçadas bastam para um build de hora em
-  /// hora não falhar à toa.
+  Uri _uri(String path) => Uri.https(
+      _host, path, _token == null ? null : {'token': _token});
+
+  /// A API às vezes recusa um pedido (limite de requisições, um 5xx
+  /// passageiro); tenta de novo com esperas crescentes, respeitando o
+  /// `Retry-After` quando ele vier.
   Future<String> _get(Uri uri) async {
     Object? lastError;
-    for (var attempt = 0; attempt < 3; attempt++) {
-      if (attempt > 0) await Future.delayed(Duration(seconds: 2 << attempt));
+    Duration? retryAfter;
+    for (var attempt = 0; attempt <= _retryDelays.length; attempt++) {
+      if (attempt > 0) {
+        var delay = _retryDelays[attempt - 1];
+        if (retryAfter != null && retryAfter > delay) delay = retryAfter;
+        await Future.delayed(delay);
+      }
+      retryAfter = null;
       try {
         var response = await _client.get(uri);
         if (response.statusCode == 200) return utf8.decode(response.bodyBytes);
         lastError = 'HTTP ${response.statusCode}';
+        var seconds = int.tryParse(response.headers['retry-after'] ?? '');
+        // Um Retry-After absurdo não pode travar o build por horas.
+        if (seconds != null && seconds <= 120)
+          retryAfter = Duration(seconds: seconds);
       } catch (error) {
         lastError = error;
       }
     }
-    throw Exception('Falha ao consultar $uri: $lastError');
+    // O token não entra na mensagem, que vai parar no log público do CI.
+    throw Exception(
+        'Falha ao consultar ${Uri.https(uri.host, uri.path)}: $lastError');
   }
 
   /// `/json/last` devolve um objeto com o par sem hífen como chave

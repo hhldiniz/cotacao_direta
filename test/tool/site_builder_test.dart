@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 import '../../tool/site/awesome_api.dart';
 import '../../tool/site/currencies.dart';
@@ -156,11 +158,36 @@ void main() {
     expect(config.siteUrl.toString(), 'https://x.dev/sub/');
   });
 
-  test('buildSite falha se faltar a cotação de alguma moeda', () {
+  test('moeda sem cotação mantém a página, com um aviso no lugar do valor',
+      () {
     var data = _sampleData();
     data.quotes.remove('USD');
-    expect(() => buildSite(SiteConfig(siteUrl: _siteUrl), data),
-        throwsArgumentError);
+    var files = buildSite(SiteConfig(siteUrl: _siteUrl), data);
+    var page = files['cotacao/dolar/index.html']!;
+    expect(page, contains('indisponível no momento'));
+    expect(page, contains('<title>Cotação do dólar hoje (USD/BRL) | '));
+    expect(page, isNot(contains('Conversão de')));
+    expect(files['sitemap.xml'], contains('cotacao/dolar/'));
+  });
+
+  test('sem nenhuma cotação o site ainda é gerado', () {
+    var files = buildSite(
+        SiteConfig(siteUrl: _siteUrl),
+        SiteData(
+            generatedAt: DateTime.utc(2026, 9, 26), quotes: {}, history: {}));
+    expect(files['index.html'], isNot(contains('Atualizado em')));
+    expect(files['cotacao/euro/index.html'], contains('indisponível'));
+  });
+
+  test('SiteData sobrevive à ida e volta pelo data.json', () {
+    var data = _sampleData();
+    var copy = SiteData.fromJson(jsonDecode(jsonEncode(data.toJson())) as Map);
+    expect(copy.generatedAt, data.generatedAt);
+    expect(copy.quotes['USD']!.bid, data.quotes['USD']!.bid);
+    expect(copy.quotes['USD']!.high, 5.5);
+    expect(copy.history['USD']!.length, 30);
+    expect(buildSite(SiteConfig(siteUrl: _siteUrl), copy),
+        buildSite(SiteConfig(siteUrl: _siteUrl), data));
   });
 
   group('AwesomeApi', () {
@@ -191,6 +218,39 @@ void main() {
         {'bid': 'x', 'timestamp': '50'},
       ]));
       expect(history.map((d) => d.bid), [5.2, 5.3]);
+    });
+
+    test('tenta de novo depois de um 429 e manda o token', () async {
+      var calls = <Uri>[];
+      var api = AwesomeApi(
+          token: 'segredo',
+          retryDelays: const [Duration.zero, Duration.zero],
+          client: MockClient((request) async {
+            calls.add(request.url);
+            return calls.length == 1
+                ? http.Response('', 429)
+                : http.Response(
+                    jsonEncode({
+                      'USDBRL': {'code': 'USD', 'bid': '5', 'timestamp': '1'}
+                    }),
+                    200);
+          }));
+      var quotes = await api.latest(['USD']);
+      expect(quotes['USD']!.bid, 5);
+      expect(calls, hasLength(2));
+      expect(calls.first.queryParameters['token'], 'segredo');
+    });
+
+    test('desiste depois das tentativas sem expor o token', () async {
+      var api = AwesomeApi(
+          token: 'segredo',
+          retryDelays: const [Duration.zero],
+          client: MockClient((_) async => http.Response('', 429)));
+      await expectLater(
+          api.latest(['USD']),
+          throwsA(predicate((error) =>
+              '$error'.contains('HTTP 429') &&
+              !'$error'.contains('segredo'))));
     });
 
     test('respostas de erro viram coleções vazias', () {
