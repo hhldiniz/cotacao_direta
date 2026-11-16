@@ -15,9 +15,9 @@ jobs:
     name: Build e publica APK (release)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -81,7 +81,7 @@ jobs:
           "$apksigner" verify --print-certs build/app/outputs/flutter-apk/app-release.apk
 
       - name: Publica o APK como artefato
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cotacao_direta-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
