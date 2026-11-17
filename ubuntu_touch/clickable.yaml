@@ -6,8 +6,11 @@
 # Ver a seção "Empacotamento Ubuntu Touch (click/OpenStore)" do README.
 clickable_minimum_required: "8.9.0"
 
-# O projeto do Flutter fica um nível acima deste arquivo.
-root_dir: ".."
+# Sem `root_dir`: o Clickable resolve caminhos relativos a partir do diretório
+# em que é executado (não do local deste arquivo), e o padrão já é esse
+# diretório. Por isso o comando roda da raiz do repositório, apontando para
+# este arquivo com `-c ubuntu_touch/clickable.yaml`; um `root_dir: ".."` aqui
+# apontaria para fora do repositório.
 
 # Base Noble (Ubuntu 24.04), a do Ubuntu Touch 24.04: é contra as bibliotecas
 # dela que o bundle Linux do Flutter é linkado, então precisa bater com a
