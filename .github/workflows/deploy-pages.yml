@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment-retry.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
 
@@ -87,6 +87,23 @@ jobs:
         with:
           path: build/site
 
+      # O deploy-pages procura o artefato pelo nome, numa única consulta à lista
+      # de artefatos da execução, feita menos de um segundo depois do upload. Às
+      # vezes essa lista ainda não mostra o artefato recém-enviado ("Found 0
+      # artifact(s)" / "No artifacts named github-pages"), e a publicação falha
+      # mesmo com o upload concluído. Por isso a primeira tentativa pode falhar
+      # sem derrubar o job, e uma segunda roda depois de uma pausa. Se ela
+      # também falhar, o job falha normalmente.
       - name: Publica no GitHub Pages
         id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+
+      - name: Aguarda antes de tentar publicar de novo
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 20
+
+      - name: Publica no GitHub Pages (segunda tentativa)
+        id: deployment-retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v5
