@@ -12,7 +12,12 @@ import 'package:flutter/services.dart';
 ///    LICENSE.txt viaja junto como asset;
 ///  * os desenhos das bandeiras, que o pacote `flag` redistribui a partir do
 ///    flag-icons sem trazer a licença de origem (o LICENSE dele cobre só o
-///    código do pacote).
+///    código do pacote);
+///  * o Chronos-Bolt, o modelo de previsão da tela de IA: a inferência em
+///    lib/ai/chronos/ é um porte do código do chronos-forecasting, da Amazon,
+///    e os pesos baixados do Hugging Face estão sob a mesma licença. É a mesma
+///    Apache 2.0 da Roboto, então o texto sai do mesmo asset, com o aviso de
+///    direito autoral do NOTICE do projeto na frente.
 ///
 /// Ambas as licenças — Apache 2.0 e MIT — obrigam a incluir o aviso de direito
 /// autoral em qualquer redistribuição, e publicar o app é redistribuir.
@@ -26,6 +31,13 @@ void registerThirdPartyLicenses() {
       await rootBundle.loadString("fonts/Roboto/LICENSE.txt"),
     );
     yield LicenseEntryWithLineBreaks(const ["flag-icons"], _flagIconsLicense);
+    yield LicenseEntryWithLineBreaks(
+      const ["Chronos-Bolt"],
+      "Chronos-Bolt and chronos-forecasting\n"
+      "Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.\n"
+      "https://github.com/amazon-science/chronos-forecasting\n\n"
+      "${await rootBundle.loadString("fonts/Roboto/LICENSE.txt")}",
+    );
   });
 }
 

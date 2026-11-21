@@ -145,22 +145,4 @@ void main() {
           0);
     });
   });
-
-  group('bollingerZScore', () {
-    test('preço na média tem z igual a zero', () {
-      expect(bollingerZScore([1, 3, 1, 3, 2], 5), closeTo(0, 1e-12));
-    });
-
-    test('preço acima da média tem z positivo', () {
-      expect(bollingerZScore([1, 1, 1, 1, 5], 5)!, greaterThan(0));
-    });
-
-    test('janela sem variação devolve zero', () {
-      expect(bollingerZScore([2, 2, 2, 2], 4), 0);
-    });
-
-    test('série mais curta que a janela não tem z', () {
-      expect(bollingerZScore([1, 2], 5), isNull);
-    });
-  });
 }

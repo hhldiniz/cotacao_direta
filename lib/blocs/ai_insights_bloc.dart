@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cotacao_direta/ai/financial_ai_service.dart';
+import 'package:cotacao_direta/ai/model/forecast_model_manager.dart';
 import 'package:cotacao_direta/blocs/base_bloc.dart';
 import 'package:cotacao_direta/model/asset_series.dart';
 import 'package:cotacao_direta/model/financial_analysis.dart';
@@ -16,6 +17,9 @@ enum AiInsightsError {
 
   /// Quotes did come back, but too few to compute indicators.
   insufficientData,
+
+  /// The forecasting model has not been downloaded yet.
+  modelMissing,
 
   /// Any unexpected failure along the way.
   failure,
@@ -43,14 +47,16 @@ class AiInsightsState {
   bool get hasAnalysis => analysis != null;
 }
 
-/// Connects the insights screen to the quote history and to the local model.
+/// Connects the insights screen to the quote history and to the forecasting
+/// model.
 ///
 /// The analysis runs on the device itself: the bloc fetches the history
-/// through the repository the app already uses, builds the series and calls
-/// the [FinancialAiService]. No quote and no result leaves the phone.
+/// through the repository the app already uses, builds the series and hands it
+/// to the [FinancialAiService], with the model the [ForecastModelManager]
+/// downloaded from Hugging Face. No quote and no result leaves the phone.
 class AiInsightsBloc extends BaseBloc {
   final CurrencyRepository _currencyRepository;
-  final FinancialAiService _aiService;
+  final ForecastModelManager _modelManager;
 
   final StreamController<AiInsightsState> _stateController =
       StreamController<AiInsightsState>.broadcast();
@@ -63,8 +69,9 @@ class AiInsightsBloc extends BaseBloc {
   static const List<int> horizonOptions = [7, 15, 30];
 
   /// Calendar days of history requested from the API. It covers about four
-  /// months of trading — enough to train the network without hitting the cap
-  /// of 360 records per request.
+  /// months of trading — enough context for the model and for testing it
+  /// against the recent past, without hitting the cap of 360 records per
+  /// request.
   static const int historyWindowInDays = 180;
 
   AiInsightsState _state = const AiInsightsState.idle();
@@ -86,17 +93,51 @@ class AiInsightsBloc extends BaseBloc {
 
   AiInsightsBloc({
     CurrencyRepository? currencyRepository,
-    FinancialAiService? aiService,
+    ForecastModelManager? modelManager,
     String initialAssetCode = "USD",
     AssetKind initialAssetKind = AssetKind.currency,
     int initialHorizonInDays = 15,
   })  : _currencyRepository = currencyRepository ?? CurrencyRepository(),
-        _aiService = aiService ?? FinancialAiService(),
+        _modelManager = modelManager ?? ForecastModelManager.shared,
         _selectedAssetCode = initialAssetCode,
         _selectedAssetKind = initialAssetKind,
         _horizonInDays = initialHorizonInDays;
 
   Stream<AiInsightsState> get stateStream => _stateController.stream;
+
+  /// Whether the forecasting model is on the device, and the download
+  /// progress while it is being fetched.
+  Stream<ForecastModelState> get modelStateStream => _modelManager.states;
+
+  ForecastModelState get modelState => _modelManager.state;
+
+  /// Name of the forecasting model and the size of its download, for the
+  /// screen.
+  String get modelName => _modelManager.model.displayName;
+
+  int get modelDownloadSize => _modelManager.model.totalSize;
+
+  /// Looks at the storage to update [modelState]. The screen calls it when it
+  /// opens.
+  Future<void> checkModel() => _modelManager.refresh();
+
+  /// Downloads the model from Hugging Face. A failure shows up on
+  /// [modelStateStream].
+  Future<bool> downloadModel() async {
+    final installed = await _modelManager.download();
+    // An analysis that failed only for lack of the model is cleared, so the
+    // screen goes back to inviting the user to analyse.
+    if (installed && _state.error == AiInsightsError.modelMissing)
+      _emit(const AiInsightsState.idle());
+    return installed;
+  }
+
+  /// Removes the model from the device. The result on screen goes with it.
+  Future<void> deleteModel() async {
+    ++_requestId;
+    await _modelManager.delete();
+    _emit(const AiInsightsState.idle());
+  }
 
   /// Last emitted state. The stream is a broadcast one and does not replay the
   /// latest event, so the screen uses this as `initialData` when rebuilding.
@@ -139,6 +180,9 @@ class AiInsightsBloc extends BaseBloc {
     _emit(const AiInsightsState.loading());
     try {
       await _runModel(series, requestId);
+    } on ForecastModelNotInstalledException {
+      if (requestId != _requestId) return;
+      _emit(const AiInsightsState.failed(AiInsightsError.modelMissing));
     } catch (exception) {
       if (requestId != _requestId) return;
       _emit(const AiInsightsState.failed(AiInsightsError.failure));
@@ -199,6 +243,9 @@ class AiInsightsBloc extends BaseBloc {
       }
 
       await _runModel(series, requestId);
+    } on ForecastModelNotInstalledException {
+      if (requestId != _requestId) return;
+      _emit(const AiInsightsState.failed(AiInsightsError.modelMissing));
     } catch (exception) {
       if (requestId != _requestId) return;
       _emit(const AiInsightsState.failed(AiInsightsError.failure));
@@ -206,14 +253,16 @@ class AiInsightsBloc extends BaseBloc {
   }
 
   Future<void> _runModel(AssetSeries series, int requestId) async {
-    // Hands control back to the event loop before training: training is
-    // short (milliseconds), but this way the loading indicator does get to
-    // show and the screen does not freeze on a slow device.
-    final analysis = await Future(() => _aiService.analyze(
-          series,
-          horizonInDays: _horizonInDays,
-          localeName: _localeName,
-        ));
+    // The first analysis loads the model; the next ones reuse it. The forward
+    // passes run off the UI thread where the platform has isolates (see
+    // ChronosBoltRunner), so the loading indicator keeps moving.
+    final forecaster = await _modelManager.forecaster();
+    if (requestId != _requestId) return;
+    final analysis = await FinancialAiService(forecaster).analyze(
+      series,
+      horizonInDays: _horizonInDays,
+      localeName: _localeName,
+    );
     if (requestId != _requestId) return;
     _emit(AiInsightsState.ready(analysis));
   }

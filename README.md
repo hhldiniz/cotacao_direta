@@ -249,62 +249,111 @@ etiqueta que a build não conhece — por exemplo ao instalar por cima de uma
 versão com mais traduções — é tratada como "seguir o aparelho", em vez de
 deixar a interface sem textos.
 
-## IA local: insights e projeções
+## On-device AI: insights and projections
 
-A aba **IA** analisa um ativo (moeda ou criptomoeda) e mostra um resumo de
-mercado, uma projeção com faixa de confiança e observações em texto. Tudo é
-calculado no próprio aparelho: não há modelo para baixar, plugin nativo,
-chamada a serviço de IA nem envio de dados para fora. A única requisição de
-rede é a busca de cotações que o app já fazia.
+The **AI** tab analyses an asset (currency or cryptocurrency) and shows a market
+summary, a projection with a confidence band and remarks in plain text. The
+projection comes from **[Chronos-Bolt Tiny](https://huggingface.co/amazon/chronos-bolt-tiny)**
+(Amazon, Apache-2.0), a pre-trained time-series foundation model, running on
+the device itself.
 
-O modelo tem duas peças, que se cobrem:
+### Why this model
 
-- uma **rede neural** de uma camada escondida (perceptron multicamada) escrita
-  em Dart puro (`lib/ai/neural/neural_network.dart`), treinada na hora com o
-  histórico do próprio ativo. Ela recebe uma janela de log-retornos recentes
-  mais quatro indicadores derivados (momento, IFR, distância da média em
-  desvios padrão e aceleração da volatilidade) e prevê o retorno do dia
-  seguinte; a projeção de vários dias sai da aplicação repetida dessa previsão;
-- uma **deriva estatística**, a média exponencial dos log-retornos, amortecida
-  ao longo do horizonte para não extrapolar uma tendência em linha reta.
+Chronos-Bolt is a T5 encoder-decoder trained on a large and varied collection
+of real time series. It forecasts a new series zero-shot — no training on the
+phone — and returns the whole distribution of the next 64 steps in one forward
+pass (quantiles 0.1 to 0.9), so the band on screen is the model's own and not
+an assumed normal. The Tiny variant was picked for reach: 9M parameters, a
+35 MB download in float32, and a forward pass of about 50 ms on a desktop CPU
+(AOT) and 130 ms in a browser (dart2js), so it runs on entry-level Android
+phones, Linux, Ubuntu Touch and the web alike, with no GPU, NPU or native
+runtime.
 
-O peso de cada peça na projeção final não é arbitrário. Um trecho do fim da
-série é separado do treino e nele a rede é comparada com o passeio aleatório
-("amanhã é igual a hoje"); o peso da rede é proporcional à vantagem obtida e
-tem teto de 60%. Quando a rede não supera o passeio aleatório — o caso comum,
-já que preço de ativo é quase um passeio aleatório —, o peso vai a zero e a
-projeção passa a ser a base estatística. Esse número aparece na tela, em
-"Vantagem sobre o passeio aleatório", para a projeção ser lida pelo que ela é.
+### Download from Hugging Face
 
-A faixa de confiança vem do modelo de caminhada aleatória em log-preço: o
-desvio acumulado cresce com `sigma * sqrt(dias)` e o multiplicador é o quantil
-da normal para o nível pedido (80% por padrão).
+The weights are not bundled with the app. The first time the user opens the AI
+tab, a card offers to download the model; `ForecastModelManager`
+(`lib/ai/model/forecast_model_manager.dart`) then fetches `config.json` and
+`model.safetensors` from `huggingface.co/amazon/chronos-bolt-tiny`:
 
-O treino é semeado com um valor fixo, então a mesma série produz sempre a mesma
-projeção. Uma análise completa (indicadores, treino e projeção) leva de 5 a 20
-ms sobre 90 a 360 pontos numa máquina de desenvolvimento, e algumas dezenas de
-milissegundos em celular — daí rodar na própria isolate da interface, sem
-precisar de isolate separado (o que também mantém o recurso funcionando na
-web).
+- pinned to one commit of the repository (`HuggingFaceModel.chronosBoltTiny`
+  in `lib/ai/model/hugging_face_model.dart`), so a later push to the repository
+  can change neither the forecasts nor the bytes;
+- checked against the size and SHA-256 of every file before anything is
+  written, and written atomically;
+- kept in the app's private `files/models` folder on Android, in
+  `$XDG_DATA_HOME/io.github.hhldiniz.cotacao_direta/models` on Linux and
+  Flatpak (Ubuntu Touch: the package's own folder under `$XDG_DATA_HOME`, the
+  only place the confinement allows), and in the browser's Cache Storage on
+  the web. The
+  Android backup rules (`android/app/src/main/res/xml/`) leave the model out —
+  it is re-downloadable and would push the backup past its 25 MB limit — and
+  the PWA service worker (`web/service_worker.js`) keeps its cache across app
+  updates.
 
-Onde fica o código:
+Hugging Face and its CDN send CORS headers, so the web build downloads it the
+same way. After the download everything works offline; the card also offers to
+remove the model to free the space. The safetensors format holds raw tensors
+and no code, which makes loading a downloaded file safe.
 
-- `lib/ai/math/` — estatística e indicadores técnicos (Dart puro);
-- `lib/ai/neural/` — a rede neural e o treino;
-- `lib/ai/local_financial_model.dart` — características, projeção e faixa de
-  confiança;
-- `lib/ai/insight_engine.dart` — quais observações fazer e com que tom (o texto
-  em si vem das traduções, em `lib/util/localizations.dart`);
-- `lib/ai/financial_ai_service.dart` — porta de entrada usada pelo bloc;
-- `lib/blocs/ai_insights_bloc.dart` e
-  `lib/view/pages/main_menu_items/ai_insights_page.dart` — estado e tela.
+### Inference in pure Dart
 
-Limites, ditos com todas as letras: são estimativas estatísticas sobre cotações
-passadas, e a tela traz esse aviso — não é recomendação de investimento. O
-motor já trabalha com ações (`AssetKind.stock`, com limiares de volatilidade
-próprios), mas a fonte de cotações usada pelo app (AwesomeAPI) só serve moeda
-fiduciária e criptomoeda; basta alimentar um `AssetSeries` com preços de ação
-para analisar uma.
+`lib/ai/chronos/chronos_bolt_model.dart` is a Dart port of the forward pass of
+`ChronosBoltModelForForecasting` (from the `chronos-forecasting` package) and of
+the T5 blocks of `transformers`: instance normalisation, patching (16 points
+per token) with the missing-value mask, the residual patch embedding, the [REG]
+token, the encoder with bucketed relative-position bias, the single-token
+decoder and the quantile head. `lib/ai/chronos/safetensors.dart` reads the
+weights as zero-copy views over the downloaded bytes.
+
+On Android and Linux the passes run on a dedicated isolate that receives the
+weights as `TransferableTypedData` (moved, not copied), so the screen never
+stutters; on the web, where isolates cannot share memory, they run on the page
+thread with a turn for the event loop between passes
+(`lib/ai/chronos/chronos_bolt_runner*.dart`).
+
+The port is pinned to the reference implementation:
+`tool/chronos_reference/generate_fixtures.py` builds a tiny Chronos-Bolt with
+random weights through the official package, runs the PyTorch forward pass and
+saves weights, config and expected quantiles under `test/fixtures/chronos_bolt/`
+(a few kilobytes); `test/ai/chronos_bolt_model_test.dart` must reproduce them.
+The same script with `--real-model DIR` checks a downloaded copy of the real
+checkpoint, compared by the optional test
+`CHRONOS_BOLT_TINY_DIR=DIR flutter test test/ai/chronos_bolt_model_test.dart`.
+The CI never downloads the 35 MB model.
+
+### How much to trust it
+
+`ChronosForecaster` (`lib/ai/chronos_forecaster.dart`) takes the median as the
+projection and the 0.1 and 0.9 quantiles as the 80% band. Before the answer is
+shown, the model is also run from up to three points in the recent past
+(walk-forward backtests, spaced half a horizon apart) and compared with what
+actually happened next, side by side with the random walk ("it stays where it
+is"), the rival that is hard to beat on prices. The skill
+`1 - model error / random walk error` reaches the screen ("Better than a plain
+guess") together with the number of tests, so the projection is read for what
+it is. With too little history for a backtest the screen says so.
+
+Where the code lives:
+
+- `lib/ai/chronos/` — safetensors reader, Chronos-Bolt forward pass and the
+  platform runners;
+- `lib/ai/model/` — Hugging Face model description, download, storage;
+- `lib/ai/chronos_forecaster.dart` — projection, band and backtests;
+- `lib/ai/math/` — statistics and technical indicators for the market summary
+  (pure Dart);
+- `lib/ai/insight_engine.dart` — which remarks to make and in what tone (the
+  text itself comes from the translations in `lib/util/localizations.dart`);
+- `lib/ai/financial_ai_service.dart` — entry point used by the bloc;
+- `lib/blocs/ai_insights_bloc.dart` and
+  `lib/view/pages/main_menu_items/ai_insights_page.dart` — state and screen.
+
+Limits, spelled out: these are statistical estimates from past quotes, and the
+screen carries that warning — it is not investment advice. The engine already
+handles stocks (`AssetKind.stock`, with its own volatility thresholds), but the
+quote source the app uses (AwesomeAPI) only serves fiat currency and
+cryptocurrency; feeding an `AssetSeries` with stock prices is enough to analyse
+one.
 
 ## Ícone do app
 

@@ -1,6 +1,6 @@
 import 'package:cotacao_direta/model/asset_series.dart';
 
-/// One projected day from the local model, with the confidence band around it.
+/// One projected day from the forecasting model, with the confidence band around it.
 class ForecastPoint {
   /// How many days ahead of the last observed point, starting at 1.
   final int step;
@@ -20,52 +20,54 @@ class ForecastPoint {
       required this.upperBound});
 }
 
-/// What training revealed about the network's own reliability. It reaches the
-/// screen because it changes how the projection should be read: a network that
-/// did not beat the random walk is, in practice, repeating the average.
+/// How the forecasting model fared when tested against the asset's own past.
+/// It reaches the screen because it changes how the projection should be
+/// read: a model that did not beat the random walk on this series is, in
+/// practice, no better than "tomorrow equals today".
 class ModelDiagnostics {
-  /// Samples (windows) built from the history to train on.
-  final int trainingSamples;
+  /// Name of the model that produced the projection, as shown on screen.
+  final String modelName;
 
-  /// The network's error on the validation slice.
-  final double? validationError;
+  /// Quotes the model read as context for the projection.
+  final int contextLength;
 
-  /// The error, on that same slice, of predicting "tomorrow equals today" —
-  /// the random walk, which is the fair rival of any price forecaster.
+  /// How many times the model was run from a point in the past and compared
+  /// with what actually happened next (a walk-forward backtest).
+  final int backtestWindows;
+
+  /// Mean absolute error of the model in those backtests, in log-price (0.01
+  /// is about 1%).
+  final double? backtestError;
+
+  /// The error, over the same backtests, of predicting "it stays where it is"
+  /// — the random walk, which is the fair rival of any price forecaster.
   final double? baselineError;
 
-  /// `1 - network error / random walk error`, clamped to [0, 1]. Zero means
-  /// the network added no information at all.
+  /// `1 - model error / random walk error`, clamped to [0, 1]. Zero means the
+  /// model added no information at all on this series.
   final double skill;
 
-  /// Weight given to the network in the final projection; the remainder goes
-  /// to the statistical drift.
-  final double neuralWeight;
-
-  final int epochs;
-
-  /// False when the history was too short to train and the projection came
-  /// from the statistical baseline alone.
-  final bool trained;
-
   const ModelDiagnostics(
-      {required this.trainingSamples,
-      required this.validationError,
+      {required this.modelName,
+      required this.contextLength,
+      required this.backtestWindows,
+      required this.backtestError,
       required this.baselineError,
-      required this.skill,
-      required this.neuralWeight,
-      required this.epochs,
-      required this.trained});
+      required this.skill});
 
-  factory ModelDiagnostics.untrained({int trainingSamples = 0}) =>
+  /// The history was too short to hold back a stretch and test the model on
+  /// it, so there is no measure of how reliable the projection is.
+  factory ModelDiagnostics.unevaluated(
+          {required String modelName, required int contextLength}) =>
       ModelDiagnostics(
-          trainingSamples: trainingSamples,
-          validationError: null,
+          modelName: modelName,
+          contextLength: contextLength,
+          backtestWindows: 0,
+          backtestError: null,
           baselineError: null,
-          skill: 0,
-          neuralWeight: 0,
-          epochs: 0,
-          trained: false);
+          skill: 0);
+
+  bool get evaluated => backtestWindows > 0;
 }
 
 /// Full projection for an asset.

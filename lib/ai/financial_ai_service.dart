@@ -1,23 +1,23 @@
 import 'dart:math';
 
+import 'package:cotacao_direta/ai/chronos_forecaster.dart';
 import 'package:cotacao_direta/ai/insight_engine.dart';
-import 'package:cotacao_direta/ai/local_financial_model.dart';
 import 'package:cotacao_direta/ai/math/indicators.dart';
 import 'package:cotacao_direta/ai/math/statistics.dart';
 import 'package:cotacao_direta/model/asset_series.dart';
 import 'package:cotacao_direta/model/financial_analysis.dart';
 
 /// Entry point of the local analysis: it takes the price series, runs the
-/// indicators, trains and queries the model, and returns everything together
+/// indicators, queries the forecasting model, and returns everything together
 /// with the remarks in text form.
 ///
-/// It all happens on the device and offline: the only thing that leaves the
-/// phone is the quote request the app already made before.
+/// It all happens on the device and offline: once the model has been
+/// downloaded, the only thing that leaves the phone is the quote request the
+/// app already made before.
 class FinancialAiService {
-  final LocalFinancialModel model;
+  final AssetForecaster forecaster;
 
-  FinancialAiService({LocalFinancialModel? model})
-      : model = model ?? LocalFinancialModel();
+  FinancialAiService(this.forecaster);
 
   /// Below this there is no series to analyse: not even the shortest
   /// indicators (7-day average, weekly change) would have enough points.
@@ -32,16 +32,17 @@ class FinancialAiService {
   ///
   /// [localeName] only affects the formatting of the numbers embedded in the
   /// remarks ("3,2%" or "3.2%").
-  FinancialAnalysis analyze(
+  Future<FinancialAnalysis> analyze(
     AssetSeries series, {
     int horizonInDays = 15,
     String localeName = "pt",
-  }) {
+  }) async {
     if (series.length < minimumPoints)
       throw ArgumentError("series with fewer than $minimumPoints points");
 
     final statistics = computeStatistics(series);
-    final forecast = model.forecast(series, horizonInDays: horizonInDays);
+    final forecast =
+        await forecaster.forecast(series, horizonInDays: horizonInDays);
     final insights = InsightEngine(localeName: localeName).generate(
       series: series,
       statistics: statistics,
@@ -58,7 +59,7 @@ class FinancialAiService {
 
   /// Statistical portrait of the series. It feeds the market summary on screen
   /// and the thresholds of the insights.
-  MarketStatistics computeStatistics(AssetSeries series) {
+  static MarketStatistics computeStatistics(AssetSeries series) {
     if (series.isEmpty)
       throw ArgumentError("computeStatistics of an empty series");
 

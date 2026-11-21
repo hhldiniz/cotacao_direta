@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backup na nuvem e transferência entre aparelhos do Android 12 em diante.
+     O modelo de previsão fica de fora pelo mesmo motivo de backup_rules.xml:
+     é grande e se baixa de novo do Hugging Face. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="models/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="models/" />
+    </device-transfer>
+</data-extraction-rules>

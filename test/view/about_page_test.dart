@@ -69,6 +69,7 @@ void main() {
       // dependência entrar no pubspec.yaml sem passar por aqui, este teste
       // cai — é o lembrete de atualizar a tela "Sobre" junto.
       const expected = [
+        "crypto",
         "fl_chart",
         "flag",
         "flutter_local_notifications",
@@ -78,6 +79,7 @@ void main() {
         "path",
         "sprintf",
         "url_launcher",
+        "web",
         "workmanager",
       ];
       final names = all.map((credit) => credit.name).toSet();

@@ -39,6 +39,14 @@ dependencies:
   # lib/util/notification_service_web.dart).
   flutter_local_notifications: ^19.0.0
   workmanager: ^0.10.7
+  # Modelo de previsão (Chronos-Bolt Tiny), baixado do Hugging Face na
+  # primeira vez em que o usuário pede (ver lib/ai/model/): o crypto confere o
+  # SHA-256 de cada arquivo e o web dá o Cache Storage onde ele fica no
+  # navegador. A pasta no Android e no Linux é resolvida à mão, sem
+  # path_provider: o lado Android dele traz um plugin JNI que teria de ser
+  # compilado também no Linux, no Flatpak e no click do Ubuntu Touch.
+  crypto: ^3.0.6
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4

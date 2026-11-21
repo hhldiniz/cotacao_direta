@@ -1,3 +1,4 @@
+import 'package:cotacao_direta/ai/model/forecast_model_manager.dart';
 import 'package:cotacao_direta/blocs/ai_insights_bloc.dart';
 import 'package:cotacao_direta/enums/cryptocurrency_enum.dart';
 import 'package:cotacao_direta/enums/currency_enum.dart';
@@ -16,10 +17,11 @@ import 'package:sprintf/sprintf.dart';
 /// Screen for the insights produced by the AI model that runs on the device
 /// itself.
 ///
-/// The flow is: pick the asset and the horizon, tap analyse, and the screen
-/// shows the market summary, the projection with its confidence band, the
-/// chart and the remarks in text form. None of these computations leave the
-/// phone.
+/// The flow is: download the forecasting model once (it comes from Hugging
+/// Face, see ForecastModelManager), pick the asset and the horizon, tap
+/// analyse, and the screen shows the market summary, the projection with its
+/// confidence band, the chart and the remarks in text form. None of these
+/// computations leave the phone.
 class AiInsightsPage extends StatefulWidget {
   AiInsightsPage({Key? key}) : super(key: key);
 
@@ -28,6 +30,19 @@ class AiInsightsPage extends StatefulWidget {
 }
 
 class _AiInsightsPageState extends State<AiInsightsPage> {
+  bool _modelChecked = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Whether the model is already on the device decides what the screen
+    // offers first: the download or the analysis.
+    if (!_modelChecked) {
+      _modelChecked = true;
+      AiInsightsBlocProvider.of(context).checkModel();
+    }
+  }
+
   List<AssetOption> _assetOptions(String counterCurrency) => [
         // The counter currency has no series of its own: quoted against
         // itself it would always be 1, and the repository skips the query.
@@ -78,6 +93,8 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
               padding: EdgeInsets.all(16 * scale),
               children: [
                 _header(context, localizations, scale),
+                SizedBox(height: 16 * scale),
+                _modelCard(context, bloc, localizations, scale),
                 SizedBox(height: 16 * scale),
                 _assetField(
                     context, bloc, localizations, options, selected, scale),
@@ -269,25 +286,169 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
         prefixIcon: const Icon(Icons.savings_outlined),
       ),
       // The simulated amount is a rule of three over the projection already
-      // computed: it is enough to redraw, with no retraining.
+      // computed: it is enough to redraw, with no new forecast.
       onChanged: (_) => setState(() {}),
     );
   }
 
-  Widget _analyzeButton(AiInsightsBloc bloc, MyAppLocalizations localizations) {
-    return StreamBuilder<AiInsightsState>(
-      stream: bloc.stateStream,
-      initialData: bloc.currentState,
+  /// Where the forecasting model stands: an invitation to download it, the
+  /// download progress, or a short line saying it is ready (with the option
+  /// to remove it and free the space).
+  Widget _modelCard(BuildContext context, AiInsightsBloc bloc,
+      MyAppLocalizations localizations, double scale) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return StreamBuilder<ForecastModelState>(
+      stream: bloc.modelStateStream,
+      initialData: bloc.modelState,
       builder: (context, snapshot) {
-        final loading = snapshot.data?.loading == true;
-        return FilledButton.icon(
-          onPressed: loading
-              ? null
-              : () => bloc.analyze(localeName: localizations.locale.toString()),
-          icon: const Icon(Icons.psychology_alt),
-          label: Text(localizations.aiInsightsAnalyzeBtnLabel!),
+        final state = snapshot.data ?? bloc.modelState;
+        final status = state.status;
+        final installed = status == ForecastModelStatus.installed;
+        final size = _megabytes(bloc.modelDownloadSize);
+
+        final Widget action;
+        switch (status) {
+          case ForecastModelStatus.checking:
+            action = Row(
+              children: [
+                SizedBox(
+                  width: 16 * scale,
+                  height: 16 * scale,
+                  child: const CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 8 * scale),
+                Text(localizations.aiModelCheckingLabel!),
+              ],
+            );
+          case ForecastModelStatus.downloading:
+            final progress = state.progress;
+            action = Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                LinearProgressIndicator(value: progress),
+                SizedBox(height: 6 * scale),
+                Text(
+                  sprintf(localizations.aiModelDownloadingLabel!, [
+                    progress == null
+                        ? size
+                        : NumberFormat.percentPattern(
+                                localizations.locale.toString())
+                            .format(progress)
+                  ]),
+                  style: TextStyle(fontSize: 12 * scale),
+                ),
+              ],
+            );
+          case ForecastModelStatus.installed:
+            action = Row(
+              children: [
+                Icon(Icons.check_circle,
+                    size: 18 * scale, color: colorScheme.primary),
+                SizedBox(width: 8 * scale),
+                Expanded(child: Text(localizations.aiModelInstalledLabel!)),
+                TextButton(
+                  onPressed: () => bloc.deleteModel(),
+                  child: Text(localizations.aiModelDeleteBtnLabel!),
+                ),
+              ],
+            );
+          case ForecastModelStatus.notInstalled:
+          case ForecastModelStatus.failed:
+            action = Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (status == ForecastModelStatus.failed) ...[
+                  Text(
+                    localizations.aiModelFailedLabel!,
+                    style: TextStyle(
+                        fontSize: 12 * scale, color: colorScheme.error),
+                  ),
+                  SizedBox(height: 8 * scale),
+                ],
+                FilledButton.tonalIcon(
+                  onPressed: () => bloc.downloadModel(),
+                  icon: const Icon(Icons.download),
+                  label: Text(
+                      "${localizations.aiModelDownloadBtnLabel!} ($size)"),
+                ),
+              ],
+            );
+        }
+
+        return Card(
+          margin: EdgeInsets.zero,
+          elevation: 0,
+          color: colorScheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16 * scale),
+            side: BorderSide(color: colorScheme.outlineVariant),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(16 * scale),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.memory,
+                        size: 18 * scale, color: colorScheme.primary),
+                    SizedBox(width: 8 * scale),
+                    Expanded(
+                      child: Text(
+                        "${localizations.aiModelSectionLabel!} · "
+                        "${bloc.modelName}",
+                        style: TextStyle(
+                          fontSize: 13 * scale,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (!installed) ...[
+                  SizedBox(height: 8 * scale),
+                  Text(
+                    sprintf(localizations.aiModelDescription!,
+                        [bloc.modelName, size]),
+                    style: TextStyle(
+                      fontSize: 12 * scale,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                SizedBox(height: 12 * scale),
+                action,
+              ],
+            ),
+          ),
         );
       },
+    );
+  }
+
+  /// Download size in megabytes, rounded: "35 MB".
+  static String _megabytes(int bytes) => "${(bytes / 1e6).round()} MB";
+
+  Widget _analyzeButton(AiInsightsBloc bloc, MyAppLocalizations localizations) {
+    return StreamBuilder<ForecastModelState>(
+      stream: bloc.modelStateStream,
+      initialData: bloc.modelState,
+      builder: (context, modelSnapshot) => StreamBuilder<AiInsightsState>(
+        stream: bloc.stateStream,
+        initialData: bloc.currentState,
+        builder: (context, snapshot) {
+          final loading = snapshot.data?.loading == true;
+          final modelReady = bloc.modelState.isInstalled;
+          return FilledButton.icon(
+            onPressed: loading || !modelReady
+                ? null
+                : () =>
+                    bloc.analyze(localeName: localizations.locale.toString()),
+            icon: const Icon(Icons.psychology_alt),
+            label: Text(localizations.aiInsightsAnalyzeBtnLabel!),
+          );
+        },
+      ),
     );
   }
 
@@ -320,6 +481,8 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
           AiInsightsError.noData => localizations.aiInsightsNoDataError!,
           AiInsightsError.insufficientData =>
             localizations.aiInsightsInsufficientDataError!,
+          AiInsightsError.modelMissing =>
+            localizations.aiInsightsModelMissingError!,
           AiInsightsError.failure => localizations.aiInsightsFailureError!,
         },
         scale,
@@ -582,23 +745,37 @@ class _AiInsightsPageState extends State<AiInsightsPage> {
     _NumberFormatter formatter,
     double scale,
   ) {
-    if (!diagnostics.trained) {
-      return Text(
-        localizations.aiInsightsModelUntrainedLabel!,
-        style: TextStyle(
-          fontSize: 12 * scale,
-          color: Theme.of(context).colorScheme.outline,
-        ),
+    final model = _metric(context, localizations.aiInsightsModelNameLabel!,
+        diagnostics.modelName, scale);
+    if (!diagnostics.evaluated) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _metricCard(context, scale, [
+            model,
+            _metric(context, localizations.aiInsightsModelSamplesLabel!,
+                "${diagnostics.contextLength}", scale),
+          ]),
+          SizedBox(height: 8 * scale),
+          Text(
+            localizations.aiInsightsModelUnevaluatedLabel!,
+            style: TextStyle(
+              fontSize: 12 * scale,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+        ],
       );
     }
     return _metricCard(context, scale, [
+      model,
       _metric(context, localizations.aiInsightsModelSamplesLabel!,
-          "${diagnostics.trainingSamples}", scale),
+          "${diagnostics.contextLength}", scale),
       _metric(context, localizations.aiInsightsModelSkillLabel!,
           formatter.percent(diagnostics.skill), scale,
           hint: localizations.aiInsightsModelSkillHint),
-      _metric(context, localizations.aiInsightsModelEpochsLabel!,
-          "${diagnostics.epochs}", scale),
+      _metric(context, localizations.aiInsightsModelBacktestsLabel!,
+          "${diagnostics.backtestWindows}", scale),
     ]);
   }
 }
