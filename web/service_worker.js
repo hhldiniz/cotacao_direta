@@ -27,6 +27,9 @@
 // não do nome do cache. (A v2 veio com a mudança do app para /app/: o cache
 // da v1 guardava o app na raiz, onde agora fica o site estático.)
 const CACHE_NAME = 'cotacao-direta-v2';
+// Prefixo do cache onde o app guarda o modelo de previsão. Não é deste service
+// worker: quem grava e lê é o próprio app, pela Cache Storage API.
+const MODEL_CACHE_PREFIX = 'cotacao-direta-models';
 
 /// Endereços em que a versão publicada tem de ganhar da guardada.
 const NETWORK_FIRST_PATHS = [
@@ -80,10 +83,15 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       // Apaga tanto os caches de versões anteriores deste service worker
-      // quanto os que sobraram do service worker antigo do Flutter.
+      // quanto os que sobraram do service worker antigo do Flutter. O cache
+      // do modelo de previsão fica: são ~35 MB baixados do Hugging Face que
+      // não mudam com a versão do app (ver
+      // lib/ai/model/model_storage_web.dart).
       const names = await caches.keys();
       await Promise.all(
-        names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+        names
+          .filter((name) => name !== CACHE_NAME && !name.startsWith(MODEL_CACHE_PREFIX))
+          .map((name) => caches.delete(name))
       );
       // Assume o controle das abas já abertas, sem esperar um recarregamento.
       await self.clients.claim();

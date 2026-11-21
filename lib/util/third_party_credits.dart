@@ -59,6 +59,18 @@ class ThirdPartyCredits {
       license: "MPL-2.0",
       url: "https://restcountries.com",
     ),
+    // O modelo de previsão da tela de IA. Os pesos não vêm no pacote do app:
+    // são baixados do Hugging Face quando o usuário pede. A inferência em
+    // lib/ai/chronos/ é um porte para Dart do código do chronos-forecasting,
+    // sob a mesma Apache 2.0, cujo texto vai para a tela de licenças (ver
+    // lib/util/third_party_licenses.dart).
+    ThirdPartyCredit(
+      name: "Chronos-Bolt",
+      copyright:
+          "Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.",
+      license: "Apache-2.0",
+      url: "https://huggingface.co/amazon/chronos-bolt-tiny",
+    ),
   ];
 
   /// Fontes e conjuntos de ícones embarcados no pacote do app.
@@ -101,6 +113,12 @@ class ThirdPartyCredits {
       copyright: "Copyright 2014 The Flutter Authors",
       license: "BSD-3-Clause",
       url: "https://flutter.dev",
+    ),
+    ThirdPartyCredit(
+      name: "crypto",
+      copyright: "Copyright 2015, the Dart project authors",
+      license: "BSD-3-Clause",
+      url: "https://pub.dev/packages/crypto",
     ),
     ThirdPartyCredit(
       name: "fl_chart",
@@ -191,6 +209,12 @@ class ThirdPartyCredits {
       copyright: "Copyright 2013 The Flutter Authors",
       license: "BSD-3-Clause",
       url: "https://pub.dev/packages/url_launcher",
+    ),
+    ThirdPartyCredit(
+      name: "web",
+      copyright: "Copyright 2023, the Dart project authors",
+      license: "BSD-3-Clause",
+      url: "https://pub.dev/packages/web",
     ),
     ThirdPartyCredit(
       name: "workmanager",

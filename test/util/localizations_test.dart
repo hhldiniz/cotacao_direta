@@ -128,14 +128,24 @@ List<String?> _allLabels(MyAppLocalizations localizations) => [
       localizations.aiInsightsConfidenceBandLabel,
       localizations.aiInsightsAmountProjectionLabel,
       localizations.aiInsightsAmountProjectionHint,
+      localizations.aiInsightsModelMissingError,
+      localizations.aiInsightsModelNameLabel,
       localizations.aiInsightsModelSamplesLabel,
       localizations.aiInsightsModelSkillLabel,
       localizations.aiInsightsModelSkillHint,
-      localizations.aiInsightsModelEpochsLabel,
-      localizations.aiInsightsModelUntrainedLabel,
+      localizations.aiInsightsModelBacktestsLabel,
+      localizations.aiInsightsModelUnevaluatedLabel,
       localizations.aiInsightsDisclaimerLabel,
       localizations.aiInsightsChartHistoryLabel,
       localizations.aiInsightsChartProjectionLabel,
+      localizations.aiModelSectionLabel,
+      localizations.aiModelDescription,
+      localizations.aiModelDownloadBtnLabel,
+      localizations.aiModelDownloadingLabel,
+      localizations.aiModelCheckingLabel,
+      localizations.aiModelInstalledLabel,
+      localizations.aiModelFailedLabel,
+      localizations.aiModelDeleteBtnLabel,
       localizations.aiInsightTrendUp,
       localizations.aiInsightTrendDown,
       localizations.aiInsightTrendSideways,
@@ -296,6 +306,20 @@ void main() {
         expect(MyAppLocalizations(locale).currencyHistoryPeriodOptionLabel,
             contains("%s"),
             reason: AppLocales.tagOf(locale));
+      }
+    });
+
+    // O cartão do modelo preenche o nome e o tamanho do download, e o
+    // progresso entra no texto do download em andamento.
+    test('os textos do modelo de previsão trazem seus marcadores', () {
+      for (var locale in AppLocales.supported) {
+        final localizations = MyAppLocalizations(locale);
+        final tag = AppLocales.tagOf(locale);
+        expect("%s".allMatches(localizations.aiModelDescription!).length, 2,
+            reason: tag);
+        expect("%s".allMatches(localizations.aiModelDownloadingLabel!).length,
+            1,
+            reason: tag);
       }
     });
 

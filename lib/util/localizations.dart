@@ -280,6 +280,7 @@ class MyAppLocalizations {
       'aiInsightsInsufficientDataError':
           'There are not enough past quotes for this asset yet.',
       'aiInsightsFailureError': 'The analysis could not be completed.',
+      'aiInsightsModelMissingError': 'Download the forecasting model first.',
       'aiInsightsSummarySectionLabel': 'How it has been going',
       'aiInsightsProjectionSectionLabel': 'What may come next',
       'aiInsightsInsightsSectionLabel': 'What this means',
@@ -302,17 +303,30 @@ class MyAppLocalizations {
       'aiInsightsConfidenceBandLabel': 'Likely range (%s of the time)',
       'aiInsightsAmountProjectionLabel': 'What you would have',
       'aiInsightsAmountProjectionHint': 'putting in %s today',
-      'aiInsightsModelSamplesLabel': 'Examples studied',
+      'aiInsightsModelNameLabel': 'Model',
+      'aiInsightsModelSamplesLabel': 'Quotes read',
       'aiInsightsModelSkillLabel': 'Better than a plain guess',
       'aiInsightsModelSkillHint': 'zero means it added nothing',
-      'aiInsightsModelEpochsLabel': 'Practice rounds',
-      'aiInsightsModelUntrainedLabel': 'There is little history here, so what '
-          'you see is a simple estimate from the past quotes.',
+      'aiInsightsModelBacktestsLabel': 'Tests against the past',
+      'aiInsightsModelUnevaluatedLabel': 'There is too little history here to '
+          'test the model against the past, so read the projection with extra '
+          'care.',
       'aiInsightsDisclaimerLabel': 'These are estimates worked out on your '
           'phone from past prices. Nobody can know the future, so do not take '
           'them as investment advice.',
       'aiInsightsChartHistoryLabel': 'So far',
       'aiInsightsChartProjectionLabel': 'What may come',
+      'aiModelSectionLabel': 'Forecasting model',
+      'aiModelDescription': 'Projections come from %s, an open model published '
+          'by Amazon on Hugging Face. It is downloaded once (%s) and from then '
+          'on runs only on this device, even offline.',
+      'aiModelDownloadBtnLabel': 'Download model',
+      'aiModelDownloadingLabel': 'Downloading… %s',
+      'aiModelCheckingLabel': 'Looking for the model…',
+      'aiModelInstalledLabel': 'Ready on this device.',
+      'aiModelFailedLabel':
+          'The download did not finish. Check your connection and try again.',
+      'aiModelDeleteBtnLabel': 'Remove',
       'aiInsightTrendUp': 'It has been going up: %s in the last %s days.',
       'aiInsightTrendDown': 'It has been going down: %s in the last %s days.',
       'aiInsightTrendSideways':
@@ -339,8 +353,8 @@ class MyAppLocalizations {
           'real prices than a plain guess.',
       'aiInsightConfidenceLow': 'In testing, the app did no better than a '
           'plain guess, so read what comes next with care.',
-      'aiInsightDataLimited': 'There is little history here (%s examples), so '
-          'what comes next is a simple estimate.',
+      'aiInsightDataLimited': 'There is little history here (%s quotes), so '
+          'the model could not be tested against the past.',
     },
     'pt': {
       'conversionButtonLabel': "Conversões",
@@ -481,6 +495,7 @@ class MyAppLocalizations {
       'aiInsightsInsufficientDataError':
           'Ainda não há cotações passadas suficientes para este ativo.',
       'aiInsightsFailureError': 'Não foi possível concluir a análise.',
+      'aiInsightsModelMissingError': 'Baixe o modelo de previsão primeiro.',
       'aiInsightsSummarySectionLabel': 'Como vem se comportando',
       'aiInsightsProjectionSectionLabel': 'O que pode vir pela frente',
       'aiInsightsInsightsSectionLabel': 'O que isso quer dizer',
@@ -503,17 +518,30 @@ class MyAppLocalizations {
       'aiInsightsConfidenceBandLabel': 'Faixa provável (%s das vezes)',
       'aiInsightsAmountProjectionLabel': 'Quanto você teria',
       'aiInsightsAmountProjectionHint': 'aplicando %s hoje',
-      'aiInsightsModelSamplesLabel': 'Exemplos estudados',
+      'aiInsightsModelNameLabel': 'Modelo',
+      'aiInsightsModelSamplesLabel': 'Cotações lidas',
       'aiInsightsModelSkillLabel': 'Melhor que um palpite simples',
       'aiInsightsModelSkillHint': 'zero quer dizer que não acrescentou nada',
-      'aiInsightsModelEpochsLabel': 'Rodadas de treino',
-      'aiInsightsModelUntrainedLabel': 'Há pouco histórico aqui, então o que '
-          'aparece é uma estimativa simples das cotações passadas.',
+      'aiInsightsModelBacktestsLabel': 'Testes com o passado',
+      'aiInsightsModelUnevaluatedLabel': 'Há pouco histórico aqui para testar '
+          'o modelo com o passado, então olhe a projeção com cuidado '
+          'redobrado.',
       'aiInsightsDisclaimerLabel': 'São estimativas calculadas no seu aparelho '
           'a partir de preços passados. Ninguém consegue saber o futuro, então '
           'não tome isso como recomendação de investimento.',
       'aiInsightsChartHistoryLabel': 'Até agora',
       'aiInsightsChartProjectionLabel': 'O que pode vir',
+      'aiModelSectionLabel': 'Modelo de previsão',
+      'aiModelDescription': 'As projeções vêm do %s, um modelo aberto '
+          'publicado pela Amazon no Hugging Face. Ele é baixado uma vez (%s) e '
+          'daí em diante roda só neste aparelho, mesmo sem internet.',
+      'aiModelDownloadBtnLabel': 'Baixar modelo',
+      'aiModelDownloadingLabel': 'Baixando… %s',
+      'aiModelCheckingLabel': 'Procurando o modelo…',
+      'aiModelInstalledLabel': 'Pronto neste aparelho.',
+      'aiModelFailedLabel':
+          'O download não terminou. Confira a conexão e tente de novo.',
+      'aiModelDeleteBtnLabel': 'Remover',
       'aiInsightTrendUp': 'Vem subindo: %s nos últimos %s dias.',
       'aiInsightTrendDown': 'Vem caindo: %s nos últimos %s dias.',
       'aiInsightTrendSideways': 'Vem se mantendo: %s nos últimos %s dias.',
@@ -539,8 +567,8 @@ class MyAppLocalizations {
           'preços reais do que um palpite simples.',
       'aiInsightConfidenceLow': 'Nos testes, o app não foi melhor que um '
           'palpite simples, então olhe o que vem pela frente com cautela.',
-      'aiInsightDataLimited': 'Há pouco histórico aqui (%s exemplos), então o '
-          'que vem pela frente é uma estimativa simples.',
+      'aiInsightDataLimited': 'Há pouco histórico aqui (%s cotações), então '
+          'não deu para testar o modelo com o passado.',
     },
     // O espanhol da Espanha. A diferença para o de baixo é de vocabulário —
     // "ajustes" e "móvil" aqui, "configuración" e "celular" lá — e do tempo
@@ -687,6 +715,7 @@ class MyAppLocalizations {
       'aiInsightsInsufficientDataError':
           'Todavía no hay suficientes cotizaciones pasadas de este activo.',
       'aiInsightsFailureError': 'No se ha podido completar el análisis.',
+      'aiInsightsModelMissingError': 'Descarga primero el modelo de previsión.',
       'aiInsightsSummarySectionLabel': 'Cómo se ha comportado',
       'aiInsightsProjectionSectionLabel': 'Qué puede venir',
       'aiInsightsInsightsSectionLabel': 'Qué significa esto',
@@ -709,18 +738,30 @@ class MyAppLocalizations {
       'aiInsightsConfidenceBandLabel': 'Rango probable (%s de las veces)',
       'aiInsightsAmountProjectionLabel': 'Cuánto tendrías',
       'aiInsightsAmountProjectionHint': 'invirtiendo %s hoy',
-      'aiInsightsModelSamplesLabel': 'Ejemplos estudiados',
+      'aiInsightsModelNameLabel': 'Modelo',
+      'aiInsightsModelSamplesLabel': 'Cotizaciones leídas',
       'aiInsightsModelSkillLabel': 'Mejor que una simple corazonada',
       'aiInsightsModelSkillHint': 'cero significa que no ha aportado nada',
-      'aiInsightsModelEpochsLabel': 'Rondas de práctica',
-      'aiInsightsModelUntrainedLabel': 'Hay poco histórico aquí, así que lo '
-          'que ves es una estimación sencilla a partir de las cotizaciones '
-          'pasadas.',
+      'aiInsightsModelBacktestsLabel': 'Pruebas con el pasado',
+      'aiInsightsModelUnevaluatedLabel': 'Hay muy poco histórico aquí para '
+          'probar el modelo con el pasado, así que mira la proyección con '
+          'especial cuidado.',
       'aiInsightsDisclaimerLabel': 'Son estimaciones calculadas en tu móvil a '
           'partir de precios pasados. Nadie puede saber el futuro, así que no '
           'lo tomes como una recomendación de inversión.',
       'aiInsightsChartHistoryLabel': 'Hasta ahora',
       'aiInsightsChartProjectionLabel': 'Lo que puede venir',
+      'aiModelSectionLabel': 'Modelo de previsión',
+      'aiModelDescription': 'Las proyecciones vienen de %s, un modelo abierto '
+          'que Amazon publica en Hugging Face. Se descarga una vez (%s) y a '
+          'partir de ahí funciona solo en este móvil, incluso sin conexión.',
+      'aiModelDownloadBtnLabel': 'Descargar modelo',
+      'aiModelDownloadingLabel': 'Descargando… %s',
+      'aiModelCheckingLabel': 'Buscando el modelo…',
+      'aiModelInstalledLabel': 'Listo en este móvil.',
+      'aiModelFailedLabel': 'La descarga no ha terminado. Comprueba la '
+          'conexión y vuelve a intentarlo.',
+      'aiModelDeleteBtnLabel': 'Eliminar',
       'aiInsightTrendUp': 'Viene subiendo: %s en los últimos %s días.',
       'aiInsightTrendDown': 'Viene bajando: %s en los últimos %s días.',
       'aiInsightTrendSideways': 'Se ha mantenido: %s en los últimos %s días.',
@@ -746,8 +787,8 @@ class MyAppLocalizations {
           'los precios reales que una simple corazonada.',
       'aiInsightConfidenceLow': 'En las pruebas, la app no lo ha hecho mejor '
           'que una simple corazonada, así que mira lo que viene con cautela.',
-      'aiInsightDataLimited': 'Hay poco histórico aquí (%s ejemplos), así que '
-          'lo que viene es una estimación sencilla.',
+      'aiInsightDataLimited': 'Hay poco histórico aquí (%s cotizaciones), así '
+          'que no se ha podido probar el modelo con el pasado.',
     },
     // O espanhol da América Latina, o es-419 do CLDR: uma tradução só para as
     // Américas, já que as diferenças entre os países de lá são menores do que
@@ -895,6 +936,8 @@ class MyAppLocalizations {
       'aiInsightsInsufficientDataError':
           'Todavía no hay suficientes cotizaciones pasadas de este activo.',
       'aiInsightsFailureError': 'No se pudo completar el análisis.',
+      'aiInsightsModelMissingError':
+          'Primero descarga el modelo de pronóstico.',
       'aiInsightsSummarySectionLabel': 'Cómo se comportó',
       'aiInsightsProjectionSectionLabel': 'Qué puede venir',
       'aiInsightsInsightsSectionLabel': 'Qué significa esto',
@@ -917,18 +960,30 @@ class MyAppLocalizations {
       'aiInsightsConfidenceBandLabel': 'Rango probable (%s de las veces)',
       'aiInsightsAmountProjectionLabel': 'Cuánto tendrías',
       'aiInsightsAmountProjectionHint': 'invirtiendo %s hoy',
-      'aiInsightsModelSamplesLabel': 'Ejemplos estudiados',
+      'aiInsightsModelNameLabel': 'Modelo',
+      'aiInsightsModelSamplesLabel': 'Cotizaciones leídas',
       'aiInsightsModelSkillLabel': 'Mejor que una simple corazonada',
       'aiInsightsModelSkillHint': 'cero significa que no aportó nada',
-      'aiInsightsModelEpochsLabel': 'Rondas de práctica',
-      'aiInsightsModelUntrainedLabel': 'Hay poco historial aquí, así que lo '
-          'que ves es una estimación sencilla a partir de las cotizaciones '
-          'pasadas.',
+      'aiInsightsModelBacktestsLabel': 'Pruebas con el pasado',
+      'aiInsightsModelUnevaluatedLabel': 'Hay muy poco historial aquí para '
+          'probar el modelo con el pasado, así que mira la proyección con '
+          'especial cuidado.',
       'aiInsightsDisclaimerLabel': 'Son estimaciones calculadas en tu celular '
           'a partir de precios pasados. Nadie puede saber el futuro, así que '
           'no lo tomes como una recomendación de inversión.',
       'aiInsightsChartHistoryLabel': 'Hasta ahora',
       'aiInsightsChartProjectionLabel': 'Lo que puede venir',
+      'aiModelSectionLabel': 'Modelo de pronóstico',
+      'aiModelDescription': 'Los pronósticos vienen de %s, un modelo abierto '
+          'que Amazon publica en Hugging Face. Se descarga una vez (%s) y '
+          'desde entonces funciona solo en este celular, incluso sin conexión.',
+      'aiModelDownloadBtnLabel': 'Descargar modelo',
+      'aiModelDownloadingLabel': 'Descargando… %s',
+      'aiModelCheckingLabel': 'Buscando el modelo…',
+      'aiModelInstalledLabel': 'Listo en este celular.',
+      'aiModelFailedLabel':
+          'La descarga no terminó. Revisa la conexión y vuelve a intentarlo.',
+      'aiModelDeleteBtnLabel': 'Eliminar',
       'aiInsightTrendUp': 'Viene subiendo: %s en los últimos %s días.',
       'aiInsightTrendDown': 'Viene bajando: %s en los últimos %s días.',
       'aiInsightTrendSideways': 'Se mantuvo: %s en los últimos %s días.',
@@ -954,8 +1009,8 @@ class MyAppLocalizations {
           'los precios reales que una simple corazonada.',
       'aiInsightConfidenceLow': 'En las pruebas, la app no lo hizo mejor que '
           'una simple corazonada, así que mira lo que viene con cuidado.',
-      'aiInsightDataLimited': 'Hay poco historial aquí (%s ejemplos), así que '
-          'lo que viene es una estimación sencilla.',
+      'aiInsightDataLimited': 'Hay poco historial aquí (%s cotizaciones), así '
+          'que no se pudo probar el modelo con el pasado.',
     }
   };
 
@@ -1412,6 +1467,10 @@ class MyAppLocalizations {
     return _values['aiInsightsFailureError'];
   }
 
+  String? get aiInsightsModelMissingError {
+    return _values['aiInsightsModelMissingError'];
+  }
+
   String? get aiInsightsSummarySectionLabel {
     return _values['aiInsightsSummarySectionLabel'];
   }
@@ -1497,6 +1556,10 @@ class MyAppLocalizations {
     return _values['aiInsightsAmountProjectionHint'];
   }
 
+  String? get aiInsightsModelNameLabel {
+    return _values['aiInsightsModelNameLabel'];
+  }
+
   String? get aiInsightsModelSamplesLabel {
     return _values['aiInsightsModelSamplesLabel'];
   }
@@ -1510,12 +1573,12 @@ class MyAppLocalizations {
     return _values['aiInsightsModelSkillHint'];
   }
 
-  String? get aiInsightsModelEpochsLabel {
-    return _values['aiInsightsModelEpochsLabel'];
+  String? get aiInsightsModelBacktestsLabel {
+    return _values['aiInsightsModelBacktestsLabel'];
   }
 
-  String? get aiInsightsModelUntrainedLabel {
-    return _values['aiInsightsModelUntrainedLabel'];
+  String? get aiInsightsModelUnevaluatedLabel {
+    return _values['aiInsightsModelUnevaluatedLabel'];
   }
 
   String? get aiInsightsDisclaimerLabel {
@@ -1528,6 +1591,38 @@ class MyAppLocalizations {
 
   String? get aiInsightsChartProjectionLabel {
     return _values['aiInsightsChartProjectionLabel'];
+  }
+
+  String? get aiModelSectionLabel {
+    return _values['aiModelSectionLabel'];
+  }
+
+  String? get aiModelDescription {
+    return _values['aiModelDescription'];
+  }
+
+  String? get aiModelDownloadBtnLabel {
+    return _values['aiModelDownloadBtnLabel'];
+  }
+
+  String? get aiModelDownloadingLabel {
+    return _values['aiModelDownloadingLabel'];
+  }
+
+  String? get aiModelCheckingLabel {
+    return _values['aiModelCheckingLabel'];
+  }
+
+  String? get aiModelInstalledLabel {
+    return _values['aiModelInstalledLabel'];
+  }
+
+  String? get aiModelFailedLabel {
+    return _values['aiModelFailedLabel'];
+  }
+
+  String? get aiModelDeleteBtnLabel {
+    return _values['aiModelDeleteBtnLabel'];
   }
 
   String? get aiInsightTrendUp {

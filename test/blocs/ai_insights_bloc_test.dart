@@ -1,24 +1,33 @@
 import 'package:cotacao_direta/ai/financial_ai_service.dart';
+import 'package:cotacao_direta/ai/model/forecast_model_manager.dart';
 import 'package:cotacao_direta/blocs/ai_insights_bloc.dart';
 import 'package:cotacao_direta/model/asset_series.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/chronos_test_helper.dart';
 import '../helpers/fakes.dart';
 import '../helpers/series_test_helper.dart';
 
 void main() {
   late FakeCurrencyRepository repository;
+  late ForecastModelManager modelManager;
   late AiInsightsBloc bloc;
 
   setUp(() {
     repository = FakeCurrencyRepository()
       ..historicalData =
           quoteHistoryFromPrices(syntheticPrices(length: 120));
-    bloc = AiInsightsBloc(currencyRepository: repository);
+    // O modelo de teste (pesos aleatórios minúsculos), já "baixado".
+    modelManager = tinyChronosManager();
+    bloc = AiInsightsBloc(
+        currencyRepository: repository, modelManager: modelManager);
   });
 
-  tearDown(() => bloc.dispose());
+  tearDown(() async {
+    bloc.dispose();
+    await modelManager.dispose();
+  });
 
   group('AiInsightsBloc.analyze', () {
     test('emite carregando e depois o resultado', () async {
@@ -110,6 +119,23 @@ void main() {
       expect(bloc.currentState.error, AiInsightsError.failure);
     });
 
+    test('o resultado vem do modelo baixado, testado contra o passado',
+        () async {
+      await bloc.analyze();
+
+      final diagnostics = bloc.currentState.analysis!.forecast.diagnostics;
+      expect(diagnostics.modelName, 'Chronos-Bolt Fixture');
+      expect(diagnostics.evaluated, isTrue);
+    });
+
+    test('sem o modelo baixado, pede o download', () async {
+      await modelManager.delete();
+
+      await bloc.analyze();
+
+      expect(bloc.currentState.error, AiInsightsError.modelMissing);
+    });
+
     test('uma resposta atrasada não sobrescreve o pedido mais novo', () async {
       final primeira = bloc.analyze();
       bloc.selectAsset("EUR", AssetKind.currency);
@@ -179,6 +205,56 @@ void main() {
     });
   });
 
+  group('AiInsightsBloc modelo', () {
+    late ForecastModelManager notInstalled;
+    late AiInsightsBloc fresh;
+
+    setUp(() {
+      notInstalled = tinyChronosManager(installed: false);
+      fresh = AiInsightsBloc(
+          currencyRepository: repository, modelManager: notInstalled);
+    });
+
+    tearDown(() async {
+      fresh.dispose();
+      await notInstalled.dispose();
+    });
+
+    test('mostra o nome e o tamanho do modelo', () {
+      expect(fresh.modelName, 'Chronos-Bolt Fixture');
+      expect(fresh.modelDownloadSize, notInstalled.model.totalSize);
+    });
+
+    test('verifica se o modelo já está no aparelho', () async {
+      await fresh.checkModel();
+
+      expect(fresh.modelState.status, ForecastModelStatus.notInstalled);
+    });
+
+    test('baixar o modelo libera a análise', () async {
+      await fresh.analyze();
+      expect(fresh.currentState.error, AiInsightsError.modelMissing);
+
+      expect(await fresh.downloadModel(), isTrue);
+
+      expect(fresh.modelState.isInstalled, isTrue);
+      // O erro de "falta o modelo" sai da tela junto com o download.
+      expect(fresh.currentState.error, isNull);
+      await fresh.analyze();
+      expect(fresh.currentState.hasAnalysis, isTrue);
+    });
+
+    test('remover o modelo tira o resultado da tela', () async {
+      await fresh.downloadModel();
+      await fresh.analyze();
+
+      await fresh.deleteModel();
+
+      expect(fresh.currentState.hasAnalysis, isFalse);
+      expect(fresh.modelState.status, ForecastModelStatus.notInstalled);
+    });
+  });
+
   group('AiInsightsBloc.parseAmount', () {
     test('aceita o formato brasileiro', () {
       expect(AiInsightsBloc.parseAmount("1.234,50"), 1234.5);
@@ -212,7 +288,8 @@ void main() {
     // Blocs próprios: o tearDown descarta o do setUp, e descartar duas vezes o
     // mesmo controller de texto quebraria.
     test('fecha a stream de estado', () async {
-      final descartavel = AiInsightsBloc(currencyRepository: repository);
+      final descartavel = AiInsightsBloc(
+          currencyRepository: repository, modelManager: modelManager);
       final stream = descartavel.stateStream;
 
       descartavel.dispose();
@@ -221,7 +298,8 @@ void main() {
     });
 
     test('descarta o controller do campo de valor', () {
-      final descartavel = AiInsightsBloc(currencyRepository: repository);
+      final descartavel = AiInsightsBloc(
+          currencyRepository: repository, modelManager: modelManager);
       final controller = descartavel.amountController;
 
       descartavel.dispose();

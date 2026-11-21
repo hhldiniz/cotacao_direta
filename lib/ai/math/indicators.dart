@@ -2,9 +2,9 @@ import 'dart:math';
 
 import 'package:cotacao_direta/ai/math/statistics.dart';
 
-/// Classic technical indicators computed over the price series. They are both
-/// the inputs the local model receives besides the raw returns and the numbers
-/// shown in the market summary on screen.
+/// Classic technical indicators computed over the price series: the numbers
+/// shown in the market summary on screen, and the thresholds the remarks are
+/// written from.
 
 /// Simple moving average of the last [period] prices. Returns null when the
 /// series is shorter than the period: an incomplete average would be compared
@@ -113,16 +113,4 @@ double compoundAnnualGrowthRate(
   if (initialPrice <= 0 || finalPrice <= 0 || spanInDays <= 0) return 0;
   final years = spanInDays / daysPerYear;
   return pow(finalPrice / initialPrice, 1 / years).toDouble() - 1;
-}
-
-/// Distance from the current price to the moving average of [period], measured
-/// in standard deviations of that same window (the Bollinger bands "z-score").
-/// Positive means the price is stretched above the average.
-double? bollingerZScore(List<double> prices, int period) {
-  if (period <= 1) throw ArgumentError("period must be greater than 1");
-  if (prices.length < period) return null;
-  final window = prices.sublist(prices.length - period);
-  final deviation = standardDeviation(window);
-  if (deviation == 0) return 0;
-  return (prices.last - mean(window)) / deviation;
 }

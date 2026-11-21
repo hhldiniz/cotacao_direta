@@ -32,7 +32,7 @@ class InsightEngine {
   /// From here on the drop from the peak deserves a warning.
   static const double _drawdownThreshold = 0.15;
 
-  /// Minimum edge over the random walk for the network to be worth mentioning.
+  /// Minimum edge over the random walk for the model to be worth mentioning.
   static const double _meaningfulSkill = 0.05;
 
   List<FinancialInsight> generate({
@@ -181,11 +181,11 @@ class InsightEngine {
   }
 
   FinancialInsight _confidenceInsight(ModelDiagnostics diagnostics) {
-    if (!diagnostics.trained) {
+    if (!diagnostics.evaluated) {
       return FinancialInsight(
           code: InsightCode.dataLimited,
           sentiment: InsightSentiment.caution,
-          arguments: ["${diagnostics.trainingSamples}"]);
+          arguments: ["${diagnostics.contextLength}"]);
     }
     if (diagnostics.skill >= _meaningfulSkill) {
       return FinancialInsight(

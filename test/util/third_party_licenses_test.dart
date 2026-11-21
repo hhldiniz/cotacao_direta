@@ -26,6 +26,17 @@ void main() {
       expect(text, contains("Version 2.0"));
     });
 
+    test('a Apache 2.0 do Chronos-Bolt entra com o aviso da Amazon', () {
+      final chronos = entries.firstWhere(
+        (entry) => entry.packages.contains("Chronos-Bolt"),
+        orElse: () => throw StateError("Chronos-Bolt não foi registrado"),
+      );
+      final text =
+          chronos.paragraphs.map((paragraph) => paragraph.text).join(" ");
+      expect(text, contains("Copyright Amazon.com, Inc. or its affiliates"));
+      expect(text, contains("Apache License"));
+    });
+
     test('a MIT do flag-icons entra na tela de licenças', () {
       final flagIcons = entries.firstWhere(
         (entry) => entry.packages.contains("flag-icons"),

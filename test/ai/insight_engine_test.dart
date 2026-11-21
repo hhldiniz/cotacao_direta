@@ -49,13 +49,12 @@ AssetForecast _forecast({
       ],
       diagnostics: diagnostics ??
           const ModelDiagnostics(
-            trainingSamples: 90,
-            validationError: 0.8,
-            baselineError: 1.0,
+            modelName: "Chronos-Bolt Tiny",
+            contextLength: 120,
+            backtestWindows: 3,
+            backtestError: 0.008,
+            baselineError: 0.01,
             skill: 0.2,
-            neuralWeight: 0.12,
-            epochs: 120,
-            trained: true,
           ),
       confidenceLevel: 0.8,
     );
@@ -267,37 +266,35 @@ void main() {
       expect(_codes(insights), isNot(contains(InsightCode.drawdown)));
     });
 
-    test('rede que superou o passeio aleatório é reportada como tal', () {
+    test('modelo que superou o passeio aleatório é reportado como tal', () {
       final insights = engine.generate(
           series: series,
           statistics: _statistics(),
           forecast: _forecast(
               diagnostics: const ModelDiagnostics(
-            trainingSamples: 90,
-            validationError: 0.7,
-            baselineError: 1.0,
+            modelName: "Chronos-Bolt Tiny",
+            contextLength: 120,
+            backtestWindows: 3,
+            backtestError: 0.007,
+            baselineError: 0.01,
             skill: 0.3,
-            neuralWeight: 0.18,
-            epochs: 100,
-            trained: true,
           )));
 
       expect(_codes(insights), contains(InsightCode.confidenceGood));
     });
 
-    test('rede sem vantagem avisa que a projeção é a base estatística', () {
+    test('modelo sem vantagem sobre o passeio aleatório pede cautela', () {
       final insights = engine.generate(
           series: series,
           statistics: _statistics(),
           forecast: _forecast(
               diagnostics: const ModelDiagnostics(
-            trainingSamples: 90,
-            validationError: 1.0,
-            baselineError: 1.0,
+            modelName: "Chronos-Bolt Tiny",
+            contextLength: 120,
+            backtestWindows: 3,
+            backtestError: 0.012,
+            baselineError: 0.01,
             skill: 0.0,
-            neuralWeight: 0.0,
-            epochs: 60,
-            trained: true,
           )));
 
       final insight = _insightOf(insights, InsightCode.confidenceLow);
@@ -305,12 +302,13 @@ void main() {
       expect(insight.arguments, isEmpty);
     });
 
-    test('histórico curto é declarado explicitamente', () {
+    test('histórico curto demais para testar o modelo é declarado', () {
       final insights = engine.generate(
           series: series,
           statistics: _statistics(),
           forecast: _forecast(
-              diagnostics: ModelDiagnostics.untrained(trainingSamples: 8)));
+              diagnostics: ModelDiagnostics.unevaluated(
+                  modelName: "Chronos-Bolt Tiny", contextLength: 8)));
 
       final insight = _insightOf(insights, InsightCode.dataLimited);
       expect(insight.arguments.single, "8");

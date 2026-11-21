@@ -1,3 +1,4 @@
+import 'package:cotacao_direta/ai/model/forecast_model_manager.dart';
 import 'package:cotacao_direta/blocs/ai_insights_bloc.dart';
 import 'package:cotacao_direta/model/asset_series.dart';
 import 'package:cotacao_direta/providers/ai_insights_bloc_provider.dart';
@@ -7,7 +8,9 @@ import 'package:cotacao_direta/view/widgets/forecast_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sprintf/sprintf.dart';
 
+import '../helpers/chronos_test_helper.dart';
 import '../helpers/fakes.dart';
 import '../helpers/series_test_helper.dart';
 
@@ -17,6 +20,7 @@ final _assetSearchField = find.widgetWithIcon(TextField, Icons.search);
 
 void main() {
   late FakeCurrencyRepository repository;
+  late ForecastModelManager modelManager;
   late AiInsightsBloc bloc;
 
   final localizations = MyAppLocalizations(const Locale("pt"));
@@ -25,10 +29,30 @@ void main() {
     repository = FakeCurrencyRepository()
       ..historicalData = quoteHistoryFromPrices(
           syntheticPrices(length: 150, dailyDrift: 0.002));
-    bloc = AiInsightsBloc(currencyRepository: repository);
+    modelManager = tinyChronosManager();
+    bloc = AiInsightsBloc(
+        currencyRepository: repository, modelManager: modelManager);
   });
 
-  tearDown(() => bloc.dispose());
+  tearDown(() {
+    bloc.dispose();
+    // Sem await: o modelo carregado durante o teste vive em Futures da zona
+    // de relógio falso do testWidgets, que não andam mais depois dele.
+    modelManager.dispose();
+  });
+
+  /// Troca o bloc do setUp por um cujo modelo ainda não foi baixado.
+  void useModelNotInstalled() {
+    bloc.dispose();
+    modelManager = tinyChronosManager(installed: false);
+    bloc = AiInsightsBloc(
+        currencyRepository: repository, modelManager: modelManager);
+  }
+
+  FilledButton analyzeButton(WidgetTester tester) => tester.widget<FilledButton>(
+      find.ancestor(
+          of: find.text(localizations.aiInsightsAnalyzeBtnLabel!),
+          matching: find.byWidgetPredicate((widget) => widget is FilledButton)));
 
   Future<void> pumpPage(WidgetTester tester) async {
     // Tela alta: a página é uma lista rolável e os widgets fora da área
@@ -62,6 +86,76 @@ void main() {
       expect(find.text(localizations.aiInsightsDescription!), findsOneWidget);
       expect(find.text(localizations.aiInsightsEmptyLabel!), findsOneWidget);
       expect(find.text(localizations.aiInsightsDisclaimerLabel!),
+          findsOneWidget);
+    });
+
+    testWidgets('com o modelo no aparelho, diz que está pronto',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+
+      expect(find.text(localizations.aiModelInstalledLabel!), findsOneWidget);
+      expect(find.textContaining("Chronos-Bolt Fixture"), findsOneWidget);
+      expect(analyzeButton(tester).onPressed, isNotNull);
+    });
+
+    testWidgets('sem o modelo, oferece o download e trava a análise',
+        (WidgetTester tester) async {
+      useModelNotInstalled();
+      await pumpPage(tester);
+
+      expect(find.textContaining(localizations.aiModelDownloadBtnLabel!),
+          findsOneWidget);
+      expect(
+          find.text(sprintf(localizations.aiModelDescription!, [
+            "Chronos-Bolt Fixture",
+            "${(modelManager.model.totalSize / 1e6).round()} MB"
+          ])),
+          findsOneWidget);
+      expect(analyzeButton(tester).onPressed, isNull);
+    });
+
+    testWidgets('baixar o modelo libera a análise',
+        (WidgetTester tester) async {
+      useModelNotInstalled();
+      await pumpPage(tester);
+
+      await tester
+          .tap(find.textContaining(localizations.aiModelDownloadBtnLabel!));
+      await tester.pumpAndSettle();
+
+      expect(find.text(localizations.aiModelInstalledLabel!), findsOneWidget);
+      expect(analyzeButton(tester).onPressed, isNotNull);
+
+      await tester.tap(find.text(localizations.aiInsightsAnalyzeBtnLabel!));
+      await tester.pumpAndSettle();
+      expect(find.byType(ForecastChart), findsOneWidget);
+    });
+
+    testWidgets('remover o modelo volta a oferecer o download',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+
+      await tester.tap(find.text(localizations.aiModelDeleteBtnLabel!));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining(localizations.aiModelDownloadBtnLabel!),
+          findsOneWidget);
+      expect(modelManager.state.status, ForecastModelStatus.notInstalled);
+    });
+
+    testWidgets('mostra de qual modelo veio a projeção e como ele foi testado',
+        (WidgetTester tester) async {
+      await pumpPage(tester);
+
+      await tester.tap(find.text(localizations.aiInsightsAnalyzeBtnLabel!));
+      await tester.pumpAndSettle();
+
+      expect(find.text(localizations.aiInsightsModelNameLabel!),
+          findsOneWidget);
+      expect(find.text("Chronos-Bolt Fixture"), findsOneWidget);
+      expect(find.text(localizations.aiInsightsModelBacktestsLabel!),
+          findsOneWidget);
+      expect(find.text(localizations.aiInsightsModelSamplesLabel!),
           findsOneWidget);
     });
 

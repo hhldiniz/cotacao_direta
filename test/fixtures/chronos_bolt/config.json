@@ -1,0 +1,44 @@
+{
+  "architectures": [
+    "ChronosBoltModelForForecasting"
+  ],
+  "chronos_config": {
+    "context_length": 32,
+    "input_patch_size": 4,
+    "input_patch_stride": 4,
+    "prediction_length": 32,
+    "quantiles": [
+      0.1,
+      0.5,
+      0.9
+    ],
+    "use_reg_token": true
+  },
+  "classifier_dropout": 0.0,
+  "d_ff": 32,
+  "d_kv": 4,
+  "d_model": 16,
+  "decoder_start_token_id": 0,
+  "dense_act_fn": "relu",
+  "dropout_rate": 0.0,
+  "eos_token_id": 1,
+  "feed_forward_proj": "relu",
+  "initializer_factor": 1.0,
+  "is_decoder": false,
+  "is_encoder_decoder": true,
+  "is_gated_act": false,
+  "layer_norm_epsilon": 1e-06,
+  "model_type": "t5",
+  "num_decoder_layers": 2,
+  "num_heads": 2,
+  "num_layers": 2,
+  "pad_token_id": 0,
+  "reg_token_id": 1,
+  "relative_attention_max_distance": 20,
+  "relative_attention_num_buckets": 8,
+  "scale_decoder_outputs": true,
+  "tie_word_embeddings": true,
+  "transformers_version": "5.24.0",
+  "use_cache": true,
+  "vocab_size": 2
+}

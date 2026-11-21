@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backup automático do Android 6 a 11 (ver data_extraction_rules.xml para o
+     12 em diante). O modelo de previsão (lib/ai/model/) fica de fora: são ~35 MB
+     que se baixam de novo do Hugging Face, e o backup automático tem teto de
+     25 MB por app — passar dele faria o backup do app inteiro, banco incluído,
+     deixar de acontecer. -->
+<full-backup-content>
+    <exclude domain="file" path="models/" />
+</full-backup-content>
